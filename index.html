@@ -403,11 +403,14 @@ canvas#gc{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
       Clear
     </button>
-    <button class="btn btn-ghost" onclick="dlPNG()">
+    <button class="btn btn-ghost" onclick="dlArtwork()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-      Export PNG
+      Artwork PNG
     </button>
-    <button class="btn btn-success" onclick="goQuote()">Get a Quote →</button>
+    <button class="btn btn-primary" onclick="dlMockup()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Mockup PNG
+    </button>
   </div>
 </header>
 
@@ -657,26 +660,39 @@ canvas#gc{
 
       <!-- Order Summary -->
       <div style="padding:0 14px 14px;border-top:1px solid var(--border);">
-        <div class="sec-label" style="margin-top:14px;">Order Summary</div>
+        <div class="sec-label" style="margin-top:14px;">Design Summary</div>
         <div class="summary-card">
           <div class="sumr"><span>Product</span><span id="sProd">T-Shirt</span></div>
           <div class="sumr"><span>Placement</span><span id="sSide">Front</span></div>
           <div class="sumdiv"></div>
           <div id="szBreakdown"></div>
           <div class="sumr" style="padding-top:2px;"><span style="font-weight:600;">Total Units</span><span id="sQty" style="font-weight:700;">0</span></div>
-          <div class="sumr"><span>Unit Price</span><span id="sUnitPrice">$4.00</span></div>
-          <div class="sumdiv"></div>
-          <div class="sumt"><span class="sl">Est. Total</span><span class="sp" id="sPrice">—</span></div>
         </div>
-        <button class="btn btn-success fw" onclick="goQuote()" style="margin-bottom:5px;">🛒 Request a Quote →</button>
-        <button class="btn btn-ghost fw" onclick="dlPNG()" style="font-size:11.5px;">↓ Save Design as PNG</button>
-        <div style="margin-top:9px;font-size:10.5px;color:var(--txt3);line-height:1.7;text-align:center;">
-          7–12 business day turnaround<br/>
-          <a href="mailto:dyefreshapparel@gmail.com" style="color:var(--grn);font-weight:600;text-decoration:none;">dyefreshapparel@gmail.com</a>
-        </div>
-      </div>
 
-    </div><!-- /pscroll -->
+        <div class="sec-label" style="margin-top:14px;margin-bottom:8px;">Save Your Design</div>
+
+        <button class="btn btn-primary fw" onclick="dlMockup()" style="margin-bottom:6px;font-size:13px;padding:9px 13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          Download Mockup PNG
+        </button>
+
+        <button class="btn btn-ghost fw" onclick="dlArtwork()" style="margin-bottom:12px;font-size:13px;padding:9px 13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download Artwork PNG
+        </button>
+
+        <div style="background:var(--grn-bg);border:1px solid var(--grn);border-radius:var(--radius);padding:11px 12px;text-align:center;">
+          <div style="font-size:11px;font-weight:600;color:var(--grn);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Get Pricing</div>
+          <div style="font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:6px;">Email your mockup with sizes &amp; quantities for a custom quote.</div>
+          <a href="mailto:dyefreshapparel@gmail.com?subject=Design Quote Request" style="display:block;background:var(--grn);color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:var(--radius-sm);text-decoration:none;">
+            ✉ dyefreshapparel@gmail.com
+          </a>
+        </div>
+
+        <div style="margin-top:9px;font-size:10.5px;color:var(--txt3);text-align:center;line-height:1.7;">
+          7–12 business day turnaround
+        </div>
+      </div>    </div><!-- /pscroll -->
   </div><!-- /panel right -->
 
 </div><!-- /app -->
@@ -1538,8 +1554,7 @@ function updSum(){
   document.getElementById('sProd').textContent = pn;
   document.getElementById('sSide').textContent = S.side.charAt(0).toUpperCase() + S.side.slice(1);
   document.getElementById('sQty').textContent  = totalQty;
-  document.getElementById('sUnitPrice').textContent = '$' + unitPrice.toFixed(2);
-  document.getElementById('sPrice').textContent = totalQty > 0 ? '$' + total.toFixed(2) : '—';
+  // Pricing removed — quote provided by email
 
   // Build cost breakdown
   const bd = document.getElementById('szBreakdown');
