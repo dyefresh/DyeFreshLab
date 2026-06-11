@@ -103,13 +103,13 @@ header{
 .app{
   display:grid;
   grid-template-columns:64px var(--lp) 1fr var(--rp);
-  grid-template-rows:1fr;
+  grid-template-rows:calc(100vh - var(--hdr));
   height:calc(100vh - var(--hdr));
   overflow:hidden;
 }
 .app > *{
+  height:calc(100vh - var(--hdr));
   min-height:0;
-  min-width:0;
   overflow:hidden;
 }
 
@@ -127,6 +127,7 @@ header{
   display:flex;
   flex-direction:column;
   overflow:hidden;
+  height:100%;
 }
 .pscroll{overflow-y:auto;flex:1;min-height:0;}
 
@@ -652,17 +653,15 @@ canvas#gc{
     <div class="pscroll">
 
       <!-- Print Zone -->
-      <div class="tpane active" style="display:block!important;padding:10px 12px;">
+      <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
         <div class="sec-label">Print Zone</div>
         <div class="pz-hint-box" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span><strong>Corner dots</strong> resize · <strong>Center ✦</strong> moves</span>
+          <span><strong>Corner dots</strong> resize &middot; <strong>Center</strong> + moves</span>
           <button id="pzToggleBtn" onclick="togglePrintZone()" style="
             flex-shrink:0;font-family:var(--font);font-size:11px;font-weight:600;
             padding:4px 10px;border-radius:10px;cursor:pointer;
             border:1.5px solid var(--red);background:var(--red);color:#fff;
-            transition:all .13s;white-space:nowrap;">
-            👁 Visible
-          </button>
+            transition:all .13s;white-space:nowrap;">Visible</button>
         </div>
         <div class="slider-row">
           <span class="sl-lbl">Width</span>
@@ -684,55 +683,13 @@ canvas#gc{
           <input type="range" class="red-thumb" id="pzY" min="100" max="330" value="184" oninput="setPZSlider()"/>
           <span class="sl-val" id="pzYv">5.3"</span>
         </div>
-        <button class="btn btn-ghost fw mt8" style="font-size:12px;" onclick="resetPZ()">↺ Reset Print Zone</button>
+        <button class="btn btn-ghost fw mt8" style="font-size:12px;" onclick="resetPZ()">&#8635; Reset Print Zone</button>
       </div>
 
-
-        </div>
-        <div class="custom-row" style="margin-bottom:6px;">
-          <label style="font-size:11px;color:var(--txt2);">Custom:</label>
-          <input type="color" id="livePicker" value="#111111" oninput="applyColor(this.value)"/>
-          <span class="hex-val" id="liveHex">#111111</span>
-        </div>
-
-        <!-- Outline -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;letter-spacing:.06em;">Outline</span>
-          <input type="color" id="liveOutlineColor" value="#ffffff"
-            style="width:22px;height:22px;border:1px solid var(--border);border-radius:3px;cursor:pointer;padding:1px;" oninput="applyEdit()"/>
-          <input type="range" id="liveOutlineWidth" min="0" max="12" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveOutlineVal').textContent=this.value+'px'"/>
-          <span id="liveOutlineVal" style="font-size:10px;font-weight:600;min-width:24px;color:var(--txt);">0px</span>
-        </div>
-
-        <!-- Letter Spacing -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;letter-spacing:.06em;">Spacing</span>
-          <input type="range" id="liveSpacing" min="-5" max="30" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveSpacingVal').textContent=this.value"/>
-          <span id="liveSpacingVal" style="font-size:10px;font-weight:600;min-width:24px;color:var(--txt);">0</span>
-        </div>
-
-        <!-- Arc -->
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;letter-spacing:.06em;">Arc</span>
-          <span style="font-size:11px;color:var(--txt3);">∩</span>
-          <input type="range" id="liveArc" min="-180" max="180" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveArcVal').textContent=this.value+'°'"/>
-          <span style="font-size:11px;color:var(--txt3);">∪</span>
-          <span id="liveArcVal" style="font-size:10px;font-weight:600;min-width:28px;color:var(--txt);">0°</span>
-        </div>
-
-        <!-- Flip -->
-        <div style="display:flex;gap:5px;margin-bottom:4px;">
-          <button onclick="flipLiveH()" class="btn btn-outline fw" style="font-size:11.5px;padding:5px;">↔ Flip Horizontal</button>
-          <button onclick="flipLiveV()" class="btn btn-outline fw" style="font-size:11.5px;padding:5px;">↕ Flip Vertical</button>
-        </div>
-
-        <div class="preview-bar" id="previewBar">Preview</div>
-      </div>
-
-      <!-- Text Edit Section -->
+      <!-- Text Edit Section (shown when text layer selected) -->
       <div class="edit-section" id="textEditSec" style="display:none;">
-        <div class="edit-section-title">✏ Edit Selected Text</div>
-        <input type="text" class="live-input" id="liveText" placeholder="Edit text…" oninput="applyEdit()"/>
+        <div class="edit-section-title">&#9998; Edit Selected Text</div>
+        <input type="text" class="live-input" id="liveText" placeholder="Edit text..." oninput="applyEdit()"/>
         <div class="row2" style="margin-bottom:8px;">
           <div class="field-group">
             <label class="field-label">Font</label>
@@ -766,57 +723,134 @@ canvas#gc{
           <input type="color" id="livePicker" value="#111111" oninput="applyColor(this.value)"/>
           <span class="hex-val" id="liveHex">#111111</span>
         </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;margin-bottom:6px;">
+          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;">Outline</span>
+          <input type="color" id="liveOutlineColor" value="#ffffff" oninput="applyEdit()" style="width:22px;height:22px;border:1px solid var(--border);border-radius:3px;cursor:pointer;padding:1px;"/>
+          <input type="range" id="liveOutlineWidth" min="0" max="12" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveOutlineVal').textContent=this.value+'px'"/>
+          <span id="liveOutlineVal" style="font-size:10px;font-weight:600;min-width:24px;">0px</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;">Spacing</span>
+          <input type="range" id="liveSpacing" min="-5" max="30" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveSpacingVal').textContent=this.value"/>
+          <span id="liveSpacingVal" style="font-size:10px;font-weight:600;min-width:24px;">0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-size:10.5px;font-weight:600;color:var(--txt3);width:50px;text-transform:uppercase;">Arc</span>
+          <input type="range" id="liveArc" min="-180" max="180" value="0" style="flex:1;" oninput="applyEdit();document.getElementById('liveArcVal').textContent=this.value+'deg'"/>
+          <span id="liveArcVal" style="font-size:10px;font-weight:600;min-width:28px;">0deg</span>
+        </div>
+        <div style="display:flex;gap:5px;margin-bottom:4px;">
+          <button onclick="flipLiveH()" class="btn btn-outline fw" style="font-size:11.5px;padding:5px;">Flip H</button>
+          <button onclick="flipLiveV()" class="btn btn-outline fw" style="font-size:11.5px;padding:5px;">Flip V</button>
+        </div>
         <div class="preview-bar" id="previewBar">Preview</div>
+
+        <!-- TEXT SIZE IN INCHES -->
+        <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+          <div class="sec-label" style="margin-bottom:6px;">Size on Shirt</div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <span class="sl-lbl">Scale</span>
+              <span id="txtVSc" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+            </div>
+            <input type="range" id="txtSlSc" min="5" max="143" value="70" oninput="apTxtSc(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;"><span>0.5"</span><span>15"</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;color:var(--txt2);font-weight:500;">Individual W / H</span>
+            <button id="txtLockBtn" onclick="toggleTxtLock()" style="font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--red);background:transparent;color:var(--red);transition:all .13s;"><span id="txtLockLbl">Unlock</span></button>
+          </div>
+          <div id="txtWhSliders" style="display:none;">
+            <div style="margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span class="sl-lbl">Width</span>
+                <span id="txtVW" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+              </div>
+              <input type="range" id="txtSlW" min="5" max="143" value="70" oninput="apTxtW(this.value)" style="width:100%;"/>
+              <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;"><span>0.5"</span><span>15"</span></div>
+            </div>
+            <div style="margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span class="sl-lbl">Height</span>
+                <span id="txtVH" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+              </div>
+              <input type="range" id="txtSlH" min="5" max="124" value="70" oninput="apTxtH(this.value)" style="width:100%;"/>
+              <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;"><span>0.5"</span><span>13"</span></div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span class="sl-lbl">Rotate</span>
+            <span id="txtVRo" style="font-size:11px;font-weight:600;color:var(--txt);min-width:35px;text-align:right;">0deg</span>
+          </div>
+          <input type="range" id="txtSlRo" min="-180" max="180" value="0" oninput="apTxtRo(this.value)" style="width:100%;margin-bottom:8px;"/>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span class="sl-lbl">Opacity</span>
+            <span id="txtVOp" style="font-size:11px;font-weight:600;color:var(--txt);min-width:35px;text-align:right;">100%</span>
+          </div>
+          <input type="range" id="txtSlOp" min="10" max="100" value="100" oninput="apTxtOp(this.value)" style="width:100%;margin-bottom:8px;"/>
+          <div class="action-row">
+            <button class="btn btn-outline" style="font-size:12px;" onclick="dupeL()">Duplicate</button>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="delSel()">Delete</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Transform -->
+      <!-- Transform (artwork + text size/rotation/opacity) -->
       <div style="padding:10px 12px;border-top:1px solid var(--border);">
         <div class="sec-label">Transform</div>
         <div id="noSel" class="no-sel">Select an object on the canvas.</div>
         <div id="layerDims" class="dims-badge" style="display:none;">
-          <div class="dim-item"><div class="dim-label">W</div><div class="dim-val" id="dimW">–</div></div>
-          <div class="dim-item"><div class="dim-label">H</div><div class="dim-val" id="dimH">–</div></div>
+          <div class="dim-item"><div class="dim-label">W</div><div class="dim-val" id="dimW">-</div></div>
+          <div class="dim-item"><div class="dim-label">H</div><div class="dim-val" id="dimH">-</div></div>
         </div>
         <div id="tCtrl" style="display:none;">
-
-          <!-- Proportional scale row -->
-          <div class="slider-row">
-            <span class="sl-lbl">Scale</span>
-            <input type="range" id="slSc" min="5" max="400" value="100" oninput="apSc(this.value)"/>
-            <span class="sl-val" id="vSc">100%</span>
+          <!-- Proportional scale — shows W×H in inches -->
+          <div style="margin-bottom:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <span class="sl-lbl">Scale</span>
+              <span id="vSc" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+            </div>
+            <input type="range" id="slSc" min="5" max="143" value="70" oninput="apSc(this.value)" style="width:100%;"/>
+            <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;">
+              <span>0.5"</span><span>15"</span>
+            </div>
           </div>
 
-          <!-- Lock aspect toggle -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <!-- W / H Individual toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">
             <span style="font-size:11px;color:var(--txt2);font-weight:500;">Individual W / H</span>
-            <button id="lockBtn" onclick="toggleLock()"
-              style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:500;
-                     padding:3px 9px;border-radius:12px;border:1.5px solid var(--border2);
-                     background:var(--surface2);color:var(--txt2);cursor:pointer;
-                     font-family:var(--font);transition:all .13s;">
-              <span id="lockIcon">🔓</span>
-              <span id="lockLbl">Unlocked</span>
+            <button id="lockBtn" onclick="toggleLock()" style="font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--red);background:transparent;color:var(--red);transition:all .13s;">
+              <span id="lockLbl">Unlock</span>
             </button>
           </div>
 
-          <!-- W / H sliders — shown when unlocked -->
-          <div id="whSliders">
-            <div class="slider-row">
-              <span class="sl-lbl">Width</span>
-              <input type="range" id="slW" min="10" max="390" value="140" oninput="apW(this.value)"/>
-              <span class="sl-val" id="vW">4.7"</span>
+          <!-- Individual sliders — hidden until unlocked -->
+          <div id="whSliders" style="display:none;">
+            <div style="margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span class="sl-lbl">Width</span>
+                <span id="vW" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+              </div>
+              <input type="range" id="slW" min="5" max="143" value="70" oninput="apW(this.value)" style="width:100%;"/>
+              <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;">
+                <span>0.5"</span><span>15"</span>
+              </div>
             </div>
-            <div class="slider-row">
-              <span class="sl-lbl">Height</span>
-              <input type="range" id="slH" min="10" max="390" value="140" oninput="apH(this.value)"/>
-              <span class="sl-val" id="vH">4.7"</span>
+            <div style="margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                <span class="sl-lbl">Height</span>
+                <span id="vH" style="font-size:11px;font-weight:700;color:var(--txt);background:var(--surface3);padding:2px 7px;border-radius:5px;">-</span>
+              </div>
+              <input type="range" id="slH" min="5" max="124" value="70" oninput="apH(this.value)" style="width:100%;"/>
+              <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);margin-top:1px;">
+                <span>0.5"</span><span>13"</span>
+              </div>
             </div>
           </div>
-
           <div class="slider-row">
             <span class="sl-lbl">Rotate</span>
             <input type="range" id="slRo" min="-180" max="180" value="0" oninput="apRo(this.value)"/>
-            <span class="sl-val" id="vRo">0°</span>
+            <span class="sl-val" id="vRo">0deg</span>
           </div>
           <div class="slider-row">
             <span class="sl-lbl">Opacity</span>
@@ -824,13 +858,13 @@ canvas#gc{
             <span class="sl-val" id="vOp">100%</span>
           </div>
           <div class="action-row">
-            <button class="btn btn-outline" style="font-size:12px;" onclick="dupeL()">⧉ Duplicate</button>
-            <button class="btn btn-primary" style="font-size:12px;" onclick="delSel()">✕ Delete</button>
+            <button class="btn btn-outline" style="font-size:12px;" onclick="dupeL()">Duplicate</button>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="delSel()">Delete</button>
           </div>
         </div>
       </div>
 
-      <!-- Sizes & Qty -->
+      <!-- Sizes & Quantities -->
       <div style="padding:0 12px 10px;border-top:1px solid var(--border);">
         <div class="sec-label" style="margin-top:10px;">Sizes &amp; Quantities</div>
         <div class="szq-table">
@@ -844,11 +878,11 @@ canvas#gc{
           </div>
         </div>
         <div class="szq-total"><span>Total units</span><span id="szqTotalUnits">0</span></div>
-        <div class="grn-note">✓ No minimums on Heat Press</div>
+        <div class="grn-note">&#10003; No minimums on Heat Press</div>
       </div>
 
-      <!-- Order Summary -->
-      <div style="padding:0 12px 10px;border-top:1px solid var(--border);">
+      <!-- Design Summary -->
+      <div style="padding:0 12px 14px;border-top:1px solid var(--border);">
         <div class="sec-label" style="margin-top:10px;">Design Summary</div>
         <div class="summary-card">
           <div class="sumr"><span>Product</span><span id="sProd">T-Shirt</span></div>
@@ -857,31 +891,28 @@ canvas#gc{
           <div id="szBreakdown"></div>
           <div class="sumr" style="padding-top:2px;"><span style="font-weight:600;">Total Units</span><span id="sQty" style="font-weight:700;">0</span></div>
         </div>
-
-        <div class="sec-label" style="margin-top:14px;margin-bottom:8px;">Save Your Design</div>
-
+        <div class="sec-label" style="margin-top:12px;margin-bottom:8px;">Save Your Design</div>
         <button class="btn btn-primary fw" onclick="dlMockup()" style="margin-bottom:6px;font-size:13px;padding:9px 13px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           Download Mockup PNG
         </button>
-
         <button class="btn btn-ghost fw" onclick="dlArtwork()" style="margin-bottom:12px;font-size:13px;padding:9px 13px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
           Download Artwork PNG
         </button>
-
         <div style="background:var(--grn-bg);border:1px solid var(--grn);border-radius:var(--radius);padding:11px 12px;text-align:center;">
           <div style="font-size:11px;font-weight:600;color:var(--grn);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Get Pricing</div>
           <div style="font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:6px;">Email your mockup with sizes &amp; quantities for a custom quote.</div>
           <a href="mailto:dyefreshapparel@gmail.com?subject=Design Quote Request" style="display:block;background:var(--grn);color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:var(--radius-sm);text-decoration:none;">
-            ✉ dyefreshapparel@gmail.com
+            &#9993; dyefreshapparel@gmail.com
           </a>
         </div>
-
-        <div style="margin-top:9px;font-size:10.5px;color:var(--txt3);text-align:center;line-height:1.7;">
-          7–12 business day turnaround
+        <div style="margin-top:9px;font-size:10.5px;color:var(--txt3);text-align:center;">
+          7-12 business day turnaround
         </div>
-      </div>    </div><!-- /pscroll -->
+      </div>
+
+    </div><!-- /pscroll -->
   </div><!-- /panel right -->
 
 </div><!-- /app -->
@@ -1393,19 +1424,133 @@ function drawHandles(){
   ctx.translate(l.x, l.y);
   ctx.rotate((l.rotation||0)*Math.PI/180);
   const hw=l.w/2, hh=l.h/2;
-  // Dashed selection box
+
+  // ── Dashed selection box ──────────────────────────────────────────────────
   ctx.setLineDash([5,3]);
-  ctx.strokeStyle = '#ff3b00';
+  ctx.strokeStyle = 'rgba(0,120,255,0.85)';
   ctx.lineWidth = 1.5;
   ctx.strokeRect(-hw,-hh,l.w,l.h);
   ctx.setLineDash([]);
-  // Corner handles
-  [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].forEach(([px,py])=>{
-    ctx.fillStyle = '#ff3b00';
-    ctx.fillRect(px-HS/2, py-HS/2, HS, HS);
+
+  // ── Size label in inches above the box ────────────────────────────────────
+  const wIn = (l.w/PX_PER_INCH).toFixed(1);
+  const hIn = (l.h/PX_PER_INCH).toFixed(1);
+  const label = wIn + '" × ' + hIn + '"';
+  ctx.font = 'bold 10px Inter,sans-serif';
+  const lw = ctx.measureText(label).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  roundRectFill(ctx, -lw/2-5, -hh-22, lw+10, 17, 4);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, 0, -hh-14);
+
+  // ── Helper: draw a circular icon handle ──────────────────────────────────
+  function iconHandle(x, y, bg, iconFn){
+    ctx.save();
+    ctx.translate(x, y);
+    // White circle with shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI*2);
+    ctx.fillStyle = bg || '#fff';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Border
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Draw icon
+    ctx.strokeStyle = bg === '#fff' ? '#333' : '#fff';
+    ctx.fillStyle   = bg === '#fff' ? '#333' : '#fff';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    iconFn();
+    ctx.restore();
+  }
+
+  // ── TOP CENTER: Move up/down (scale height) ───────────────────────────────
+  iconHandle(0, -hh-18, '#fff', ()=>{
+    ctx.beginPath();
+    ctx.moveTo(0,-5); ctx.lineTo(0,5);
+    ctx.moveTo(-4,-3); ctx.lineTo(0,-7); ctx.lineTo(4,-3);
+    ctx.moveTo(-4,3);  ctx.lineTo(0,7);  ctx.lineTo(4,3);
+    ctx.stroke();
   });
-  ctx.setLineDash([]);          // explicit reset before restore (restore doesn't guarantee this)
+
+  // ── TOP LEFT: Delete ──────────────────────────────────────────────────────
+  iconHandle(-hw-18, -hh-18, '#fff', ()=>{
+    // Trash icon
+    ctx.beginPath();
+    ctx.moveTo(-4,-5); ctx.lineTo(4,-5);
+    ctx.moveTo(-6,-5); ctx.lineTo(-6,5); ctx.lineTo(6,5); ctx.lineTo(6,-5);
+    ctx.moveTo(-2,-5); ctx.lineTo(-2,-7); ctx.lineTo(2,-7); ctx.lineTo(2,-5);
+    ctx.moveTo(-2,-2); ctx.lineTo(-2,3);
+    ctx.moveTo(2,-2);  ctx.lineTo(2,3);
+    ctx.stroke();
+  });
+
+  // ── TOP RIGHT: Rotate ─────────────────────────────────────────────────────
+  iconHandle(hw+18, -hh-18, '#fff', ()=>{
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, -Math.PI*0.8, Math.PI*0.8);
+    ctx.stroke();
+    // Arrow head
+    const ex = Math.cos(Math.PI*0.8)*5, ey = Math.sin(Math.PI*0.8)*5;
+    ctx.beginPath();
+    ctx.moveTo(ex-3, ey-1); ctx.lineTo(ex, ey); ctx.lineTo(ex-1, ey+3);
+    ctx.stroke();
+  });
+
+  // ── CENTER RIGHT: Flip horizontal ─────────────────────────────────────────
+  iconHandle(hw+18, 0, '#fff', ()=>{
+    ctx.beginPath();
+    ctx.moveTo(-5,-4); ctx.lineTo(-5,4);
+    ctx.moveTo(5,-4);  ctx.lineTo(5,4);
+    ctx.moveTo(-5,0);  ctx.lineTo(-2,-4); ctx.lineTo(-2,4); ctx.closePath();
+    ctx.moveTo(5,0);   ctx.lineTo(2,-4);  ctx.lineTo(2,4);  ctx.closePath();
+    ctx.stroke();
+  });
+
+  // ── BOTTOM LEFT: Layer order ──────────────────────────────────────────────
+  iconHandle(-hw-18, hh+18, '#fff', ()=>{
+    // Layers icon
+    [-4,0,4].forEach((dy,i)=>{
+      ctx.globalAlpha = 0.4 + i*0.3;
+      ctx.beginPath();
+      ctx.moveTo(-5,dy); ctx.lineTo(5,dy);
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  });
+
+  // ── BOTTOM RIGHT: Resize (proportional) ───────────────────────────────────
+  iconHandle(hw+18, hh+18, '#fff', ()=>{
+    ctx.beginPath();
+    ctx.moveTo(-5,-5); ctx.lineTo(5,5);
+    ctx.moveTo(2,5);   ctx.lineTo(5,5); ctx.lineTo(5,2);
+    ctx.moveTo(-5,-2); ctx.lineTo(-5,-5); ctx.lineTo(-2,-5);
+    ctx.stroke();
+  });
+
   ctx.restore();
+}
+
+// Helper: filled rounded rect
+function roundRectFill(c, x, y, w, h, r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+  c.fill();
 }
 
 function drawPrintZone(){
@@ -1505,10 +1650,23 @@ function layerHit(mx,my){
 }
 function layerCornerHit(mx,my,l){
   const hw=l.w/2, hh=l.h/2, a=(l.rotation||0)*Math.PI/180;
-  for(const [ox,oy,nm] of [[-hw,-hh,'tl'],[hw,-hh,'tr'],[hw,hh,'br'],[-hw,hh,'bl']]){
+  // All handle positions relative to layer center
+  const handles = [
+    [-hw-18, -hh-18, 'delete'],   // top-left: trash
+    [  0,    -hh-18, 'scaleH'],   // top-center: scale height
+    [ hw+18, -hh-18, 'rotate'],   // top-right: rotate
+    [ hw+18,  0,     'flipH' ],   // center-right: flip
+    [-hw-18,  hh+18, 'layer' ],   // bottom-left: layer order
+    [ hw+18,  hh+18, 'resize'],   // bottom-right: resize
+    [-hw,    -hh,    'tl'    ],   // corners for resize drag
+    [ hw,    -hh,    'tr'    ],
+    [ hw,     hh,    'br'    ],
+    [-hw,     hh,    'bl'    ],
+  ];
+  for(const [ox,oy,nm] of handles){
     const rx=l.x+ox*Math.cos(a)-oy*Math.sin(a);
     const ry=l.y+ox*Math.sin(a)+oy*Math.cos(a);
-    if(Math.abs(mx-rx)<HS+5 && Math.abs(my-ry)<HS+5) return nm;
+    if(Math.abs(mx-rx)<22 && Math.abs(my-ry)<22) return nm;
   }
   return null;
 }
@@ -1527,7 +1685,19 @@ function mdown(mx,my){
     const sel=S.layers.find(l=>l.id===S.selectedId);
     if(sel){
       const h=layerCornerHit(mx,my,sel);
-      if(h){ S.drag={type:'lresize',h,sx:mx,sy:my,sw:sel.w,sh:sel.h}; return; }
+      if(h){
+        if(h==='delete'){ delSel(); return; }
+        if(h==='rotate'){ S.drag={type:'lrotate',ox:mx,oy:my,startRot:sel.rotation||0,cx:sel.x,cy:sel.y}; return; }
+        if(h==='flipH'){ sel.flipH=!sel.flipH; render(); return; }
+        if(h==='layer'){
+          const idx=S.layers.findIndex(x=>x.id===sel.id);
+          if(idx>0){ [S.layers[idx],S.layers[idx-1]]=[S.layers[idx-1],S.layers[idx]]; updLayers(); render(); } return;
+        }
+        if(h==='scaleH'){ S.drag={type:'lresize',h:'scaleH',sx:mx,sy:my,sw:sel.w,sh:sel.h}; return; }
+        if(h==='tl'||h==='tr'||h==='br'||h==='bl'||h==='resize'){
+          S.drag={type:'lresize',h,sx:mx,sy:my,sw:sel.w,sh:sel.h}; return;
+        }
+      }
     }
   }
   // 2. Layer body? → always selectable; also shows print zone
@@ -1554,14 +1724,47 @@ function mdown(mx,my){
 function mmove(mx,my){
   if(!S.drag) return;
   const t=S.drag.type;
+  if(t==='lrotate'){
+    const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
+    const dx=mx-S.drag.cx, dy=my-S.drag.cy;
+    const odx=S.drag.ox-S.drag.cx, ody=S.drag.oy-S.drag.cy;
+    const angle = Math.atan2(dy,dx) - Math.atan2(ody,odx);
+    l.rotation = Math.round((S.drag.startRot + angle*180/Math.PI) % 360);
+    syncT(); render(); return;
+  }
   if(t==='lmove'){
     const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
     l.x=mx-S.drag.ox; l.y=my-S.drag.oy;
   } else if(t==='lresize'){
     const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
-    const d=(S.drag.h.includes('r')?1:-1)*(mx-S.drag.sx);
-    l.w=Math.max(20, S.drag.sw+d*2);
-    if(l.type==='image') l.h=S.drag.sh*(l.w/S.drag.sw);
+    const h=S.drag.h;
+    const dx=mx-S.drag.sx;
+    const dy=my-S.drag.sy;
+    // Determine resize delta based on handle position
+    let newW = S.drag.sw;
+    let newH = S.drag.sh;
+    if(h==='tl'||h==='bl') newW = Math.max(20, S.drag.sw - dx*2);
+    if(h==='tr'||h==='br'||h==='resize') newW = Math.max(20, S.drag.sw + dx*2);
+    if(h==='tr'||h==='tl'||h==='scaleH') newH = Math.max(20, S.drag.sh - dy*2);
+    if(h==='br'||h==='bl') newH = Math.max(20, S.drag.sh + dy*2);
+    if(h==='resize'){
+      // Bottom-right: proportional resize using diagonal
+      const diag = Math.sqrt(dx*dx + dy*dy) * (dx+dy > 0 ? 1 : -1);
+      const ratio = S.drag.sh / S.drag.sw;
+      newW = Math.max(20, S.drag.sw + diag);
+      newH = Math.round(newW * ratio);
+    }
+    l.w = newW;
+    // For images always resize H proportionally unless scaleH
+    if(l.type==='image'){
+      if(h==='scaleH') l.h = newH;
+      else if(h!=='scaleH') l.h = newH;
+    } else {
+      // Text: always allow independent H resize
+      l.h = newH;
+    }
+    // Update transform panel
+    syncT(); render();
   } else if(t==='pz_move'){
     S.pz.x = mx - S.drag.ox;
     S.pz.y = my - S.drag.oy;
@@ -1720,6 +1923,7 @@ function syncT(){
   const isText=l&&l.type==='text';
 
   document.getElementById('textEditSec').style.display = isText ? 'block' : 'none';
+  if(isText) syncTxtTransform(l);
   document.getElementById('noSel').style.display = l ? 'none' : '';
   document.getElementById('tCtrl').style.display = l ? 'block' : 'none';
 
@@ -1775,98 +1979,110 @@ function syncT(){
     updPreview(l);
   }
 
-  // Layer inch dimensions
-  const dimEl=document.getElementById('layerDims');
-  if(l){
-    dimEl.style.display='flex';
-    document.getElementById('dimW').textContent=(l.w/PX_PER_INCH).toFixed(1)+'"';
-    document.getElementById('dimH').textContent=(l.h/PX_PER_INCH).toFixed(1)+'"';
-  } else {
-    dimEl.style.display='none';
-  }
+
 
   // Transform sliders
-  // Store original dimensions on first select so Scale% is meaningful
   if(!l._origW){ l._origW = l.w; l._origH = l.h; }
-  const sc = Math.round((l.w / l._origW) * 100);
-  document.getElementById('slSc').value  = sc;
-  document.getElementById('vSc').textContent = sc + '%';
-  document.getElementById('slW').value = Math.round(l.w);
-  document.getElementById('vW').textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
-  document.getElementById('slH').value = Math.round(l.h);
-  document.getElementById('vH').textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
-  // Sync lock button state
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  // Scale slider position = current width in px
+  document.getElementById('slSc').value = Math.min(Math.round(l.w), 143);
+  document.getElementById('vSc').textContent = wIn + '" × ' + hIn + '"';
+  document.getElementById('slRo').value = l.rotation || 0;
+  document.getElementById('vRo').textContent = (l.rotation || 0) + 'deg';
+  const op = Math.round((l.opacity ?? 1) * 100);
+  document.getElementById('slOp').value = op;
+  document.getElementById('vOp').textContent = op + '%';
+  // Sync W/H sliders
   const wh = document.getElementById('whSliders');
   if(wh) wh.style.display = aspectLocked ? 'none' : 'block';
-  const lockIcon = document.getElementById('lockIcon');
-  const lockLbl  = document.getElementById('lockLbl');
-  const lockBtn  = document.getElementById('lockBtn');
-  if(lockIcon) lockIcon.textContent = aspectLocked ? '🔒' : '🔓';
-  if(lockLbl)  lockLbl.textContent  = aspectLocked ? 'Locked' : 'Unlocked';
-  if(lockBtn){ lockBtn.style.borderColor = aspectLocked ? 'var(--red)' : 'var(--border2)'; lockBtn.style.color = aspectLocked ? 'var(--red)' : 'var(--txt2)'; }
-  document.getElementById('slRo').value=l.rotation||0; document.getElementById('vRo').textContent=(l.rotation||0)+'°';
-  const op=Math.round((l.opacity??1)*100);
+  document.getElementById('slW').value = Math.min(Math.round(l.w), 143);
+  document.getElementById('vW').textContent = wIn + '"';
+  document.getElementById('slH').value = Math.min(Math.round(l.h), 124);
+  document.getElementById('vH').textContent = hIn + '"';
+  // Sync lock button label
+  const lockLbl = document.getElementById('lockLbl');
+  const lockBtn = document.getElementById('lockBtn');
+  if(lockLbl) lockLbl.textContent = aspectLocked ? 'Unlock' : 'Lock';
+  if(lockBtn){ lockBtn.style.borderColor = aspectLocked ? 'var(--red)' : 'var(--grn)'; lockBtn.style.color = aspectLocked ? 'var(--red)' : 'var(--grn)'; }
+
   document.getElementById('slOp').value=op; document.getElementById('vOp').textContent=op+'%';
 }
 
-// aspectLocked: when true, Scale slider changes W+H proportionally
+// ── TRANSFORM CONTROLS ──────────────────────────────────────────────────────
+// aspectLocked=true → Scale slider changes W+H proportionally
+// aspectLocked=false → W and H sliders work independently
 let aspectLocked = true;
 
 function toggleLock(){
   aspectLocked = !aspectLocked;
-  const btn  = document.getElementById('lockBtn');
-  const icon = document.getElementById('lockIcon');
-  const lbl  = document.getElementById('lockLbl');
-  const wh   = document.getElementById('whSliders');
+  const btn = document.getElementById('lockBtn');
+  const lbl = document.getElementById('lockLbl');
+  const wh  = document.getElementById('whSliders');
   if(aspectLocked){
-    icon.textContent = '🔒';
-    lbl.textContent  = 'Locked';
+    lbl.textContent = 'Unlock';
     btn.style.borderColor = 'var(--red)';
     btn.style.color = 'var(--red)';
     wh.style.display = 'none';
   } else {
-    icon.textContent = '🔓';
-    lbl.textContent  = 'Unlocked';
-    btn.style.borderColor = 'var(--border2)';
-    btn.style.color = 'var(--txt2)';
+    lbl.textContent = 'Lock';
+    btn.style.borderColor = 'var(--grn)';
+    btn.style.color = 'var(--grn)';
     wh.style.display = 'block';
+    // Populate W/H sliders with current values
+    const l = S.layers.find(x=>x.id===S.selectedId);
+    if(l){
+      document.getElementById('slW').value = Math.min(Math.round(l.w), 143);
+      document.getElementById('vW').textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
+      document.getElementById('slH').value = Math.min(Math.round(l.h), 124);
+      document.getElementById('vH').textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
+    }
   }
 }
 
 function apSc(v){
-  const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
-  const pct = v/100;
-  // Scale proportionally from original aspect ratio stored on layer
-  if(!l._origW) l._origW = l.w;
-  if(!l._origH) l._origH = l.h;
-  l.w = Math.round(l._origW * pct);
-  l.h = Math.round(l._origH * pct);
-  document.getElementById('vSc').textContent = v + '%';
-  // Keep W/H sliders in sync
-  document.getElementById('slW').value = l.w;
-  document.getElementById('vW').textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
-  document.getElementById('slH').value = l.h;
-  document.getElementById('vH').textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l) return;
+  // v is the TARGET WIDTH in px (slider goes 5px–143px = 0.5"–15")
+  if(!l._origW){ l._origW = l.w; l._origH = l.h; }
+  const ratio = l._origH / l._origW;  // preserve aspect ratio
+  l.w = Math.max(5, +v);
+  l.h = Math.round(l.w * ratio);
+  // Show W×H in inches
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  document.getElementById('vSc').textContent = wIn + '" × ' + hIn + '"';
+  // Sync individual sliders
+  document.getElementById('slW').value = Math.round(l.w);
+  document.getElementById('vW').textContent = wIn + '"';
+  document.getElementById('slH').value = Math.min(Math.round(l.h), 124);
+  document.getElementById('vH').textContent = hIn + '"';
   render();
 }
+
 function apW(v){
-  const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
-  l.w = Math.max(10, +v);
-  document.getElementById('vW').textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
-  // Update scale slider to reflect width change
-  if(l._origW) {
-    const pct = Math.round((l.w/l._origW)*100);
-    document.getElementById('slSc').value = pct;
-    document.getElementById('vSc').textContent = pct+'%';
-  }
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l) return;
+  l.w = Math.max(5, +v);
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  document.getElementById('vW').textContent = wIn + '"';
+  // Keep scale slider in sync (based on width)
+  document.getElementById('slSc').value = Math.round(l.w);
+  document.getElementById('vSc').textContent = wIn + '" × ' + hIn + '"';
   render();
 }
+
 function apH(v){
-  const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
-  l.h = Math.max(10, +v);
-  document.getElementById('vH').textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l) return;
+  l.h = Math.max(5, +v);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  document.getElementById('vH').textContent = hIn + '"';
+  // Update scale readout
+  document.getElementById('vSc').textContent = wIn + '" × ' + hIn + '"';
   render();
 }
+
+
 function apRo(v){
   const l=S.layers.find(x=>x.id===S.selectedId); if(!l) return;
   l.rotation=parseInt(v);
@@ -2265,6 +2481,110 @@ function addAIImageToCanvas(imgEl, url){
   S.selectedId = layer.id;
   updLayers(); syncT(); render();
   toast('AI design added ✓');
+}
+
+// ── TEXT TRANSFORM CONTROLS ──────────────────────────────────────────────────
+let txtAspectLocked = true;
+
+function syncTxtTransform(l){
+  if(!l || l.type !== 'text') return;
+  if(!l._origW){ l._origW = l.w; l._origH = l.h; }
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  // Scale slider (tracks width)
+  const sc = document.getElementById('txtSlSc');
+  const vsc = document.getElementById('txtVSc');
+  if(sc) sc.value = Math.min(Math.round(l.w), 143);
+  if(vsc) vsc.textContent = wIn + '" × ' + hIn + '"';
+  // W/H sliders
+  const sw = document.getElementById('txtSlW');
+  const sh = document.getElementById('txtSlH');
+  const vw = document.getElementById('txtVW');
+  const vh = document.getElementById('txtVH');
+  if(sw) sw.value = Math.min(Math.round(l.w), 143);
+  if(sh) sh.value = Math.min(Math.round(l.h), 124);
+  if(vw) vw.textContent = wIn + '"';
+  if(vh) vh.textContent = hIn + '"';
+  // Rotate + opacity
+  const sro = document.getElementById('txtSlRo');
+  const vro = document.getElementById('txtVRo');
+  if(sro) sro.value = l.rotation || 0;
+  if(vro) vro.textContent = (l.rotation || 0) + 'deg';
+  const sop = document.getElementById('txtSlOp');
+  const vop = document.getElementById('txtVOp');
+  if(sop) sop.value = Math.round((l.opacity ?? 1) * 100);
+  if(vop) vop.textContent = Math.round((l.opacity ?? 1) * 100) + '%';
+  // Lock state
+  const whs = document.getElementById('txtWhSliders');
+  const lbl = document.getElementById('txtLockLbl');
+  const btn = document.getElementById('txtLockBtn');
+  if(whs) whs.style.display = txtAspectLocked ? 'none' : 'block';
+  if(lbl) lbl.textContent = txtAspectLocked ? 'Unlock' : 'Lock';
+  if(btn){ btn.style.borderColor = txtAspectLocked ? 'var(--red)' : 'var(--grn)'; btn.style.color = txtAspectLocked ? 'var(--red)' : 'var(--grn)'; }
+}
+
+function toggleTxtLock(){
+  txtAspectLocked = !txtAspectLocked;
+  const l = S.layers.find(x=>x.id===S.selectedId);
+  syncTxtTransform(l);
+}
+
+function apTxtSc(v){
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l||l.type!=='text') return;
+  if(!l._origW){ l._origW = l.w; l._origH = l.h; }
+  const ratio = l._origH / l._origW;
+  l.w = Math.max(5, +v);
+  l.h = Math.round(l.w * ratio);
+  // Scale font size proportionally
+  if(!l._origFontSize) l._origFontSize = l.fontSize;
+  l.fontSize = Math.max(8, Math.round(l._origFontSize * (l.w / l._origW)));
+  const wIn = (l.w/PX_PER_INCH).toFixed(1);
+  const hIn = (l.h/PX_PER_INCH).toFixed(1);
+  const vsc = document.getElementById('txtVSc');
+  if(vsc) vsc.textContent = wIn + '" × ' + hIn + '"';
+  document.getElementById('txtSlW').value = Math.round(l.w);
+  document.getElementById('txtVW').textContent = wIn + '"';
+  document.getElementById('txtSlH').value = Math.min(Math.round(l.h),124);
+  document.getElementById('txtVH').textContent = hIn + '"';
+  syncT(); render();
+}
+
+function apTxtW(v){
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l||l.type!=='text') return;
+  l.w = Math.max(5, +v);
+  if(!l._origFontSize) l._origFontSize = l.fontSize;
+  if(!l._origW) l._origW = l.w;
+  l.fontSize = Math.max(8, Math.round(l._origFontSize * (l.w / l._origW)));
+  const wIn = (l.w/PX_PER_INCH).toFixed(1);
+  const hIn = (l.h/PX_PER_INCH).toFixed(1);
+  document.getElementById('txtVW').textContent = wIn + '"';
+  document.getElementById('txtSlSc').value = Math.round(l.w);
+  document.getElementById('txtVSc').textContent = wIn + '" × ' + hIn + '"';
+  syncT(); render();
+}
+
+function apTxtH(v){
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l||l.type!=='text') return;
+  l.h = Math.max(5, +v);
+  const hIn = (l.h/PX_PER_INCH).toFixed(1);
+  const wIn = (l.w/PX_PER_INCH).toFixed(1);
+  document.getElementById('txtVH').textContent = hIn + '"';
+  document.getElementById('txtVSc').textContent = wIn + '" × ' + hIn + '"';
+  render();
+}
+
+function apTxtRo(v){
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l||l.type!=='text') return;
+  l.rotation = parseInt(v);
+  document.getElementById('txtVRo').textContent = v + 'deg';
+  render();
+}
+
+function apTxtOp(v){
+  const l = S.layers.find(x=>x.id===S.selectedId); if(!l||l.type!=='text') return;
+  l.opacity = v / 100;
+  document.getElementById('txtVOp').textContent = v + '%';
+  render();
 }
 
 init();
