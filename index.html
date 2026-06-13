@@ -401,21 +401,7 @@ canvas#gc{
 
 /* ─── TOAST ─── */
 #whSliders{ display:none; }
-.ai-result-card{
-  border:1.5px solid var(--border);border-radius:var(--radius);
-  overflow:hidden;cursor:pointer;background:var(--surface2);
-  transition:all .13s;aspect-ratio:1;
-  display:flex;align-items:center;justify-content:center;
-}
-.ai-result-card:hover{border-color:var(--red);transform:scale(1.03);box-shadow:var(--shadow);}
-.ai-result-card img{width:100%;height:100%;object-fit:contain;padding:4px;}
-.ai-spinner{
-  display:inline-block;width:14px;height:14px;
-  border:2px solid rgba(255,255,255,.3);
-  border-top-color:#fff;border-radius:50%;
-  animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;
-}
-@keyframes spin{to{transform:rotate(360deg);}}
+
 .toast{
   position:fixed;bottom:18px;left:50%;
   transform:translateX(-50%) translateY(60px);
@@ -749,52 +735,7 @@ canvas#gc{
         </div>
         <input type="file" id="fi" accept="image/*" style="display:none" onchange="uploadImg(event)"/>
 
-        <div class="divider"></div>
-
-        <!-- AI Design Generator -->
-        <div class="sec-label" style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:12px;">✦</span> AI Design Generator
         </div>
-        <p style="font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">
-          Describe your design and AI will generate artwork you can place directly on the shirt.
-        </p>
-        <textarea id="aiPrompt" placeholder="e.g. A bold eagle with flames and the text Hustle Hard on a transparent background…"
-          style="width:100%;min-height:72px;resize:vertical;
-            background:var(--surface2);border:1px solid var(--border);
-            border-radius:var(--radius-sm);color:var(--txt);
-            font-family:var(--font);font-size:12px;padding:8px 9px;
-            outline:none;line-height:1.5;transition:border-color .13s;"
-          onfocus="this.style.borderColor='var(--red)'"
-          onblur="this.style.borderColor='var(--border)'"></textarea>
-
-        <div style="display:flex;gap:5px;margin-top:6px;margin-bottom:10px;">
-          <select id="aiStyle" class="field" style="font-size:11.5px;">
-            <option value="vector logo, bold clean lines, flat colors">Vector Logo</option>
-            <option value="vintage badge style, retro typography, distressed texture">Vintage Badge</option>
-            <option value="minimalist flat icon, simple shapes, limited palette">Minimalist Icon</option>
-            <option value="bold graffiti lettering, street art, urban style">Graffiti / Street</option>
-            <option value="retro 80s neon style, bold outlines, vibrant colors">Retro 80s</option>
-            <option value="cartoon character, fun bold style, thick outlines">Cartoon</option>
-            <option value="black and white high contrast illustration, bold shapes">Black & White</option>
-            <option value="tribal tattoo style, intricate patterns, bold black">Tribal</option>
-          </select>
-        </div>
-
-        <button class="btn btn-primary fw" id="aiGenBtn" onclick="generateAIArt()" style="font-size:13px;padding:9px;">
-          <span id="aiGenBtnIcon">✦</span> Generate Design
-        </button>
-
-        <!-- Results grid -->
-        <div id="aiResults" style="display:none;margin-top:12px;">
-          <div class="sec-label" style="margin-bottom:6px;">Results — click to add</div>
-          <div id="aiGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
-          <button class="btn btn-ghost fw" onclick="generateAIArt()" style="margin-top:8px;font-size:12px;">
-            ↺ Regenerate
-          </button>
-        </div>
-
-        <div id="aiError" style="display:none;margin-top:8px;font-size:11.5px;color:var(--red);"></div>
-      </div>
 
       <!-- Layers Pane -->
       <div id="pane-layers" class="tpane">
@@ -1687,112 +1628,106 @@ function drawHandles(){
   const hw=l.w/2, hh=l.h/2;
 
   // ── Dashed selection box ──────────────────────────────────────────────────
-  ctx.setLineDash([5,3]);
+  ctx.setLineDash([4,3]);
   ctx.strokeStyle = 'rgba(0,120,255,0.85)';
   ctx.lineWidth = 1.5;
   ctx.strokeRect(-hw,-hh,l.w,l.h);
   ctx.setLineDash([]);
 
-  // ── Size label in inches above the box ────────────────────────────────────
+  // ── Size label BELOW the box ──────────────────────────────────────────────
   const wIn = (l.w/PX_PER_INCH).toFixed(1);
   const hIn = (l.h/PX_PER_INCH).toFixed(1);
   const label = wIn + '" × ' + hIn + '"';
-  ctx.font = 'bold 10px Inter,sans-serif';
+  ctx.font = 'bold 9px Inter,sans-serif';
   const lw = ctx.measureText(label).width;
-  ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  roundRectFill(ctx, -lw/2-5, -hh-22, lw+10, 17, 4);
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  roundRectFill(ctx, -lw/2-4, hh+6, lw+8, 14, 3);
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(label, 0, -hh-14);
+  ctx.fillText(label, 0, hh+13);
 
-  // ── Helper: draw a circular icon handle ──────────────────────────────────
-  function iconHandle(x, y, bg, iconFn){
+  // ── Helper: small circular icon handle (radius 10px) ─────────────────────
+  function iconHandle(x, y, iconFn){
     ctx.save();
     ctx.translate(x, y);
-    // White circle with shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.25)';
-    ctx.shadowBlur = 4;
+    ctx.shadowColor = 'rgba(0,0,0,0.22)';
+    ctx.shadowBlur  = 3;
     ctx.beginPath();
-    ctx.arc(0, 0, 14, 0, Math.PI*2);
-    ctx.fillStyle = bg || '#fff';
+    ctx.arc(0, 0, 10, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
     ctx.fill();
     ctx.shadowBlur = 0;
-    // Border
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    // Draw icon
-    ctx.strokeStyle = bg === '#fff' ? '#333' : '#fff';
-    ctx.fillStyle   = bg === '#fff' ? '#333' : '#fff';
-    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = '#333';
+    ctx.fillStyle   = '#333';
+    ctx.lineWidth = 1.4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     iconFn();
     ctx.restore();
   }
 
-  // ── TOP CENTER: Move up/down (scale height) ───────────────────────────────
-  iconHandle(0, -hh-18, '#fff', ()=>{
+  // ── TOP CENTER: Scale height ──────────────────────────────────────────────
+  iconHandle(0, -hh-13, ()=>{
     ctx.beginPath();
-    ctx.moveTo(0,-5); ctx.lineTo(0,5);
-    ctx.moveTo(-4,-3); ctx.lineTo(0,-7); ctx.lineTo(4,-3);
-    ctx.moveTo(-4,3);  ctx.lineTo(0,7);  ctx.lineTo(4,3);
+    ctx.moveTo(0,-4); ctx.lineTo(0,4);
+    ctx.moveTo(-3,-2); ctx.lineTo(0,-5); ctx.lineTo(3,-2);
+    ctx.moveTo(-3,2);  ctx.lineTo(0,5);  ctx.lineTo(3,2);
     ctx.stroke();
   });
 
   // ── TOP LEFT: Delete ──────────────────────────────────────────────────────
-  iconHandle(-hw-18, -hh-18, '#fff', ()=>{
-    // Trash icon
+  iconHandle(-hw-13, -hh-13, ()=>{
     ctx.beginPath();
-    ctx.moveTo(-4,-5); ctx.lineTo(4,-5);
-    ctx.moveTo(-6,-5); ctx.lineTo(-6,5); ctx.lineTo(6,5); ctx.lineTo(6,-5);
-    ctx.moveTo(-2,-5); ctx.lineTo(-2,-7); ctx.lineTo(2,-7); ctx.lineTo(2,-5);
-    ctx.moveTo(-2,-2); ctx.lineTo(-2,3);
-    ctx.moveTo(2,-2);  ctx.lineTo(2,3);
+    ctx.moveTo(-3,-4); ctx.lineTo(3,-4);
+    ctx.moveTo(-4,-4); ctx.lineTo(-4,4); ctx.lineTo(4,4); ctx.lineTo(4,-4);
+    ctx.moveTo(-1,-4); ctx.lineTo(-1,-5.5); ctx.lineTo(1,-5.5); ctx.lineTo(1,-4);
+    ctx.moveTo(-1,-1); ctx.lineTo(-1,2);
+    ctx.moveTo(1,-1);  ctx.lineTo(1,2);
     ctx.stroke();
   });
 
   // ── TOP RIGHT: Rotate ─────────────────────────────────────────────────────
-  iconHandle(hw+18, -hh-18, '#fff', ()=>{
+  iconHandle(hw+13, -hh-13, ()=>{
     ctx.beginPath();
-    ctx.arc(0, 0, 5, -Math.PI*0.8, Math.PI*0.8);
+    ctx.arc(0, 0, 4, -Math.PI*0.75, Math.PI*0.75);
     ctx.stroke();
-    // Arrow head
-    const ex = Math.cos(Math.PI*0.8)*5, ey = Math.sin(Math.PI*0.8)*5;
+    const ex = Math.cos(Math.PI*0.75)*4, ey = Math.sin(Math.PI*0.75)*4;
     ctx.beginPath();
-    ctx.moveTo(ex-3, ey-1); ctx.lineTo(ex, ey); ctx.lineTo(ex-1, ey+3);
+    ctx.moveTo(ex-2, ey-1); ctx.lineTo(ex, ey); ctx.lineTo(ex-1, ey+2);
     ctx.stroke();
   });
 
   // ── CENTER RIGHT: Flip horizontal ─────────────────────────────────────────
-  iconHandle(hw+18, 0, '#fff', ()=>{
+  iconHandle(hw+13, 0, ()=>{
     ctx.beginPath();
-    ctx.moveTo(-5,-4); ctx.lineTo(-5,4);
-    ctx.moveTo(5,-4);  ctx.lineTo(5,4);
-    ctx.moveTo(-5,0);  ctx.lineTo(-2,-4); ctx.lineTo(-2,4); ctx.closePath();
-    ctx.moveTo(5,0);   ctx.lineTo(2,-4);  ctx.lineTo(2,4);  ctx.closePath();
+    ctx.moveTo(-1,-3); ctx.lineTo(-1,3);
+    ctx.moveTo(1,-3);  ctx.lineTo(1,3);
+    ctx.moveTo(-1,0);  ctx.lineTo(-3.5,-3); ctx.lineTo(-3.5,3); ctx.closePath();
+    ctx.moveTo(1,0);   ctx.lineTo(3.5,-3);  ctx.lineTo(3.5,3);  ctx.closePath();
     ctx.stroke();
   });
 
   // ── BOTTOM LEFT: Layer order ──────────────────────────────────────────────
-  iconHandle(-hw-18, hh+18, '#fff', ()=>{
-    // Layers icon
-    [-4,0,4].forEach((dy,i)=>{
+  iconHandle(-hw-13, hh+13, ()=>{
+    [-3,0,3].forEach((dy,i)=>{
       ctx.globalAlpha = 0.4 + i*0.3;
       ctx.beginPath();
-      ctx.moveTo(-5,dy); ctx.lineTo(5,dy);
+      ctx.moveTo(-4,dy); ctx.lineTo(4,dy);
       ctx.stroke();
     });
     ctx.globalAlpha = 1;
   });
 
-  // ── BOTTOM RIGHT: Resize (proportional) ───────────────────────────────────
-  iconHandle(hw+18, hh+18, '#fff', ()=>{
+  // ── BOTTOM RIGHT: Resize ──────────────────────────────────────────────────
+  iconHandle(hw+13, hh+13, ()=>{
     ctx.beginPath();
-    ctx.moveTo(-5,-5); ctx.lineTo(5,5);
-    ctx.moveTo(2,5);   ctx.lineTo(5,5); ctx.lineTo(5,2);
-    ctx.moveTo(-5,-2); ctx.lineTo(-5,-5); ctx.lineTo(-2,-5);
+    ctx.moveTo(-4,-4); ctx.lineTo(4,4);
+    ctx.moveTo(1,4);   ctx.lineTo(4,4); ctx.lineTo(4,1);
+    ctx.moveTo(-4,-1); ctx.lineTo(-4,-4); ctx.lineTo(-1,-4);
     ctx.stroke();
   });
 
@@ -1900,13 +1835,13 @@ function layerCornerHit(mx,my,l){
   const hw=l.w/2, hh=l.h/2, a=(l.rotation||0)*Math.PI/180;
   // All handle positions relative to layer center
   const handles = [
-    [-hw-18, -hh-18, 'delete'],   // top-left: trash
-    [  0,    -hh-18, 'scaleH'],   // top-center: scale height
-    [ hw+18, -hh-18, 'rotate'],   // top-right: rotate
-    [ hw+18,  0,     'flipH' ],   // center-right: flip
-    [-hw-18,  hh+18, 'layer' ],   // bottom-left: layer order
-    [ hw+18,  hh+18, 'resize'],   // bottom-right: resize
-    [-hw,    -hh,    'tl'    ],   // corners for resize drag
+    [-hw-13, -hh-13, 'delete'],
+    [  0,    -hh-13, 'scaleH'],
+    [ hw+13, -hh-13, 'rotate'],
+    [ hw+13,  0,     'flipH' ],
+    [-hw-13,  hh+13, 'layer' ],
+    [ hw+13,  hh+13, 'resize'],
+    [-hw,    -hh,    'tl'    ],
     [ hw,    -hh,    'tr'    ],
     [ hw,     hh,    'br'    ],
     [-hw,     hh,    'bl'    ],
@@ -1914,7 +1849,7 @@ function layerCornerHit(mx,my,l){
   for(const [ox,oy,nm] of handles){
     const rx=l.x+ox*Math.cos(a)-oy*Math.sin(a);
     const ry=l.y+ox*Math.sin(a)+oy*Math.cos(a);
-    if(Math.abs(mx-rx)<22 && Math.abs(my-ry)<22) return nm;
+    if(Math.abs(mx-rx)<16 && Math.abs(my-ry)<16) return nm;
   }
   return null;
 }
@@ -2773,166 +2708,7 @@ function getColorImg(side){
 }
 
 // ─── AI DESIGN GENERATOR ──────────────────────────────────────────────────────
-async function generateAIArt(){
-  const prompt = (document.getElementById('aiPrompt')?.value||'').trim();
-  if(!prompt){ toast('Please describe your design first'); return; }
-
-  const style  = document.getElementById('aiStyle')?.value || 'vector logo';
-  const btn    = document.getElementById('aiGenBtn');
-  const grid   = document.getElementById('aiGrid');
-  const results= document.getElementById('aiResults');
-  const errEl  = document.getElementById('aiError');
-
-  btn.innerHTML = '<span class="ai-spinner"></span> Generating…';
-  btn.disabled  = true;
-  errEl.style.display   = 'none';
-  results.style.display = 'block';
-  grid.innerHTML        = '';
-
-  // Show 2 placeholder cards
-  const cards = [0,1].map(i => {
-    const card = document.createElement('div');
-    card.className = 'ai-result-card';
-    card.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;
-      justify-content:center;height:100%;gap:6px;color:var(--txt3);">
-      <span class="ai-spinner" style="width:20px;height:20px;border-color:rgba(0,0,0,.15);
-        border-top-color:var(--red);"></span>
-      <span style="font-size:10px;">Creating design ${i+1}…</span></div>`;
-    grid.appendChild(card);
-    return card;
-  });
-
-  try {
-    // Call Claude API to generate 2 SVG designs
-    const svgPrompt = `You are a t-shirt graphic designer. Create a clean SVG artwork for a t-shirt design.
-Design request: "${prompt}"
-Style: ${style}
-
-Rules:
-- Return ONLY raw SVG code, nothing else, no markdown, no explanation
-- SVG must have viewBox="0 0 400 400" and NO background rectangle (transparent)
-- Use only solid colors, no gradients needed unless essential
-- Design should be bold, clear, and print-ready
-- Keep it relatively simple — 5-15 elements max
-- Centered in the viewBox
-- Make it look like professional t-shirt artwork`;
-
-    // Generate 2 variations
-    const generate = async (variation) => {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: svgPrompt + (variation === 1 ? '\n\nCreate a different variation.' : '')
-          }]
-        })
-      });
-      if(!res.ok){
-        const errText = await res.text().catch(()=>'');
-        throw new Error('API ' + res.status + ': ' + errText.slice(0,100));
-      }
-      const data = await res.json();
-      return data.content?.[0]?.text || '';
-    };
-
-    const [svg1, svg2] = await Promise.all([generate(0), generate(1)]);
-
-    [svg1, svg2].forEach((svgText, i) => {
-      const card = cards[i];
-      // Extract SVG from response
-      let svg = svgText.trim();
-      if(svg.includes('<svg')) {
-        svg = svg.slice(svg.indexOf('<svg'));
-        if(svg.includes('</svg>')) svg = svg.slice(0, svg.lastIndexOf('</svg>') + 6);
-      } else {
-        card.innerHTML = `<div style="padding:8px;text-align:center;font-size:10px;color:var(--txt3);">
-          Design ${i+1} failed — try Regenerate</div>`;
-        return;
-      }
-
-      // Render SVG to canvas image via blob URL
-      const blob = new Blob([svg], {type:'image/svg+xml'});
-      const url  = URL.createObjectURL(blob);
-      const img  = new Image();
-
-      img.onload = () => {
-        // Draw to offscreen canvas for crisp rasterization
-        const oc = document.createElement('canvas');
-        oc.width = 512; oc.height = 512;
-        const octx = oc.getContext('2d');
-        octx.drawImage(img, 0, 0, 512, 512);
-        URL.revokeObjectURL(url);
-
-        // Create a new image from the canvas data
-        const finalImg = new Image();
-        finalImg.onload = () => {
-          card.innerHTML = '';
-          card.style.padding = '4px';
-          card.title = 'Click to add to shirt';
-
-          const preview = document.createElement('img');
-          preview.src   = finalImg.src;
-          preview.style = 'width:100%;height:100%;object-fit:contain;border-radius:6px;';
-          card.appendChild(preview);
-          card.onclick = () => addAIImageToCanvas(finalImg);
-        };
-        finalImg.src = oc.toDataURL('image/png');
-      };
-
-      img.onerror = () => {
-        card.innerHTML = `<div style="padding:8px;text-align:center;font-size:10px;color:var(--txt3);">
-          Render failed — try Regenerate</div>`;
-      };
-
-      img.src = url;
-    });
-
-  } catch(err){
-    const msg = err.message || 'Generation failed';
-    cards.forEach(card => {
-      card.innerHTML = `<div style="padding:8px;text-align:center;font-size:10px;color:var(--txt3);">
-        ⚠ ${msg.slice(0,60)}</div>`;
-    });
-    errEl.textContent   = '⚠ ' + msg;
-    errEl.style.display = 'block';
-    console.error('[AI Art]', err);
-  } finally {
-    btn.innerHTML = '<span>✦</span> Generate Design';
-    btn.disabled  = false;
-  }
-}
-
-
-function addAIImageToCanvas(img, url){
-  // The img was loaded without crossOrigin so it's displayable but "tainted" for canvas.
-  // We use it directly in drawLayer — canvas.toDataURL will be blocked for mockup export
-  // but the live design works fine. For export we reload with crossOrigin if needed.
-  const maxW = S.pz.w * 0.9;
-  const maxH = S.pz.h * 0.9;
-  const natW = img.naturalWidth  || 512;
-  const natH = img.naturalHeight || 512;
-  const scale = Math.min(maxW/natW, maxH/natH, 1);
-  const w = Math.round(natW * scale);
-  const h = Math.round(natH * scale);
-
-  const layer = {
-    id:++uid, type:'image', img,
-    x:S.pz.x+S.pz.w/2, y:S.pz.y+S.pz.h/2,
-    w, h, rotation:0, opacity:1, _origW:w, _origH:h
-  };
-  S.layers.push(layer);
-  S.selectedId = layer.id;
-  updLayers(); syncT(); render();
-  toast('AI art added ✓');
-}
-
+// Client-side SVG design generator — creates real t-shirt graphics from keywords
 function addAIImageToCanvas(imgEl, url){
   // Add the AI-generated image as a layer on the canvas
   const layer = {
