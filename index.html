@@ -431,6 +431,195 @@ canvas#gc{
 .mt8{margin-top:8px;}
 .mt10{margin-top:10px;}
 .grn-note{font-size:11px;color:var(--grn);font-weight:600;margin-top:5px;display:flex;align-items:center;gap:3px;}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE LAYOUT — Mobile, Tablet, Desktop
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Tablet portrait: 600px–1024px ─────────────────────── */
+@media (max-width: 1024px){
+  :root{
+    --lp: 190px;
+    --rp: 240px;
+  }
+}
+
+/* ── Tablet portrait narrow: 600px–768px ───────────────── */
+@media (max-width: 768px){
+  :root{
+    --lp: 0px;
+    --rp: 0px;
+    --hdr: 48px;
+  }
+  /* Stack: canvas fills most of screen */
+  .app{
+    grid-template-columns: 52px 1fr;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "sidebar canvas"
+      "sidebar bottom-bar";
+  }
+  /* Sidebar stays left, narrower */
+  .sidebar{
+    width:52px;
+    grid-area: sidebar;
+    padding:6px 0;
+    gap:2px;
+  }
+  .tbtn{
+    width:44px;height:46px;
+    font-size:8.5px;
+  }
+  .tbtn svg{ width:17px;height:17px; }
+  /* Canvas area fills center */
+  .ca{
+    grid-area: canvas;
+    padding:44px 8px 8px;
+  }
+  canvas#gc{
+    max-width:100%;
+    max-height:calc(60vh);
+    width:auto !important;
+    height:auto !important;
+  }
+  /* Left panel becomes a slide-up bottom sheet */
+  .panel:not(.rp){
+    display:none; /* hidden by default, shown via JS */
+  }
+  /* Right panel becomes bottom drawer */
+  .panel.rp{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    width:100%;
+    height:auto;
+    max-height:45vh;
+    border-top:1px solid var(--border);
+    border-left:none;
+    border-radius:12px 12px 0 0;
+    z-index:200;
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 -4px 24px rgba(0,0,0,.12);
+  }
+  .panel.rp.rp-open{
+    transform:translateY(0);
+  }
+  .panel.rp .pscroll{
+    max-height:calc(45vh - 40px);
+    padding-bottom:16px;
+  }
+  /* Left content panel becomes bottom sheet too */
+  .panel:not(.rp).panel-open{
+    display:flex;
+    position:fixed;
+    bottom:0; left:52px; right:0;
+    height:auto;
+    max-height:55vh;
+    border-top:1px solid var(--border);
+    border-right:none;
+    border-radius:12px 12px 0 0;
+    z-index:200;
+    box-shadow:0 -4px 24px rgba(0,0,0,.12);
+    flex-direction:column;
+  }
+  /* Bottom bar for toggling panels */
+  .mobile-bottom-bar{
+    grid-area: bottom-bar;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:6px 8px;
+    background:var(--surface);
+    border-top:1px solid var(--border);
+  }
+  .mbb-btn{
+    flex:1;max-width:90px;
+    padding:7px 4px;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    background:var(--surface);
+    font-family:var(--font);
+    font-size:10px;font-weight:600;
+    color:var(--txt2);cursor:pointer;
+    text-align:center;
+    transition:all .15s;
+  }
+  .mbb-btn.active{
+    border-color:var(--red);
+    color:var(--red);
+    background:var(--red-bg);
+  }
+  /* Header adjustments */
+  header .logo-sub{ display:none; }
+  .hdr-actions .btn span:not(.btn-icon){ display:none; }
+}
+
+/* ── Mobile portrait: <600px ────────────────────────────── */
+@media (max-width: 599px){
+  :root{ --hdr:44px; }
+  header{
+    padding:0 8px;
+  }
+  .logo-name{ font-size:14px; }
+  .hdr-center{
+    gap:2px;
+  }
+  .hdr-center .pill-btn{
+    font-size:10px;
+    padding:4px 8px;
+  }
+  .sidebar{
+    width:46px;
+  }
+  .tbtn{
+    width:40px;height:44px;
+    font-size:8px;
+  }
+  .tbtn svg{width:16px;height:16px;}
+  .app{
+    grid-template-columns:46px 1fr;
+  }
+  canvas#gc{
+    max-height:calc(55vh);
+  }
+  .sidebar-df{
+    width:28px;height:28px;
+    font-size:9px;
+  }
+}
+
+/* ── Landscape phone (600-900px, short height) ──────────── */
+@media (max-width:900px) and (max-height:500px){
+  :root{ --hdr:40px; }
+  canvas#gc{
+    max-height:calc(100vh - var(--hdr) - 60px);
+  }
+  .panel.rp{
+    max-height:50vh;
+  }
+  .mobile-bottom-bar{
+    padding:4px 6px;
+    gap:5px;
+  }
+  .mbb-btn{
+    padding:5px 4px;
+    font-size:9px;
+  }
+}
+
+/* Desktop: show static layout */
+@media (min-width:1025px){
+  .mobile-bottom-bar{ display:none; }
+  .panel:not(.rp){ display:flex !important; }
+  .panel.rp{
+    position:static !important;
+    transform:none !important;
+    max-height:none !important;
+    border-radius:0 !important;
+    height:100% !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -900,6 +1089,22 @@ canvas#gc{
   </div><!-- /panel right -->
 
 </div><!-- /app -->
+
+<!-- Mobile bottom bar -->
+<div class="mobile-bottom-bar" id="mobileBottomBar">
+  <button class="mbb-btn" id="mbb-design" onclick="mbbToggle('design')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><br>Design
+  </button>
+  <button class="mbb-btn" id="mbb-options" onclick="mbbToggle('options')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg><br>Options
+  </button>
+  <button class="mbb-btn" id="mbb-preview" onclick="togglePrintZone()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><br>Preview
+  </button>
+  <button class="mbb-btn" id="mbb-save" onclick="dlMockup()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><br>Save
+  </button>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -2238,103 +2443,203 @@ function getTotalQty(){
 }
 
 function updSum(){
-  // Build a map of layers per location (including current unsaved side)
-  const locationLayers = {
-    front:  [...(S.views.front  || [])],
-    back:   [...(S.views.back   || [])],
-    sleeve: [...(S.views.sleeve || [])]
-  };
-  // Merge current side's live layers
-  locationLayers[S.side] = [...S.layers];
-
-  // Pricing constants
-  const GARMENT   = 4.00;
-  const COLOR1    = 4.00;   // first color per location
-  const COLOR_ADD = 3.00;   // each additional color per location
-
-  // Calculate print cost per location
-  let printCost = 0;
-  const locationBreakdown = [];
-  ['front','back','sleeve'].forEach(loc=>{
-    const count = locationLayers[loc].length;
-    if(count > 0){
-      const locCost = COLOR1 + (count - 1) * COLOR_ADD;
-      printCost += locCost;
-      locationBreakdown.push({loc, count, locCost});
-    }
-  });
-
-  const unitPrice = GARMENT + printCost;
-  const totalQty  = getTotalQty();
-  const total     = unitPrice * totalQty;
+  const totalQty = getTotalQty();
   const pn = S.product.charAt(0).toUpperCase() + S.product.slice(1);
 
   document.getElementById('sProd').textContent = pn;
   document.getElementById('sSide').textContent = S.side.charAt(0).toUpperCase() + S.side.slice(1);
   document.getElementById('sQty').textContent  = totalQty;
-  // Pricing removed — quote provided by email
 
-  // Build cost breakdown
+  // Build size breakdown — just quantities, no pricing
   const bd = document.getElementById('szBreakdown');
   bd.innerHTML = '';
 
-  // Garment row
-  const gRow = document.createElement('div');
-  gRow.className = 'sumr';
-  gRow.innerHTML = `<span>Garment</span><span>$${GARMENT.toFixed(2)}</span>`;
-  bd.appendChild(gRow);
-
-  // Per-location print rows
-  locationBreakdown.forEach(({loc, count, locCost})=>{
-    const label = loc.charAt(0).toUpperCase() + loc.slice(1);
-    const detail = count === 1
-      ? `1 color`
-      : `1 + ${count-1} color${count>2?'s':''}`;
+  const sizes = SIZES.filter(sz => S.sizeQtys[sz] > 0);
+  if(sizes.length === 0){
     const row = document.createElement('div');
     row.className = 'sumr';
-    row.innerHTML = `<span>Print – ${label} <span style="font-size:.67rem;color:var(--mut);">(${detail})</span></span><span>$${locCost.toFixed(2)}</span>`;
+    row.style.cssText = 'font-style:italic;color:var(--txt3);';
+    row.textContent = 'No sizes selected yet';
     bd.appendChild(row);
-  });
-
-  if(locationBreakdown.length === 0){
-    const row = document.createElement('div');
-    row.className = 'sumr';
-    row.innerHTML = `<span style="color:var(--mut);font-style:italic;">No print added yet</span><span>$0.00</span>`;
-    bd.appendChild(row);
-  }
-
-  // Divider
-  const div = document.createElement('div');
-  div.className = 'sumdiv';
-  bd.appendChild(div);
-
-  // Size qty rows
-  SIZES.forEach(sz=>{
-    const q = S.sizeQtys[sz];
-    if(q > 0){
+  } else {
+    sizes.forEach(sz => {
+      const q = S.sizeQtys[sz];
       const row = document.createElement('div');
-      row.className = 'sum-sz-row';
-      row.innerHTML = `<span>${sz}</span><span>${q} × $${unitPrice.toFixed(2)} = $${(q * unitPrice).toFixed(2)}</span>`;
+      row.className = 'sumr';
+      row.innerHTML = `<span style="font-weight:600;">${sz}</span><span>${q} unit${q>1?'s':''}</span>`;
       bd.appendChild(row);
-    }
-  });
+    });
+  }
 }
 
 // ─────────────────────────────────────────
 //  EXPORT / QUOTE
 // ─────────────────────────────────────────
-function dlPNG(){
-  const prev=S.selectedId; S.selectedId=null;
-  // Render clean (no handles, no print zone)
-  ctx.clearRect(0,0,cv.width,cv.height);
-  drawPhoto();
-  S.layers.forEach(l=>drawLayer(l));
-  const a=document.createElement('a');
-  a.download='dyefresh-design.png';
-  a.href=cv.toDataURL('image/png');
+function dlArtwork(){
+  // Download just the artwork layers — transparent background, no shirt, no print zone
+  const prev = S.selectedId;
+  S.selectedId = null;
+  const pzWas = S.pzVisible;
+  S.pzVisible = false;
+
+  // Create offscreen canvas same size
+  const oc = document.createElement('canvas');
+  oc.width = cv.width; oc.height = cv.height;
+  const octx = oc.getContext('2d');
+
+  // Draw only layers (transparent bg)
+  S.layers.forEach(l => {
+    // Replicate drawLayer on offscreen canvas
+    octx.save();
+    octx.globalAlpha = l.opacity ?? 1;
+    octx.translate(l.x, l.y);
+    octx.rotate((l.rotation||0)*Math.PI/180);
+    if(l.flipH||l.flipV) octx.scale(l.flipH?-1:1, l.flipV?-1:1);
+    if(l.type==='image' && l.img){
+      octx.drawImage(l.img, -l.w/2, -l.h/2, l.w, l.h);
+    } else if(l.type==='text'){
+      const fw = l.bold?'bold ':'';
+      const fi = l.italic?'italic ':'';
+      octx.font = fi+fw+l.fontSize+'px "'+l.font+'"';
+      octx.fillStyle = l.color;
+      octx.textAlign = 'center';
+      octx.textBaseline = 'middle';
+      if((l.outlineWidth||0)>0){
+        octx.strokeStyle=l.outlineColor||'#000';
+        octx.lineWidth=l.outlineWidth*2;
+        octx.lineJoin='round';
+        octx.strokeText(l.text,0,0);
+      }
+      octx.fillText(l.text, 0, 0);
+    }
+    octx.restore();
+  });
+
+  const a = document.createElement('a');
+  a.download = 'dyefresh-artwork.png';
+  a.href = oc.toDataURL('image/png');
   a.click();
-  S.selectedId=prev; render();
-  toast('Design saved ✓');
+
+  S.selectedId = prev;
+  S.pzVisible = pzWas;
+  render();
+  toast('Artwork PNG saved ✓');
+}
+
+function dlMockup(){
+  const prev = S.selectedId;
+  S.selectedId = null;
+  const pzWas = S.pzVisible;
+  S.pzVisible = false;
+
+  // Offscreen canvas: shirt + artwork + size summary
+  const PAD = 30;
+  const LABEL_H = 140; // space at bottom for size info
+  const oc = document.createElement('canvas');
+  oc.width  = cv.width + PAD*2;
+  oc.height = cv.height + LABEL_H + PAD;
+  const oc2 = oc.getContext('2d');
+
+  // White background
+  oc2.fillStyle = '#ffffff';
+  oc2.fillRect(0, 0, oc.width, oc.height);
+
+  // Draw shirt photo
+  const photo = (S.product==='tshirt') ? (getColorImg(S.side)||imgCache[S.product]?.[S.side]) : imgCache[S.product]?.[S.side];
+  if(photo){
+    const scale = Math.min(cv.width/photo.naturalWidth, cv.height/photo.naturalHeight);
+    const dw = photo.naturalWidth*scale, dh = photo.naturalHeight*scale;
+    const dx = (cv.width-dw)/2, dy = (cv.height-dh)/2;
+    oc2.drawImage(photo, PAD+dx, dy, dw, dh);
+  }
+
+  // Draw all design layers
+  S.layers.forEach(l => {
+    oc2.save();
+    oc2.globalAlpha = l.opacity ?? 1;
+    oc2.translate(PAD + l.x, l.y);
+    oc2.rotate((l.rotation||0)*Math.PI/180);
+    if(l.flipH||l.flipV) oc2.scale(l.flipH?-1:1, l.flipV?-1:1);
+    if(l.type==='image' && l.img){
+      oc2.drawImage(l.img, -l.w/2, -l.h/2, l.w, l.h);
+    } else if(l.type==='text'){
+      const fw = l.bold?'bold ':'';
+      const fi = l.italic?'italic ':'';
+      oc2.font = fi+fw+l.fontSize+'px "'+l.font+'"';
+      oc2.fillStyle = l.color;
+      oc2.textAlign = 'center';
+      oc2.textBaseline = 'middle';
+      if((l.outlineWidth||0)>0){
+        oc2.strokeStyle=l.outlineColor||'#000';
+        oc2.lineWidth=l.outlineWidth*2;
+        oc2.lineJoin='round';
+        oc2.strokeText(l.text,0,0);
+      }
+      oc2.fillText(l.text,0,0);
+    }
+    oc2.restore();
+  });
+
+  // ── Bottom info strip ──────────────────────────────────────────────────────
+  const sy = cv.height + 12;
+  oc2.fillStyle = '#f5f5f5';
+  oc2.fillRect(0, cv.height, oc.width, LABEL_H + PAD);
+
+  // DyeFresh branding
+  oc2.fillStyle = '#e63000';
+  oc2.font = 'bold 13px Inter,Arial,sans-serif';
+  oc2.textAlign = 'left';
+  oc2.textBaseline = 'top';
+  oc2.fillText('DyeFresh Design Lab', PAD, sy);
+
+  // Product + placement
+  const pn = S.product.charAt(0).toUpperCase() + S.product.slice(1);
+  const side = S.side.charAt(0).toUpperCase() + S.side.slice(1);
+  oc2.fillStyle = '#333';
+  oc2.font = '11px Inter,Arial,sans-serif';
+  oc2.fillText(pn + ' — ' + side, PAD, sy + 17);
+
+  // Layer sizes in inches
+  let yOff = sy + 35;
+  oc2.font = 'bold 10px Inter,Arial,sans-serif';
+  oc2.fillStyle = '#555';
+  oc2.fillText('Artwork sizes:', PAD, yOff);
+  yOff += 14;
+  oc2.font = '10px Inter,Arial,sans-serif';
+  S.layers.forEach((l, i) => {
+    const wIn = (l.w/PX_PER_INCH).toFixed(1);
+    const hIn = (l.h/PX_PER_INCH).toFixed(1);
+    const lbl = l.type==='text' ? `"${l.text.substring(0,20)}"` : `Image ${i+1}`;
+    oc2.fillText(`  ${lbl}: ${wIn}" × ${hIn}"`, PAD, yOff);
+    yOff += 13;
+  });
+
+  // Sizes & quantities
+  const sizes = SIZES.filter(sz => S.sizeQtys[sz] > 0);
+  if(sizes.length > 0){
+    oc2.font = 'bold 10px Inter,Arial,sans-serif';
+    oc2.fillStyle = '#555';
+    oc2.fillText('Sizes & Quantities:', PAD + 220, sy + 35);
+    let sqY = sy + 49;
+    oc2.font = '10px Inter,Arial,sans-serif';
+    sizes.forEach(sz => {
+      oc2.fillText(`  ${sz}: ${S.sizeQtys[sz]}`, PAD + 220, sqY);
+      sqY += 13;
+    });
+    const total = Object.values(S.sizeQtys).reduce((a,b)=>a+b,0);
+    oc2.font = 'bold 10px Inter,Arial,sans-serif';
+    oc2.fillText(`  Total: ${total} units`, PAD + 220, sqY);
+  }
+
+  const a = document.createElement('a');
+  a.download = 'dyefresh-mockup.png';
+  a.href = oc.toDataURL('image/png');
+  a.click();
+
+  S.selectedId = prev;
+  S.pzVisible = pzWas;
+  render();
+  toast('Mockup PNG saved ✓');
 }
 function goQuote(){
   toast('Opening quote form…');
@@ -2679,6 +2984,85 @@ function apTxtOp(v){
   if(el) el.textContent = v + '%';
   render();
 }
+
+// ── MOBILE PANEL MANAGEMENT ────────────────────────────────────────────────
+let mbbActive = null;
+
+function isMobile(){ return window.innerWidth <= 1024; }
+
+function mbbToggle(panel){
+  if(!isMobile()) return;
+  const leftPanel  = document.querySelector('.panel:not(.rp)');
+  const rightPanel = document.querySelector('.panel.rp');
+  const mbbDesign  = document.getElementById('mbb-design');
+  const mbbOptions = document.getElementById('mbb-options');
+
+  if(mbbActive === panel){
+    // Close current panel
+    if(leftPanel)  leftPanel.classList.remove('panel-open');
+    if(rightPanel) rightPanel.classList.remove('rp-open');
+    mbbDesign?.classList.remove('active');
+    mbbOptions?.classList.remove('active');
+    mbbActive = null;
+    return;
+  }
+
+  mbbActive = panel;
+  if(panel === 'design'){
+    if(leftPanel)  leftPanel.classList.add('panel-open');
+    if(rightPanel) rightPanel.classList.remove('rp-open');
+    mbbDesign?.classList.add('active');
+    mbbOptions?.classList.remove('active');
+  } else if(panel === 'options'){
+    if(rightPanel) rightPanel.classList.add('rp-open');
+    if(leftPanel)  leftPanel.classList.remove('panel-open');
+    mbbOptions?.classList.add('active');
+    mbbDesign?.classList.remove('active');
+  }
+}
+
+// Close mobile panels when tapping canvas
+function closeMobilePanels(){
+  if(!isMobile()) return;
+  const leftPanel  = document.querySelector('.panel:not(.rp)');
+  const rightPanel = document.querySelector('.panel.rp');
+  if(leftPanel)  leftPanel.classList.remove('panel-open');
+  if(rightPanel) rightPanel.classList.remove('rp-open');
+  document.querySelectorAll('.mbb-btn').forEach(b=>b.classList.remove('active'));
+  mbbActive = null;
+}
+
+// Scale canvas to fit on mobile
+function fitCanvasToScreen(){
+  const gc = document.getElementById('gc');
+  if(!gc) return;
+  if(window.innerWidth > 1024){
+    gc.style.width  = '';
+    gc.style.height = '';
+    return;
+  }
+  // Calculate available width and height
+  const sidebarW = window.innerWidth <= 599 ? 46 : 52;
+  const availW   = window.innerWidth - sidebarW - 16;
+  const bottomH  = 60; // bottom bar
+  const headerH  = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 48;
+  const availH   = window.innerHeight - headerH - bottomH - 16;
+  const scaleW   = availW / 500;   // canvas native width
+  const scaleH   = availH / 580;   // canvas native height
+  const scale    = Math.min(scaleW, scaleH, 1);
+  gc.style.width  = Math.round(500 * scale) + 'px';
+  gc.style.height = Math.round(580 * scale) + 'px';
+}
+
+// Run on load and resize
+window.addEventListener('resize', fitCanvasToScreen);
+window.addEventListener('orientationchange', ()=>{ setTimeout(fitCanvasToScreen, 200); });
+// Tap canvas closes panels on mobile
+document.addEventListener('DOMContentLoaded', ()=>{
+  const gc = document.getElementById('gc');
+  if(gc) gc.addEventListener('touchstart', closeMobilePanels, {passive:true});
+  fitCanvasToScreen();
+});
 
 init();
 </script>
