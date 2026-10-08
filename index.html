@@ -1226,13 +1226,13 @@ const DEFAULT_PZ = {
 
 // Gildan 5000 colors with real SanMar product photos (16 confirmed UUIDs + swatch-only fallback)
 const SHIRT_COLORS = [
-  {n:"Athletic Heather", h:"#b8b0ab", lt:true,  slug:"athleticheather"},
-  {n:"Athletic Kelly",   h:"#1a7a3c", lt:false, slug:"athletickelly"},
+  {n:"Athletic Heather", h:"#b8b0ab", lt:true,  slug:"athleticheather", img:"https://cdnp.sanmar.com/medias/sys_master/images/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg"},
+  {n:"Athletic Kelly",   h:"#1a7a3c", lt:false, slug:"athletickelly",   img:"https://cdnp.sanmar.com/medias/sys_master/images/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg"},
   {n:"Athletic Maroon",  h:"#5c1a2a", lt:false, slug:"athleticmaroon"},
-  {n:"Athletic Red",     h:"#d42b2b", lt:false, slug:"athleticred"},
+  {n:"Athletic Red",     h:"#d42b2b", lt:false, slug:"athleticred",     img:"https://cdnp.sanmar.com/medias/sys_master/images/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg"},
   {n:"Athletic Royal",   h:"#2b4caf", lt:false, slug:"athleticroyal"},
   {n:"Bright Aqua",      h:"#00b8c8", lt:false, slug:"brightaqua"},
-  {n:"Bright Gold",      h:"#f0a820", lt:false, slug:"brightgold"},
+  {n:"Bright Gold",      h:"#f0a820", lt:false, slug:"brightgold",      img:"https://cdnp.sanmar.com/medias/sys_master/images/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg"},
   {n:"Bright Red",       h:"#e02020", lt:false, slug:"brightred"},
   {n:"Candy Pink",       h:"#f4a0b0", lt:true,  slug:"candypink"},
   {n:"Cardinal Red",     h:"#8c1a2e", lt:false, slug:"cardinalred"},
@@ -1251,23 +1251,23 @@ const SHIRT_COLORS = [
   {n:"Marine Green",     h:"#1a5a50", lt:false, slug:"marinegreen"},
   {n:"Medium Grey",      h:"#909090", lt:false, slug:"mediumgrey"},
   {n:"Olive",            h:"#4a5030", lt:false, slug:"olive"},
-  {n:"Orange",           h:"#e86010", lt:false, slug:"orange"},
+  {n:"Orange",           h:"#e86010", lt:false, slug:"orange",          img:"https://cdnp.sanmar.com/medias/sys_master/images/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg"},
   {n:"Pro Kelly Green",  h:"#18a030", lt:false, slug:"prokellgreen"},
   {n:"Sapphire",         h:"#1870c8", lt:false, slug:"sapphire"},
   {n:"Silver",           h:"#c0bcb8", lt:true,  slug:"silver"},
   {n:"Spearmint",        h:"#70e090", lt:true,  slug:"spearmint"},
   {n:"Team Cardinal",    h:"#981828", lt:false, slug:"teamcardinal"},
-  {n:"Team Navy",        h:"#1a2858", lt:false, slug:"teamnavy"},
-  {n:"Team Purple",      h:"#602898", lt:false, slug:"teampurple"},
+  {n:"Team Navy",        h:"#1a2858", lt:false, slug:"teamnavy",        img:"https://cdnp.sanmar.com/medias/sys_master/images/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg"},
+  {n:"Team Purple",      h:"#602898", lt:false, slug:"teampurple",      img:"https://cdnp.sanmar.com/medias/sys_master/images/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg"},
   {n:"Team Teal",        h:"#007868", lt:false, slug:"teamteal"},
   {n:"Tennessee Orange", h:"#e86820", lt:false, slug:"tennesseeorange"},
   {n:"Texas Orange",     h:"#b84010", lt:false, slug:"texasorange"},
-  {n:"Tidal Wave",       h:"#7098b8", lt:false, slug:"tidalwave"},
+  {n:"Tidal Wave",       h:"#7098b8", lt:false, slug:"tidalwave",       img:"https://cdnp.sanmar.com/medias/sys_master/images/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg"},
   {n:"Trophy Gold",      h:"#d8cc70", lt:true,  slug:"trophysgold"},
   {n:"True Celadon",     h:"#a8e8d0", lt:true,  slug:"trueceladon"},
-  {n:"True Royal",       h:"#2848c8", lt:false, slug:"trueroyal"},
-  {n:"White",            h:"#f4f4f4", lt:true,  slug:"white"},
-  {n:"Yellow",           h:"#e8d848", lt:true,  slug:"yellow"},
+  {n:"True Royal",       h:"#2848c8", lt:false, slug:"trueroyal",       img:"https://cdnp.sanmar.com/medias/sys_master/images/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg"},
+  {n:"White",            h:"#f4f4f4", lt:true,  slug:"white",           img:"https://cdnp.sanmar.com/medias/sys_master/images/h3c/h7e/30606109016094/1200W_3985_White-0-PC54WhiteModelFront3/1200W-3985-White-0-PC54WhiteModelFront3.jpg"},
+  {n:"Yellow",           h:"#e8d848", lt:true,  slug:"yellow",          img:"https://cdnp.sanmar.com/medias/sys_master/images/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg"},
 ];
 // Default to Silver (index 28)
 const G5000_COLORS = SHIRT_COLORS; // keep alias
@@ -1413,7 +1413,19 @@ function loadURLParams(){
         highlightActiveSwatch();
         const nameEl = document.getElementById('selectedColorName');
         if(nameEl) nameEl.textContent = SHIRT_COLORS[idx].n;
-        // Load the garment photo for this color
+        // Load garment photo directly from SHIRT_COLORS[idx].img if available
+        const c = SHIRT_COLORS[idx];
+        if(c && c.img){
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            imgCache['tshirt']['front_color_'+idx] = img;
+            imgCache['tshirt']['front'] = img;
+            render();
+          };
+          img.src = c.img;
+        }
+        // Also try the proxy (works in dev environments)
         loadPC54Images();
       }, 50);
     }
