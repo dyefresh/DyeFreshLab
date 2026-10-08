@@ -805,7 +805,12 @@ function launchDesignLab() {
   if (!pickerProductId) return;
   const prod = PRODUCTS[pickerProductId];
   const color = prod.colors[selectedIdx[pickerProductId]];
-  const url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
+  let url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
+  // Pass the direct garment photo URL so Design Lab can show it immediately
+  // regardless of which product type or color mapping is being used
+  if (color.img) {
+    url += `&img=${encodeURIComponent(color.img)}`;
+  }
   window.open(url, '_blank');
   closePicker();
 }

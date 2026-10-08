@@ -1326,6 +1326,7 @@ function loadURLParams(){
   const params = new URLSearchParams(window.location.search);
   const product = params.get('product');
   const color   = params.get('color');
+  const imgUrl  = params.get('img');  // direct garment photo URL from Products page
 
   // Map catalog color slugs → SHIRT_COLORS slugs
   const COLOR_MAP = {
@@ -1435,6 +1436,28 @@ function loadURLParams(){
         loadPC54Images();
       }, 50);
     }
+  }
+
+  // If a direct garment image URL was passed (?img=), load it immediately
+  // into both caches keyed to the current product — this works for shirts,
+  // hoodies, or any product type without needing a SHIRT_COLORS entry.
+  if(imgUrl){
+    const img = new Image();
+    img.onload = () => {
+      const prod = S.product;
+      // Put in imgCache so drawPhoto() fallback finds it
+      if(!imgCache[prod]) imgCache[prod] = {};
+      imgCache[prod]['front'] = img;
+      imgCache[prod]['back']  = img;
+      // Also put in colorImgCache at the current tint index
+      const idx = S.tintIdx;
+      if(!colorImgCache[idx]) colorImgCache[idx] = {};
+      colorImgCache[idx]['front'] = img;
+      colorImgCache[idx]['back']  = img;
+      render();
+    };
+    img.onerror = () => { console.warn('Failed to load ?img= garment photo:', imgUrl); };
+    img.src = imgUrl;
   }
 }
 
@@ -1619,9 +1642,10 @@ function render(){
 }
 
 function drawPhoto(){
-  // For tshirt: use real per-color SanMar image if loaded, else draw base photo
+  // Use real per-color SanMar image if loaded (works for any product type),
+  // then fall back to the generic product photo from imgCache
   const side = S.side;
-  const colorImg = (S.product==='tshirt') ? getColorImg(side) : null;
+  const colorImg = getColorImg(side);
   const photo = colorImg || imgCache[S.product]?.[S.side];
   ctx.save();
   if(photo){
@@ -2651,8 +2675,8 @@ function dlMockup(){
   oc2.fillStyle = '#ffffff';
   oc2.fillRect(0, 0, oc.width, oc.height);
 
-  // Draw shirt photo
-  const photo = (S.product==='tshirt') ? (getColorImg(S.side)||imgCache[S.product]?.[S.side]) : imgCache[S.product]?.[S.side];
+  // Draw garment photo (color-specific if available, else generic product photo)
+  const photo = getColorImg(S.side) || imgCache[S.product]?.[S.side];
   if(photo){
     const scale = Math.min(cv.width/photo.naturalWidth, cv.height/photo.naturalHeight);
     const dw = photo.naturalWidth*scale, dh = photo.naturalHeight*scale;
