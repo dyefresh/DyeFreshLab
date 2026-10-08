@@ -1,0 +1,783 @@
+<title>DyeFresh Product Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Oswald:wght@500;700&display=swap">
+
+<style>
+/*
+  Layout: full-width dark grid, product cards in responsive columns
+  Palette: near-black ground, DyeFresh red accent, warm white type
+  Type: Bebas Neue (display/hero) + Inter (body/UI) + Oswald (card labels)
+*/
+
+:root {
+  --bg:          #0d0d0d;
+  --surface:     #1a1a1a;
+  --surface2:    #242424;
+  --border:      #2e2e2e;
+  --red:         #e8290b;
+  --red-hover:   #ff3d1f;
+  --red-dim:     rgba(232, 41, 11, 0.14);
+  --white:       #f5f5f5;
+  --txt:         #e8e8e8;
+  --txt2:        #a0a0a0;
+  --txt3:        #616161;
+  color-scheme: dark;
+  --font-display: 'Bebas Neue', 'Arial Black', sans-serif;
+  --font-label:   'Oswald', 'Arial Narrow', sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:       #f0f0f0;
+    --surface:  #ffffff;
+    --surface2: #f7f7f7;
+    --border:   #ddd;
+    --white:    #111;
+    --txt:      #1a1a1a;
+    --txt2:     #555;
+    --txt3:     #999;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:#f0f0f0;--surface:#fff;--surface2:#f7f7f7;--border:#ddd;
+  --white:#111;--txt:#1a1a1a;--txt2:#555;--txt3:#999;color-scheme:light;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:var(--font-body);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-inline:0;padding-block:0;
+}
+
+/* ── HERO ── */
+.hero{
+  background:var(--bg);border-bottom:1px solid var(--border);
+  padding:60px 24px 48px;text-align:center;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 55% at 50% -10%,rgba(232,41,11,.2) 0%,transparent 68%);
+}
+.hero-eyebrow{
+  font-family:var(--font-label);font-size:11px;font-weight:500;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:10px;
+}
+.hero-title{
+  font-family:var(--font-display);font-size:clamp(50px,8.5vw,100px);
+  line-height:.95;letter-spacing:.01em;color:var(--white);text-wrap:balance;margin-bottom:16px;
+}
+.hero-title span{color:var(--red);}
+.hero-sub{font-size:15px;color:var(--txt2);max-width:480px;margin:0 auto 28px;line-height:1.75;}
+.hero-cta{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--red);color:#fff;
+  font-family:var(--font-label);font-size:14px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:13px 30px;border-radius:4px;text-decoration:none;
+  transition:background .18s,transform .12s;
+}
+.hero-cta:hover{background:var(--red-hover);transform:translateY(-1px);}
+.hero-stats{
+  display:flex;justify-content:center;gap:40px;margin-top:44px;flex-wrap:wrap;
+}
+.stat{text-align:center;}
+.stat-num{font-family:var(--font-display);font-size:34px;color:var(--white);line-height:1;}
+.stat-lbl{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--txt3);margin-top:3px;}
+
+/* ── FILTER BAR ── */
+.filter-bar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;align-items:center;gap:4px;
+  overflow-x:auto;scrollbar-width:none;
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-pill{
+  font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--txt2);
+  background:transparent;border:none;padding:14px 15px;
+  border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s;letter-spacing:.02em;
+}
+.filter-pill:hover{color:var(--txt);}
+.filter-pill.active{color:var(--red);border-bottom-color:var(--red);}
+
+/* ── CATALOG GRID ── */
+.catalog-section{max-width:1280px;margin:0 auto;padding:44px 24px 80px;}
+.section-heading{
+  font-family:var(--font-display);font-size:clamp(26px,4vw,42px);
+  letter-spacing:.03em;color:var(--white);margin-bottom:5px;
+}
+.section-sub{font-size:13px;color:var(--txt3);margin-bottom:28px;}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;}
+
+/* ── CARD ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;display:flex;flex-direction:column;
+  transition:border-color .18s,transform .18s,box-shadow .18s;
+}
+.card:hover{
+  border-color:var(--red);transform:translateY(-3px);
+  box-shadow:0 14px 36px rgba(0,0,0,.4),0 0 0 1px var(--red);
+}
+.card-image{
+  aspect-ratio:4/3;background:var(--surface2);position:relative;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.card-photo{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .3s ease,opacity .2s;
+  display:block;
+}
+.card:hover .card-photo{transform:scale(1.03);}
+.card-photo-placeholder{
+  font-size:64px;line-height:1;user-select:none;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.5));
+}
+.card-badge{
+  position:absolute;top:12px;left:12px;
+  color:#fff;font-family:var(--font-label);font-size:10px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;
+}
+.card-badge.popular{background:var(--red);}
+.card-badge.new{background:#177a44;}
+
+/* inline color swatch row on card */
+.card-swatch-row{
+  display:flex;gap:5px;align-items:center;
+  padding:8px 14px 0;flex-wrap:wrap;
+}
+.cswatch{
+  width:18px;height:18px;border-radius:50%;cursor:pointer;flex-shrink:0;
+  border:2px solid transparent;transition:transform .12s,border-color .12s;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.cswatch:hover{transform:scale(1.2);}
+.cswatch.active{border-color:var(--red);transform:scale(1.15);}
+.cswatch-more{font-size:10px;color:var(--txt3);margin-left:2px;}
+
+.card-body{padding:13px 16px 16px;display:flex;flex-direction:column;flex:1;}
+.card-style{font-family:var(--font-label);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);margin-bottom:3px;}
+.card-name{
+  font-family:var(--font-label);font-size:17px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--white);
+  margin-bottom:5px;line-height:1.2;text-wrap:balance;
+}
+.card-desc{font-size:12px;color:var(--txt2);line-height:1.65;margin-bottom:12px;flex:1;}
+.card-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.card-price{font-family:var(--font-label);font-size:15px;letter-spacing:.04em;color:var(--txt);}
+.card-price span{font-size:10px;color:var(--txt3);}
+.card-color-label{font-size:11px;color:var(--txt3);letter-spacing:.04em;}
+.btn-customize{
+  display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  background:var(--red);color:#fff;
+  font-family:var(--font-label);font-size:13px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:11px 14px;border:none;border-radius:5px;cursor:pointer;
+  transition:background .15s,transform .12s;margin-top:auto;
+}
+.btn-customize:hover{background:var(--red-hover);transform:translateY(-1px);}
+
+/* ── COLOR PICKER MODAL ── */
+#colorPickerModal{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.75);
+  align-items:center;justify-content:center;padding:20px;
+}
+#colorPickerModal.open{display:flex!important;}
+.picker-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:28px 22px 22px;max-width:440px;width:100%;
+  box-shadow:0 28px 64px rgba(0,0,0,.65);
+  max-height:90vh;overflow-y:auto;
+}
+.picker-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.picker-product-img{
+  width:100%;aspect-ratio:16/9;object-fit:cover;
+  border-radius:8px;margin-bottom:16px;
+  background:var(--surface2);transition:opacity .2s;
+}
+.picker-title{
+  font-family:var(--font-display);font-size:22px;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--white);margin-bottom:3px;
+}
+.picker-subtitle{font-size:12px;color:var(--txt3);letter-spacing:.06em;margin-bottom:18px;}
+.picker-section-label{
+  font-family:var(--font-label);font-size:11px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;
+}
+#colorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:18px;}
+.cpick-btn{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;
+  padding:8px 10px;cursor:pointer;transition:border-color .13s,background .13s;width:100%;
+}
+.cpick-btn:hover{border-color:var(--txt3);background:var(--surface);}
+.cpick-btn.selected{border-color:var(--red);background:var(--red-dim);}
+.cpick-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.45);}
+.cpick-name{font-size:11.5px;color:var(--txt);font-family:var(--font-body);line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#pickerGoBtn{
+  width:100%;padding:13px;background:var(--red);color:#fff;
+  font-family:var(--font-label);font-size:14px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;
+  border:none;border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background .15s;
+}
+#pickerGoBtn:hover{background:var(--red-hover);}
+.picker-note{margin-top:10px;font-size:10.5px;color:var(--txt3);text-align:center;line-height:1.6;}
+.picker-close{background:none;border:none;color:var(--txt3);font-size:22px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;}
+.picker-close:hover{color:var(--txt);}
+
+/* ── PROCESS STRIP ── */
+.process-strip{
+  background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:40px 24px;
+}
+.process-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;text-align:center;}
+.process-step{display:flex;flex-direction:column;align-items:center;gap:9px;}
+.step-num{font-family:var(--font-display);font-size:40px;color:var(--red);line-height:1;}
+.step-title{font-family:var(--font-label);font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--white);}
+.step-desc{font-size:12px;color:var(--txt3);line-height:1.6;max-width:180px;}
+
+/* ── FOOTER ── */
+.catalog-footer{background:var(--bg);border-top:1px solid var(--border);padding:30px 24px;text-align:center;}
+.footer-brand{font-family:var(--font-display);font-size:26px;letter-spacing:.06em;color:var(--white);margin-bottom:5px;}
+.footer-brand span{color:var(--red);}
+.footer-note{font-size:11.5px;color:var(--txt3);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .hero{padding:44px 16px 36px;}
+  .hero-stats{gap:20px;}
+  .catalog-section{padding:32px 14px 56px;}
+  .process-strip{padding:30px 14px;}
+  .filter-bar{padding:0 10px;}
+  #colorGrid{grid-template-columns:repeat(2,1fr);}
+}
+.card.filtered-out{display:none;}
+</style>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-eyebrow">SanMar Wholesale Blanks · Printed by DyeFresh</div>
+  <h1 class="hero-title">PRINTED<br><span>FRESH.</span></h1>
+  <p class="hero-sub">Pick your shirt, choose your color, then design it your way — we print and ship in 7–12 business days.</p>
+  <a href="#catalog" class="hero-cta">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Browse &amp; Customize
+  </a>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">500+</div><div class="stat-lbl">Orders Completed</div></div>
+    <div class="stat"><div class="stat-num">42</div><div class="stat-lbl">Garment Colors</div></div>
+    <div class="stat"><div class="stat-num">7–12</div><div class="stat-lbl">Day Turnaround</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-lbl">Custom Printed</div></div>
+  </div>
+</section>
+
+<!-- ── FILTER BAR ── -->
+<nav class="filter-bar" aria-label="Product categories">
+  <button class="filter-pill active" data-filter="all">All</button>
+  <button class="filter-pill" data-filter="tshirts">T-Shirts</button>
+  <button class="filter-pill" data-filter="hoodies">Hoodies</button>
+  <button class="filter-pill" data-filter="hats">Hats</button>
+  <button class="filter-pill" data-filter="bottoms">Bottoms</button>
+</nav>
+
+<!-- ── PRODUCT GRID ── -->
+<main id="catalog" class="catalog-section">
+  <h2 class="section-heading">CHOOSE YOUR GARMENT</h2>
+  <p class="section-sub">Click a color dot to preview · Click "Customize It" to open the Design Lab</p>
+
+  <div class="product-grid" id="productGrid">
+
+    <!-- PC54 Core Cotton Tee -->
+    <article class="card" data-cat="tshirts" data-product-id="pc54">
+      <div class="card-image">
+        <img class="card-photo" id="pc54-img"
+          src="https://cdnp.sanmar.com/medias/sys_master/images/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg"
+          alt="PC54 Core Cotton Tee" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👕</div>
+        <div class="card-badge popular">Most Popular</div>
+      </div>
+      <div class="card-swatch-row" id="pc54-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC54 · Port &amp; Company</div>
+        <div class="card-name">Core Cotton Tee</div>
+        <div class="card-desc">5.4 oz 100% cotton. Classic fit with a removable tag for custom relabeling. The go-to for events, teams, and merch drops — S through 6XL.</div>
+        <div class="card-meta">
+          <div class="card-price">From $10 <span>/ piece</span></div>
+          <div class="card-color-label" id="pc54-color-label">Aquatic Blue</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pc54')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+    <!-- PC61 Essential Tee -->
+    <article class="card" data-cat="tshirts" data-product-id="pc61">
+      <div class="card-image">
+        <img class="card-photo" id="pc61-img"
+          src="https://cdnp.sanmar.com/medias/sys_master/images/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg"
+          alt="PC61 Essential Tee" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👕</div>
+        <div class="card-badge new">Fan Favorite</div>
+      </div>
+      <div class="card-swatch-row" id="pc61-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC61 · Port &amp; Company</div>
+        <div class="card-name">Essential Tee</div>
+        <div class="card-desc">5.5 oz 100% cotton. Relaxed, slightly longer fit with double-needle stitching. An everyday wardrobe staple in 40+ colors — great for bulk orders.</div>
+        <div class="card-meta">
+          <div class="card-price">From $8 <span>/ piece</span></div>
+          <div class="card-color-label" id="pc61-color-label">Lime</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pc61')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+    <!-- PC600 Bouncer Tee -->
+    <article class="card" data-cat="tshirts" data-product-id="pc600">
+      <div class="card-image">
+        <img class="card-photo" id="pc600-img"
+          src="https://cdnp.sanmar.com/medias/sys_master/images/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg"
+          alt="PC600 Bouncer Tee" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👕</div>
+        <div class="card-badge" style="background:#7d3c98;">Bold Colors</div>
+      </div>
+      <div class="card-swatch-row" id="pc600-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC600 · Port &amp; Company</div>
+        <div class="card-name">Bouncer Tee</div>
+        <div class="card-desc">6.1 oz 100% cotton. Heavier, structured tee that holds its shape. Vibrant dyed-through colors that won't fade — built for bold statement prints.</div>
+        <div class="card-meta">
+          <div class="card-price">From $11 <span>/ piece</span></div>
+          <div class="card-color-label" id="pc600-color-label">Lemon Yellow</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pc600')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+    <!-- HOODIE placeholder — same catalog key as before -->
+    <article class="card" data-cat="hoodies" data-product-id="hoodie">
+      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
+        <div class="card-photo-placeholder">🧥</div>
+        <div class="card-badge popular">Popular</div>
+      </div>
+      <div class="card-swatch-row" id="hoodie-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC78H · Port &amp; Company</div>
+        <div class="card-name">Core Fleece Hoodie</div>
+        <div class="card-desc">7.8 oz 50/50 cotton/poly blend. Kangaroo pocket, double-needle stitching, ribbed cuffs and waistband. The go-to pullover for teams and crews.</div>
+        <div class="card-meta">
+          <div class="card-price">From $26 <span>/ piece</span></div>
+          <div class="card-color-label" id="hoodie-color-label">Black</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('hoodie')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+    <!-- HAT placeholder -->
+    <article class="card" data-cat="hats" data-product-id="hat">
+      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
+        <div class="card-photo-placeholder">🧢</div>
+        <div class="card-badge popular">Popular</div>
+      </div>
+      <div class="card-swatch-row" id="hat-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar C112 · Port Authority</div>
+        <div class="card-name">Structured Cap</div>
+        <div class="card-desc">6-panel structured twill cap with a pre-curved visor and Velcro closure. Clean front panel for embroidery or DTF print. One size fits most.</div>
+        <div class="card-meta">
+          <div class="card-price">From $10 <span>/ piece</span></div>
+          <div class="card-color-label" id="hat-color-label">Black</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('hat')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+    <!-- JOGGERS placeholder -->
+    <article class="card" data-cat="bottoms" data-product-id="joggers">
+      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
+        <div class="card-photo-placeholder">👖</div>
+        <div class="card-badge new">New</div>
+      </div>
+      <div class="card-swatch-row" id="joggers-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar F082 · Fruit of the Loom</div>
+        <div class="card-name">Eversoft Joggers</div>
+        <div class="card-desc">60/40 cotton/poly fleece joggers with tapered fit, side pockets, and elastic waistband. Branded athleisure that moves with your crew.</div>
+        <div class="card-meta">
+          <div class="card-price">From $22 <span>/ piece</span></div>
+          <div class="card-color-label" id="joggers-color-label">Black</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('joggers')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
+  </div><!-- /product-grid -->
+</main>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="process-strip">
+  <div class="process-inner">
+    <div class="process-step">
+      <div class="step-num">01</div>
+      <div class="step-title">Pick a Garment</div>
+      <div class="step-desc">Choose from our SanMar wholesale catalog and select your color.</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">02</div>
+      <div class="step-title">Design It</div>
+      <div class="step-desc">Upload artwork or add text in the DyeFresh Design Lab — no account needed.</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">03</div>
+      <div class="step-title">Submit Order</div>
+      <div class="step-desc">We review your design, confirm sizing, and send you a quote within 24 hours.</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">04</div>
+      <div class="step-title">Printed Fresh</div>
+      <div class="step-desc">Production runs 7–12 business days. Ships directly to you.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── COLOR PICKER MODAL ── -->
+<div id="colorPickerModal" role="dialog" aria-modal="true" aria-label="Choose a color">
+  <div class="picker-box">
+    <div class="picker-header">
+      <div>
+        <div class="picker-title" id="pickerTitle">Choose a Color</div>
+        <div class="picker-subtitle" id="pickerStyleNum"></div>
+      </div>
+      <button class="picker-close" onclick="closePicker()" aria-label="Close">&#10005;</button>
+    </div>
+    <img class="picker-product-img" id="pickerPreviewImg" src="" alt="Product preview" onerror="this.style.opacity='.2'">
+    <div class="picker-section-label">Select Color</div>
+    <div id="colorGrid"></div>
+    <button id="pickerGoBtn" onclick="launchDesignLab()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Start Designing
+    </button>
+    <p class="picker-note">You can also adjust the color inside the Design Lab after it opens.</p>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="catalog-footer">
+  <div class="footer-brand">DYE<span>FRESH</span> PRINTING</div>
+  <div class="footer-note">Questions? Email dyefreshapparel@gmail.com · Long Island, NY</div>
+</footer>
+
+<script>
+// ── UPDATE THIS to your actual hosted Design Lab URL ──────────────
+const DESIGN_LAB_URL = 'https://dyefresh.com/design-lab';
+// ─────────────────────────────────────────────────────────────────
+
+// Real SanMar CDN image URL builder
+// Pattern: https://cdnp.sanmar.com/medias/sys_master/images/{path}/{filename}/{filename}.jpg
+function sanmar(itemNum, colorSlug, styleCode, colorLabel, modelSuffix) {
+  // We store the full confirmed image paths directly
+  return null; // overridden per-product below
+}
+
+// ── PRODUCT CATALOG DATA ─────────────────────────────────────────
+const PRODUCTS = {
+  pc54: {
+    name: 'Core Cotton Tee',
+    style: 'SanMar PC54',
+    designLabKey: 'tshirt',
+    defaultColor: 0,
+    colors: [
+      { name:'Aquatic Blue', slug:'aquaticblue', hex:'#4bacc6',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg' },
+      { name:'White',        slug:'white',       hex:'#f0f0f0', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h3c/h7e/30606109016094/1200W_3985_White-0-PC54WhiteModelFront3/1200W-3985-White-0-PC54WhiteModelFront3.jpg' },
+      { name:'Navy',         slug:'navy',        hex:'#1a2952',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg' },
+      { name:'Red',          slug:'red',         hex:'#c0392b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg' },
+      { name:'Royal Blue',   slug:'royal',       hex:'#2471a3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg' },
+      { name:'Gold',         slug:'gold',        hex:'#d4a017',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg' },
+      { name:'Purple',       slug:'purple',      hex:'#7d3c98',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg' },
+      { name:'Ash',          slug:'heather',     hex:'#c8c8c8', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg' },
+      { name:'Maroon',       slug:'maroon',      hex:'#6b1a1a' },
+      { name:'Dark Heather', slug:'grey',        hex:'#4a4a4a' },
+    ]
+  },
+  pc61: {
+    name: 'Essential Tee',
+    style: 'SanMar PC61',
+    designLabKey: 'tshirt',
+    defaultColor: 0,
+    colors: [
+      { name:'Lime',         slug:'green',    hex:'#5dbe4a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg' },
+      { name:'White',        slug:'white',    hex:'#f0f0f0', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/he0/h65/29138358960158/1200W_1634_White-0-PC61WhiteModelFront4/1200W-1634-White-0-PC61WhiteModelFront4.jpg' },
+      { name:'Navy',         slug:'navy',     hex:'#1a2952',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/he2/h02/29138197151774/1200W_1634_Navy-0-PC61NavyModelFront4/1200W-1634-Navy-0-PC61NavyModelFront4.jpg' },
+      { name:'Red',          slug:'red',      hex:'#c0392b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h4b/hec/29138205409310/1200W_1634_Red-0-PC61RedModelFront4/1200W-1634-Red-0-PC61RedModelFront4.jpg' },
+      { name:'Royal Blue',   slug:'royal',    hex:'#2471a3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hcd/h0d/29138207768606/1200W_1634_Royal-0-PC61RoyalModelFront4/1200W-1634-Royal-0-PC61RoyalModelFront4.jpg' },
+      { name:'Gold',         slug:'gold',     hex:'#d4a017',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg' },
+      { name:'Orange',       slug:'orange',   hex:'#e67e22',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg' },
+      { name:'Black',        slug:'black',    hex:'#111111' },
+      { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3' },
+    ]
+  },
+  pc600: {
+    name: 'Bouncer Tee',
+    style: 'SanMar PC600',
+    designLabKey: 'tshirt',
+    defaultColor: 0,
+    colors: [
+      { name:'Lemon Yellow', slug:'gold',    hex:'#f1c40f',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg' },
+      { name:'White',        slug:'white',   hex:'#f0f0f0', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h58/h1b/29318232735774/1200W_10578_White-0-PC600WhiteModelFront1/1200W-10578-White-0-PC600WhiteModelFront1.jpg' },
+      { name:'Black',        slug:'black',   hex:'#111111' },
+      { name:'Navy',         slug:'navy',    hex:'#1a2952' },
+      { name:'Red',          slug:'red',     hex:'#c0392b' },
+      { name:'Royal Blue',   slug:'royal',   hex:'#2471a3' },
+      { name:'Purple',       slug:'purple',  hex:'#7d3c98' },
+      { name:'Orange',       slug:'orange',  hex:'#e67e22' },
+    ]
+  },
+  hoodie: {
+    name: 'Core Fleece Hoodie',
+    style: 'SanMar PC78H',
+    designLabKey: 'hoodie',
+    defaultColor: 0,
+    colors: [
+      { name:'Black',        slug:'black',  hex:'#111111' },
+      { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
+      { name:'Navy',         slug:'navy',   hex:'#1a2952' },
+      { name:'Red',          slug:'red',    hex:'#c0392b' },
+      { name:'Royal Blue',   slug:'royal',  hex:'#2471a3' },
+      { name:'Maroon',       slug:'maroon', hex:'#6b1a1a' },
+      { name:'Gold',         slug:'gold',   hex:'#d4a017' },
+    ]
+  },
+  hat: {
+    name: 'Structured Cap',
+    style: 'SanMar C112',
+    designLabKey: 'hat',
+    defaultColor: 0,
+    colors: [
+      { name:'Black',        slug:'black',  hex:'#111111' },
+      { name:'Navy',         slug:'navy',   hex:'#1a2952' },
+      { name:'Red',          slug:'red',    hex:'#c0392b' },
+      { name:'White',        slug:'white',  hex:'#f0f0f0', light:true },
+      { name:'Royal Blue',   slug:'royal',  hex:'#2471a3' },
+      { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
+    ]
+  },
+  joggers: {
+    name: 'Eversoft Joggers',
+    style: 'SanMar F082',
+    designLabKey: 'joggers',
+    defaultColor: 0,
+    colors: [
+      { name:'Black',        slug:'black',  hex:'#111111' },
+      { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
+      { name:'Navy',         slug:'navy',   hex:'#1a2952' },
+      { name:'Red',          slug:'red',    hex:'#c0392b' },
+    ]
+  },
+};
+
+// Track selected color per product (index into colors array)
+const selectedIdx = {};
+Object.keys(PRODUCTS).forEach(id => { selectedIdx[id] = PRODUCTS[id].defaultColor; });
+
+// Currently open picker
+let pickerProductId = null;
+
+// ── BUILD INLINE SWATCHES ON EACH CARD ──────────────────────────
+function buildSwatches() {
+  Object.entries(PRODUCTS).forEach(([id, prod]) => {
+    const row = document.getElementById(id + '-swatches');
+    if (!row) return;
+    const show = prod.colors.slice(0, 6);
+    const extra = prod.colors.length - 6;
+
+    show.forEach((c, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'cswatch' + (i === selectedIdx[id] ? ' active' : '');
+      dot.style.background = c.hex;
+      dot.title = c.name;
+      if (c.light) dot.style.border = '2px solid #bbb';
+      dot.onclick = (e) => {
+        e.stopPropagation();
+        selectColorOnCard(id, i);
+      };
+      row.appendChild(dot);
+    });
+
+    if (extra > 0) {
+      const more = document.createElement('span');
+      more.className = 'cswatch-more';
+      more.textContent = '+' + extra + ' more';
+      row.appendChild(more);
+    }
+  });
+}
+
+function selectColorOnCard(productId, colorIdx) {
+  const prod = PRODUCTS[productId];
+  if (!prod) return;
+  selectedIdx[productId] = colorIdx;
+  const color = prod.colors[colorIdx];
+
+  // Update card image if we have one
+  if (color.img) {
+    const img = document.getElementById(productId + '-img');
+    if (img) {
+      img.style.opacity = '0.5';
+      const newImg = new Image();
+      newImg.crossOrigin = 'anonymous';
+      newImg.onload = () => { img.src = color.img; img.style.opacity = '1'; };
+      newImg.onerror = () => { img.style.opacity = '1'; };
+      newImg.src = color.img;
+    }
+  }
+
+  // Update color label
+  const label = document.getElementById(productId + '-color-label');
+  if (label) label.textContent = color.name;
+
+  // Update active swatch dot
+  const row = document.getElementById(productId + '-swatches');
+  if (row) {
+    row.querySelectorAll('.cswatch').forEach((dot, i) => {
+      dot.classList.toggle('active', i === colorIdx);
+    });
+  }
+}
+
+// ── COLOR PICKER MODAL ───────────────────────────────────────────
+function openPicker(productId) {
+  pickerProductId = productId;
+  const prod = PRODUCTS[productId];
+  if (!prod) return;
+
+  document.getElementById('pickerTitle').textContent = prod.name;
+  document.getElementById('pickerStyleNum').textContent = prod.style;
+
+  // Set preview image in modal
+  const curColor = prod.colors[selectedIdx[productId]];
+  const prevImg = document.getElementById('pickerPreviewImg');
+  if (curColor.img) {
+    prevImg.src = curColor.img;
+    prevImg.style.opacity = '1';
+  } else {
+    prevImg.src = '';
+    prevImg.style.opacity = '.1';
+  }
+
+  // Build color grid
+  const grid = document.getElementById('colorGrid');
+  grid.innerHTML = '';
+  prod.colors.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'cpick-btn' + (i === selectedIdx[productId] ? ' selected' : '');
+    btn.innerHTML = `
+      <span class="cpick-dot" style="background:${c.hex};${c.light ? 'border:1.5px solid #bbb;' : ''}"></span>
+      <span class="cpick-name">${c.name}</span>
+    `;
+    btn.onclick = () => {
+      grid.querySelectorAll('.cpick-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedIdx[productId] = i;
+      // Update preview image in modal
+      if (c.img) {
+        prevImg.style.opacity = '0.4';
+        const tmp = new Image();
+        tmp.onload = () => { prevImg.src = c.img; prevImg.style.opacity = '1'; };
+        tmp.onerror = () => { prevImg.style.opacity = '.1'; };
+        tmp.src = c.img;
+      } else {
+        prevImg.style.opacity = '.1';
+      }
+    };
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('colorPickerModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePicker() {
+  // Sync card back to whatever was selected in picker
+  if (pickerProductId !== null) {
+    selectColorOnCard(pickerProductId, selectedIdx[pickerProductId]);
+  }
+  document.getElementById('colorPickerModal').classList.remove('open');
+  document.body.style.overflow = '';
+  pickerProductId = null;
+}
+
+function launchDesignLab() {
+  if (!pickerProductId) return;
+  const prod = PRODUCTS[pickerProductId];
+  const color = prod.colors[selectedIdx[pickerProductId]];
+  const url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
+  window.open(url, '_blank');
+  closePicker();
+}
+
+// ── FILTER PILLS ─────────────────────────────────────────────────
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const filter = pill.dataset.filter;
+    document.querySelectorAll('.card[data-cat]').forEach(card => {
+      card.classList.toggle('filtered-out', filter !== 'all' && card.dataset.cat !== filter);
+    });
+  });
+});
+
+// Close modal on backdrop click
+document.getElementById('colorPickerModal').addEventListener('click', function(e) {
+  if (e.target === this) closePicker();
+});
+
+// Init
+buildSwatches();
+</script>
