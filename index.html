@@ -1417,7 +1417,8 @@ function loadURLParams(){
         const c = SHIRT_COLORS[idx];
         if(c && c.img){
           const img = new Image();
-          img.crossOrigin = 'anonymous';
+          // No crossOrigin — SanMar CDN has no CORS headers; crossOrigin='anonymous'
+          // causes the browser to block the load. drawImage() works fine without it.
           img.onload = () => {
             // Populate BOTH caches so getColorImg() and imgCache both find it
             if(!colorImgCache[idx]) colorImgCache[idx] = {};
@@ -1427,6 +1428,7 @@ function loadURLParams(){
             imgCache['tshirt']['front'] = img;
             render();
           };
+          img.onerror = (e) => { console.warn('Failed to load garment image:', c.img, e); };
           img.src = c.img;
         }
         // Also try the proxy (works in dev environments)
@@ -1452,10 +1454,9 @@ function init(){
 // ─────────────────────────────────────────
 function loadColorPhoto(colorObj, idx){
   if(colorObj.img){
-    // Load the real SanMar photo for this color
+    // Load the real SanMar photo for this color (no crossOrigin — SanMar CDN blocks it)
     if(!imgCache['tshirt']['front_color_'+idx]){
       const img = new Image();
-      img.crossOrigin = 'anonymous';
       img.onload  = ()=>{ imgCache['tshirt']['front_color_'+idx]=img; render(); };
       img.onerror = ()=>{ imgCache['tshirt']['front_color_'+idx]=null; render(); };
       img.src = colorObj.img;
@@ -1506,17 +1507,17 @@ function preloadImages(){
     Object.entries(sides).forEach(([side,url])=>{
       if(!url) return;
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      // No crossOrigin — avoids blocking CDN images that lack CORS headers
       img.onload  = ()=>{ imgCache[prod][side]=img; render(); };
       img.onerror = ()=>{ imgCache[prod][side]=null; };
       img.src = url;
     });
   });
   // Pre-load all G5000 color photos that have URLs — populate both caches
+  // No crossOrigin — SanMar CDN sends no CORS headers; setting it blocks the load
   G5000_COLORS.forEach((c,i)=>{
     if(!c.img) return;
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload  = ()=>{
       imgCache['tshirt']['front_color_'+i] = img;
       if(!colorImgCache[i]) colorImgCache[i] = {};
@@ -2860,13 +2861,13 @@ function preloadColorImages(idx){
     const url = urlMap[side] || urlMap.front;
     if(!url) return;
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // No crossOrigin — SanMar CDN blocks cross-origin requests
     img.onload = () => {
       colorImgCache[idx][side] = img;
       if(S.tintIdx === idx) render(); // re-render when image arrives
     };
     img.onerror = () => { colorImgCache[idx][side] = null; };
-    img.src = url + (url.includes('?') ? '&' : '?') + 'width=600';
+    img.src = url;
   });
 }
 

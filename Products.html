@@ -377,10 +377,13 @@ body{
       </div>
     </article>
 
-    <!-- HOODIE placeholder — same catalog key as before -->
+    <!-- HOODIE -->
     <article class="card" data-cat="hoodies" data-product-id="hoodie">
-      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
-        <div class="card-photo-placeholder">🧥</div>
+      <div class="card-image" style="background:var(--surface2);position:relative;">
+        <img src="https://cdnp.sanmar.com/medias/sys_master/images/h3d/h91/30579920666654/1200W_4180_AthlHthr-0-PC78HAthlHthrModelFront3/1200W-4180-AthlHthr-0-PC78HAthlHthrModelFront3.jpg"
+             alt="Core Fleece Hoodie" id="hoodie-card-img"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             onerror="this.style.display='none'">
         <div class="card-badge popular">Popular</div>
       </div>
       <div class="card-swatch-row" id="hoodie-swatches"></div>
@@ -683,16 +686,16 @@ function selectColorOnCard(productId, colorIdx) {
   const color = prod.colors[colorIdx];
 
   // Update card image if we have one
-  if (color.img) {
-    const img = document.getElementById(productId + '-img');
-    if (img) {
-      img.style.opacity = '0.5';
-      const newImg = new Image();
-      newImg.crossOrigin = 'anonymous';
-      newImg.onload = () => { img.src = color.img; img.style.opacity = '1'; };
-      newImg.onerror = () => { img.style.opacity = '1'; };
-      newImg.src = color.img;
-    }
+  // Try both id patterns: productId-img and productId-card-img
+  const cardImgEl = document.getElementById(productId + '-card-img') ||
+                    document.getElementById(productId + '-img');
+  if (cardImgEl && color.img) {
+    cardImgEl.style.opacity = '0.5';
+    const newImg = new Image();
+    // No crossOrigin — SanMar CDN blocks cross-origin requests
+    newImg.onload = () => { cardImgEl.src = color.img; cardImgEl.style.opacity = '1'; };
+    newImg.onerror = () => { cardImgEl.style.opacity = '1'; };
+    newImg.src = color.img;
   }
 
   // Update color label
