@@ -45,6 +45,71 @@
   --white:#111;--txt:#1a1a1a;--txt2:#555;--txt3:#999;color-scheme:light;
 }
 
+/* ── INVENTORY BADGES ── */
+.inv-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-family: var(--font-label);
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.inv-out {
+  background: rgba(200,20,20,.18);
+  color: #ff6b6b;
+  border: 1px solid rgba(200,20,20,.35);
+}
+.inv-low {
+  background: rgba(220,140,0,.18);
+  color: #f0a500;
+  border: 1px solid rgba(220,140,0,.35);
+}
+.inv-unavailable .cpick-dot {
+  opacity: 0.35;
+}
+.inv-unavailable .cpick-name {
+  color: var(--txt3);
+}
+
+/* Size grid inside picker for inventory display */
+.size-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.size-btn {
+  min-width: 44px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--txt);
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .15s, background .15s;
+}
+.size-btn:hover { border-color: var(--red); }
+.size-btn.size-out {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.size-btn.size-low {
+  border-color: #f0a500;
+  color: #f0a500;
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{
   background:var(--bg);color:var(--txt);
@@ -524,6 +589,7 @@ const PRODUCTS = {
   pc54: {
     name: 'Core Cotton Tee',
     style: 'SanMar PC54',
+    sanMarStyle: 'PC54',
     designLabKey: 'tshirt',
     defaultColor: 0,
     colors: [
@@ -592,6 +658,7 @@ const PRODUCTS = {
   hoodie: {
     name: 'Core Fleece Hoodie',
     style: 'SanMar PC78H',
+    sanMarStyle: 'PC78H',
     designLabKey: 'hoodie',
     defaultColor: 2,
     colors: [
@@ -834,6 +901,276 @@ document.getElementById('colorPickerModal').addEventListener('click', function(e
   if (e.target === this) closePicker();
 });
 
+// ── SANMAR API INTEGRATION ────────────────────────────────────────
+// Set this to your deployed proxy URL once live on Railway/Render.
+// Leave as null to use hardcoded color data only (current fallback).
+const SANMAR_PROXY_URL = null; // e.g. 'https://dyefresh-proxy.up.railway.app'
+
+// Maps SanMar color names to hex values for swatches
+// (API returns color names but not hex — we map them here)
+const SANMAR_COLOR_HEX = {
+  'Athletic Heather':       '#b0a89e',
+  'White':                  '#f0f0f0',
+  'Navy':                   '#1a2952',
+  'Red':                    '#c0392b',
+  'Royal':                  '#2471a3',
+  'Royal Blue':             '#2471a3',
+  'Maroon':                 '#6b1a1a',
+  'Gold':                   '#d4a017',
+  'Jet Black':              '#111111',
+  'Black':                  '#111111',
+  'Dark Heather Grey':      '#4a4a4a',
+  'Dark Heather':           '#4a4a4a',
+  'Ash':                    '#c8c8c8',
+  'Cardinal':               '#8b1a2e',
+  'Carolina Blue':          '#7bafd4',
+  'Charcoal':               '#36454f',
+  'Cherry Blossom':         '#ffb7c5',
+  'Clover Green':           '#3a7d44',
+  'Coal Grey':              '#5c5c5c',
+  'Coyote Brown':           '#81613c',
+  'Creme':                  '#f5f0e0',
+  'Dark Chocolate Brown':   '#3b1f10',
+  'Dark Green':             '#1a3a2a',
+  'Dark Heather Grey':      '#4a4a4a',
+  'Duck Brown':             '#7b6437',
+  'Flush Pink':             '#ff6b8a',
+  'Forest Green Heather':   '#2d5a27',
+  'Graphite Heather':       '#6e6e6e',
+  'Heather Athletic Maroon':'#7a3b3b',
+  'Heather Dark Choc Brown':'#4a2f1a',
+  'Heather Navy':           '#2c3e6b',
+  'Heather Purple':         '#6b4fa0',
+  'Heather Red':            '#b85c5c',
+  'Heather Royal':          '#4a6fa5',
+  'Heather Sangria':        '#a0385a',
+  'Ivory':                  '#fffff0',
+  'Kelly':                  '#2a7a3b',
+  'Laurel Green':           '#7d9b6e',
+  'Lavender':               '#c8a8e9',
+  'Light Blue':             '#a8c8e8',
+  'Light Sand':             '#d4c9b0',
+  'Lime':                   '#a8d44a',
+  'Medium Grey':            '#9e9e9e',
+  'Natural':                '#f5f0e8',
+  'Neon Blue':              '#00b4ff',
+  'Neon Green':             '#39ff14',
+  'Neon Orange':            '#ff6624',
+  'Neon Pink':              '#ff44aa',
+  'Neon Yellow':            '#f5f500',
+  'Neptune Blue':           '#2c5f8a',
+  'Oatmeal Heather':        '#c8b89a',
+  'Olive':                  '#4a5c2a',
+  'Olive Drab Green':       '#5a5a2a',
+  'Olive Drab Grn Hther':   '#5a5a35',
+  'Orange':                 '#e86a20',
+  'Pale Blush':             '#f8d7da',
+  'Purple':                 '#4a1a7a',
+  'Sangria':                '#8b1a4a',
+  'Sapphire':               '#1a5fa0',
+  'Silver':                 '#c0c0c0',
+  'Steel Blue':             '#3a5a7a',
+  'Stonewashed Blue':       '#7a9ab0',
+  'Teal':                   '#1a7a7a',
+  'Team Purple':            '#4a1a8a',
+  'Tennessee Orange':       '#e85a1a',
+  'True Celadon':           '#9ad0b4',
+  'True Navy':              '#0a1a4a',
+  'True Royal':             '#1a3fa0',
+  'Tundra Blue':            '#7a9ac0',
+  'Woodland Brown':         '#5a4a2a',
+  'Yellow':                 '#f5e020',
+  'Aquatic Blue':           '#1ab4d4',
+  'Bright Aqua':            '#00d4d4',
+  'Candy Pink':             '#ff9ab4',
+  'Sand':                   '#c4a97a',
+  'S. Green':               '#a8e020',
+  'S. Orange':              '#ff7a20',
+};
+
+// Light colors that need a border on their swatch dot
+const LIGHT_COLORS = new Set([
+  'White','Ivory','Natural','Creme','Oatmeal Heather','Light Sand',
+  'Silver','Ash','Cherry Blossom','Pale Blush','Light Blue','Lavender',
+  'Neon Yellow','True Celadon'
+]);
+
+/**
+ * Fetch all colors + images for a product style from the proxy.
+ * Falls back gracefully if proxy is not set or call fails.
+ */
+async function fetchSanMarColors(style) {
+  if (!SANMAR_PROXY_URL) return null;
+  try {
+    const res = await fetch(`${SANMAR_PROXY_URL}/api/colors?style=${encodeURIComponent(style)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('SanMar colors fetch failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetch inventory for a style + color from the proxy.
+ * Returns { sizes: { S: { qty, status }, M: ..., L: ..., XL: ..., '2XL': ... } }
+ */
+async function fetchSanMarInventory(style, color) {
+  if (!SANMAR_PROXY_URL) return null;
+  try {
+    const res = await fetch(
+      `${SANMAR_PROXY_URL}/api/inventory?style=${encodeURIComponent(style)}&color=${encodeURIComponent(color)}`
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('SanMar inventory fetch failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Convert a SanMar API color object to our internal color format.
+ */
+function sanMarColorToInternal(apiColor) {
+  const name = apiColor.name || apiColor.colorName || '';
+  const hex  = SANMAR_COLOR_HEX[name] || '#888888';
+  return {
+    name,
+    slug        : name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    hex,
+    light       : LIGHT_COLORS.has(name),
+    img         : apiColor.front    || null,
+    imgBack     : apiColor.back     || null,
+    imgSide     : apiColor.side     || null,
+    imgThreeQ   : apiColor.threeQ   || null,
+    catalogColor: apiColor.catalogColor || name,
+    _fromAPI    : true,
+  };
+}
+
+/**
+ * Auto-populate a product's colors from the SanMar API.
+ * Called once on page load for each product that has a style number.
+ * Updates PRODUCTS in place and refreshes swatches + card image.
+ */
+async function autoPopulateProduct(productId) {
+  const prod = PRODUCTS[productId];
+  if (!prod || !prod.sanMarStyle || !SANMAR_PROXY_URL) return;
+
+  const apiColors = await fetchSanMarColors(prod.sanMarStyle);
+  if (!apiColors || !apiColors.length) return;
+
+  // Replace colors array with API data
+  prod.colors = apiColors.map(sanMarColorToInternal);
+
+  // Reset selected index to 0 (or find previous selection by name)
+  const prevName = prod.colors[selectedIdx[productId]]?.name;
+  const newIdx   = prevName
+    ? prod.colors.findIndex(c => c.name === prevName)
+    : prod.defaultColor ?? 0;
+  selectedIdx[productId] = Math.max(0, newIdx);
+
+  // Rebuild swatches with new colors
+  const swatchRow = document.getElementById(`${productId}-swatches`);
+  if (swatchRow) {
+    swatchRow.innerHTML = '';
+    const show = prod.colors.slice(0, 8);
+    show.forEach((c, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'cswatch' + (i === selectedIdx[productId] ? ' active' : '');
+      dot.style.background = c.hex;
+      dot.title = c.name;
+      if (c.light) dot.style.border = '2px solid #bbb';
+      dot.onclick = () => selectColorOnCard(productId, i);
+      swatchRow.appendChild(dot);
+    });
+    if (prod.colors.length > 8) {
+      const more = document.createElement('div');
+      more.className = 'cswatch-more';
+      more.textContent = `+${prod.colors.length - 8}`;
+      swatchRow.appendChild(more);
+    }
+  }
+
+  // Update card image to show selected color
+  selectColorOnCard(productId, selectedIdx[productId]);
+
+  console.log(`✅ ${productId}: loaded ${prod.colors.length} colors from SanMar API`);
+}
+
+/**
+ * Show inventory badges on color buttons inside the picker modal.
+ * Called when the picker opens (after API is available).
+ */
+async function loadInventoryBadges(productId) {
+  const prod = PRODUCTS[productId];
+  if (!prod || !prod.sanMarStyle || !SANMAR_PROXY_URL) return;
+
+  const grid = document.getElementById('colorGrid');
+  if (!grid) return;
+
+  // Fetch inventory for all colors in parallel
+  const inventories = await Promise.all(
+    prod.colors.map(c =>
+      fetchSanMarInventory(prod.sanMarStyle, c.catalogColor || c.name)
+    )
+  );
+
+  const btns = grid.querySelectorAll('.cpick-btn');
+  btns.forEach((btn, i) => {
+    const inv = inventories[i];
+    if (!inv || !inv.sizes) return;
+
+    const sizes   = Object.values(inv.sizes);
+    const anyIn   = sizes.some(s => s.status !== 'out_of_stock');
+    const allOut  = sizes.every(s => s.status === 'out_of_stock');
+    const anyLow  = sizes.some(s => s.status === 'low_stock');
+
+    // Remove existing badge if any
+    btn.querySelector('.inv-badge')?.remove();
+
+    if (allOut) {
+      const badge = document.createElement('span');
+      badge.className = 'inv-badge inv-out';
+      badge.textContent = 'Out of Stock';
+      btn.appendChild(badge);
+      btn.classList.add('inv-unavailable');
+    } else if (anyLow) {
+      const badge = document.createElement('span');
+      badge.className = 'inv-badge inv-low';
+      badge.textContent = 'Low Stock';
+      btn.appendChild(badge);
+    }
+
+    // Store sizes on the color for use in Design Lab URL
+    prod.colors[i].inventory = inv.sizes;
+  });
+}
+
+// ── SANMAR-AWARE OPEN PICKER (replaces inline onclick) ────────────
+// Extend openPicker to also load inventory badges when proxy is available
+const _origOpenPicker = openPicker;
+window.openPicker = async function(productId) {
+  _origOpenPicker(productId);
+  // Load inventory badges after modal is open
+  if (SANMAR_PROXY_URL) {
+    await loadInventoryBadges(productId);
+  }
+};
+
+// ── INIT: Auto-populate all products on page load ─────────────────
+async function initSanMarIntegration() {
+  if (!SANMAR_PROXY_URL) {
+    console.log('SanMar proxy not configured — using hardcoded color data.');
+    return;
+  }
+  console.log('🎨 SanMar API integration active — fetching product data...');
+  await Promise.all(Object.keys(PRODUCTS).map(autoPopulateProduct));
+  console.log('✅ SanMar product data loaded.');
+}
+
 // Init
 buildSwatches();
+initSanMarIntegration();
 </script>
