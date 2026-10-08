@@ -231,6 +231,9 @@ body{
 }
 #pickerGoBtn:hover{background:var(--red-hover);}
 .picker-note{margin-top:10px;font-size:10.5px;color:var(--txt3);text-align:center;line-height:1.6;}
+.picker-view-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
+.pvt-btn{background:var(--surface2);border:1.5px solid var(--border);color:var(--txt2);font-size:11px;font-weight:600;padding:4px 14px;border-radius:20px;cursor:pointer;transition:all .15s;}
+.pvt-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .picker-close{background:none;border:none;color:var(--txt3);font-size:22px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;}
 .picker-close:hover{color:var(--txt);}
 
@@ -479,6 +482,11 @@ body{
       </div>
       <button class="picker-close" onclick="closePicker()" aria-label="Close">&#10005;</button>
     </div>
+    <div class="picker-view-tabs" id="pickerViewTabs" style="display:none">
+      <button class="pvt-btn active" data-view="front" onclick="switchPickerView('front',this)">Front</button>
+      <button class="pvt-btn" data-view="back" onclick="switchPickerView('back',this)">Back</button>
+      <button class="pvt-btn" data-view="side" onclick="switchPickerView('side',this)">Side</button>
+    </div>
     <img class="picker-product-img" id="pickerPreviewImg" src="" alt="Product preview" onerror="this.style.opacity='.2'">
     <div class="picker-section-label">Select Color</div>
     <div id="colorGrid"></div>
@@ -582,15 +590,25 @@ const PRODUCTS = {
     name: 'Core Fleece Hoodie',
     style: 'SanMar PC78H',
     designLabKey: 'hoodie',
-    defaultColor: 0,
+    defaultColor: 2,
     colors: [
-      { name:'Black',        slug:'black',  hex:'#111111' },
-      { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
-      { name:'Navy',         slug:'navy',   hex:'#1a2952' },
-      { name:'Red',          slug:'red',    hex:'#c0392b' },
-      { name:'Royal Blue',   slug:'royal',  hex:'#2471a3' },
-      { name:'Maroon',       slug:'maroon', hex:'#6b1a1a' },
-      { name:'Gold',         slug:'gold',   hex:'#d4a017' },
+      { name:'Athletic Heather', slug:'heather', hex:'#b0a89e', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h3d/h91/30579920666654/1200W_4180_AthlHthr-0-PC78HAthlHthrModelFront3/1200W-4180-AthlHthr-0-PC78HAthlHthrModelFront3.jpg',
+        imgBack:'https://cdnp.sanmar.com/medias/sys_master/images/h53/he8/30954398122014/624Wx724H_4180_AthlHthr-2-PC78HAthlHthrModelBack3/624Wx724H-4180-AthlHthr-2-PC78HAthlHthrModelBack3.jpg',
+        imgSide:'https://cdnp.sanmar.com/medias/sys_master/images/h01/he9/30954398187550/624Wx724H_4180_AthlHthr-4-PC78HAthlHthrModelSide3/624Wx724H-4180-AthlHthr-4-PC78HAthlHthrModelSide3.jpg' },
+      { name:'White',            slug:'white',   hex:'#f0f0f0', light:true },
+      { name:'Navy',             slug:'navy',    hex:'#1a2952',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h1a/hcd/30581361868830/1200W_4180_Navy-0-PC78HNavyModelFront3/1200W-4180-Navy-0-PC78HNavyModelFront3.jpg' },
+      { name:'Red',              slug:'red',     hex:'#c0392b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hc2/he3/30581586133022/1200W_4180_Red-0-PC78HRedModelFront3/1200W-4180-Red-0-PC78HRedModelFront3.jpg' },
+      { name:'Royal Blue',       slug:'royal',   hex:'#2471a3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hd3/h0f/30581588164638/1200W_4180_Royal-0-PC78HRoyalModelFront3/1200W-4180-Royal-0-PC78HRoyalModelFront3.jpg' },
+      { name:'Maroon',           slug:'maroon',  hex:'#6b1a1a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hd3/h0d/30581355970590/1200W_4180_Maroon-0-PC78HMaroonModelFront3/1200W-4180-Maroon-0-PC78HMaroonModelFront3.jpg' },
+      { name:'Gold',             slug:'gold',    hex:'#d4a017',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hf5/hd7/30580638351390/1200W_4180_Gold-0-PC78HGoldModelFront3/1200W-4180-Gold-0-PC78HGoldModelFront3.jpg' },
+      { name:'Black',            slug:'black',   hex:'#111111' },
+      { name:'Dark Heather',     slug:'grey',    hex:'#4a4a4a' },
     ]
   },
   hat: {
@@ -691,24 +709,61 @@ function selectColorOnCard(productId, colorIdx) {
 }
 
 // ── COLOR PICKER MODAL ───────────────────────────────────────────
+let pickerView = 'front'; // 'front' | 'back' | 'side'
+
+function getPickerImgForView(color, view) {
+  if (view === 'back' && color.imgBack) return color.imgBack;
+  if (view === 'side' && color.imgSide) return color.imgSide;
+  return color.img || null;
+}
+
+function switchPickerView(view, btn) {
+  pickerView = view;
+  document.querySelectorAll('.pvt-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (!pickerProductId) return;
+  const prod = PRODUCTS[pickerProductId];
+  const color = prod.colors[selectedIdx[pickerProductId]];
+  const prevImg = document.getElementById('pickerPreviewImg');
+  const url = getPickerImgForView(color, view);
+  if (url) { prevImg.src = url; prevImg.style.opacity = '1'; }
+  else { prevImg.style.opacity = '.1'; }
+}
+
+function setPickerImage(color) {
+  const prevImg = document.getElementById('pickerPreviewImg');
+  const url = getPickerImgForView(color, pickerView);
+  if (url) {
+    prevImg.style.opacity = '0.4';
+    const tmp = new Image();
+    tmp.onload = () => { prevImg.src = url; prevImg.style.opacity = '1'; };
+    tmp.onerror = () => { prevImg.style.opacity = '.1'; };
+    tmp.src = url;
+  } else {
+    prevImg.src = ''; prevImg.style.opacity = '.1';
+  }
+}
+
 function openPicker(productId) {
   pickerProductId = productId;
+  pickerView = 'front';
   const prod = PRODUCTS[productId];
   if (!prod) return;
 
   document.getElementById('pickerTitle').textContent = prod.name;
   document.getElementById('pickerStyleNum').textContent = prod.style;
 
-  // Set preview image in modal
+  // Show/hide view tabs — only show if any color has back/side views
+  const hasMultiView = prod.colors.some(c => c.imgBack || c.imgSide);
+  const tabs = document.getElementById('pickerViewTabs');
+  tabs.style.display = hasMultiView ? 'flex' : 'none';
+  document.querySelectorAll('.pvt-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === 'front');
+  });
+
+  // Set preview image
   const curColor = prod.colors[selectedIdx[productId]];
-  const prevImg = document.getElementById('pickerPreviewImg');
-  if (curColor.img) {
-    prevImg.src = curColor.img;
-    prevImg.style.opacity = '1';
-  } else {
-    prevImg.src = '';
-    prevImg.style.opacity = '.1';
-  }
+  setPickerImage(curColor);
 
   // Build color grid
   const grid = document.getElementById('colorGrid');
@@ -724,16 +779,7 @@ function openPicker(productId) {
       grid.querySelectorAll('.cpick-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedIdx[productId] = i;
-      // Update preview image in modal
-      if (c.img) {
-        prevImg.style.opacity = '0.4';
-        const tmp = new Image();
-        tmp.onload = () => { prevImg.src = c.img; prevImg.style.opacity = '1'; };
-        tmp.onerror = () => { prevImg.style.opacity = '.1'; };
-        tmp.src = c.img;
-      } else {
-        prevImg.style.opacity = '.1';
-      }
+      setPickerImage(c);
     };
     grid.appendChild(btn);
   });
