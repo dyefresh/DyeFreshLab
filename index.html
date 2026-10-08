@@ -1419,6 +1419,10 @@ function loadURLParams(){
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = () => {
+            // Populate BOTH caches so getColorImg() and imgCache both find it
+            if(!colorImgCache[idx]) colorImgCache[idx] = {};
+            colorImgCache[idx]['front'] = img;
+            colorImgCache[idx]['back']  = img;
             imgCache['tshirt']['front_color_'+idx] = img;
             imgCache['tshirt']['front'] = img;
             render();
@@ -1508,12 +1512,18 @@ function preloadImages(){
       img.src = url;
     });
   });
-  // Pre-load all G5000 color photos that have URLs
+  // Pre-load all G5000 color photos that have URLs — populate both caches
   G5000_COLORS.forEach((c,i)=>{
     if(!c.img) return;
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload  = ()=>{ imgCache['tshirt']['front_color_'+i]=img; if(i===S.tintIdx && S.product==='tshirt') { imgCache['tshirt']['front']=img; render(); } };
+    img.onload  = ()=>{
+      imgCache['tshirt']['front_color_'+i] = img;
+      if(!colorImgCache[i]) colorImgCache[i] = {};
+      colorImgCache[i]['front'] = img;
+      colorImgCache[i]['back']  = img;
+      if(i===S.tintIdx && S.product==='tshirt'){ imgCache['tshirt']['front']=img; render(); }
+    };
     img.onerror = ()=>{ imgCache['tshirt']['front_color_'+i]=null; };
     img.src = c.img;
   });
