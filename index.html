@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DyeFresh — Design Lab</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&family=Bebas+Neue&family=Anton&family=Righteous&family=Pacifico&family=Lobster&family=Dancing+Script:wght@400;700&family=Permanent+Marker&family=Bangers&family=Russo+One&family=Black+Han+Sans&family=Boogaloo&family=Lilita+One&family=Teko:wght@400;500;600;700&family=Alfa+Slab+One&family=Fjalla+One&family=Raleway:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=Merriweather:wght@400;700;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
 /* ─────────────────────────────────────────
    RESET & TOKENS
@@ -639,6 +639,10 @@ canvas#gc{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       Mockup PNG
     </button>
+    <button class="btn btn-success" onclick="openOrderModal()" style="font-weight:700;letter-spacing:.01em;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Place Order
+    </button>
   </div>
 </header>
 
@@ -700,18 +704,49 @@ canvas#gc{
         <div class="sec-label">Add Text</div>
         <div class="field-group" style="margin-bottom:8px;">
           <label class="field-label">Your Text</label>
-          <input type="text" class="field" id="txtIn" placeholder="Enter text…"/>
+          <input type="text" class="field" id="txtIn" placeholder="Enter text…" oninput="previewFont('fontSel','fontPreviewAdd')"/>
         </div>
         <div class="field-group" style="margin-bottom:8px;">
           <label class="field-label">Font</label>
-          <select class="field" id="fontSel">
-            <option value="Impact">Impact</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Mono</option>
-            <option value="Arial Black">Arial Black</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Inter" selected>Inter</option>
+          <select class="field font-select" id="fontSel" onchange="previewFont('fontSel','fontPreviewAdd')">
+            <optgroup label="— Bold &amp; Display —">
+              <option value="Bebas Neue">Bebas Neue</option>
+              <option value="Anton">Anton</option>
+              <option value="Oswald">Oswald</option>
+              <option value="Impact">Impact</option>
+              <option value="Arial Black">Arial Black</option>
+              <option value="Teko">Teko</option>
+              <option value="Fjalla One">Fjalla One</option>
+              <option value="Russo One">Russo One</option>
+              <option value="Alfa Slab One">Alfa Slab One</option>
+              <option value="Lilita One">Lilita One</option>
+              <option value="Bangers">Bangers (Comic)</option>
+            </optgroup>
+            <optgroup label="— Clean &amp; Modern —">
+              <option value="Inter" selected>Inter</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Raleway">Raleway</option>
+              <option value="Righteous">Righteous</option>
+              <option value="Boogaloo">Boogaloo</option>
+              <option value="Black Han Sans">Black Han Sans</option>
+            </optgroup>
+            <optgroup label="— Serif —">
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Georgia">Georgia</option>
+            </optgroup>
+            <optgroup label="— Script &amp; Decorative —">
+              <option value="Pacifico">Pacifico</option>
+              <option value="Lobster">Lobster</option>
+              <option value="Dancing Script">Dancing Script</option>
+              <option value="Permanent Marker">Permanent Marker</option>
+            </optgroup>
+            <optgroup label="— Mono —">
+              <option value="Courier Prime">Courier Prime</option>
+              <option value="Courier New">Courier New</option>
+            </optgroup>
           </select>
+          <div id="fontPreviewAdd" style="margin-top:5px;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:18px;color:var(--txt);text-align:center;line-height:1.3;font-family:'Inter';">Aa — Design Lab</div>
         </div>
         <input type="hidden" id="szSel" value="32"/>
         <div class="field-group" style="margin-bottom:10px;">
@@ -728,12 +763,31 @@ canvas#gc{
 
         <!-- Upload section -->
         <div class="sec-label">Upload Artwork</div>
-        <div class="upload-zone" onclick="document.getElementById('fi').click()">
+        <div class="upload-zone" id="artDropZone" onclick="document.getElementById('fi').click()" ondragover="artDragOver(event)" ondragleave="artDragLeave(event)" ondrop="artDrop(event)">
           <div class="uz-ico">🎨</div>
-          <p>Click to upload your art</p>
-          <small>PNG · JPG · SVG supported</small>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <small>PNG · JPG · SVG · PDF supported</small>
         </div>
-        <input type="file" id="fi" accept="image/*" style="display:none" onchange="uploadImg(event)"/>
+        <input type="file" id="fi" accept="image/*,.pdf,.svg" style="display:none" onchange="uploadImg(event)"/>
+        <button class="btn btn-primary fw" onclick="document.getElementById('fi').click()" style="margin-top:8px;font-size:13px;padding:9px 13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Artwork
+        </button>
+        <div style="margin-top:6px;font-size:10.5px;color:var(--txt3);text-align:center;line-height:1.6;">
+          Best results: PNG with transparent background.<br>
+          For best print quality, use 300 DPI or higher.
+        </div>
+
+        <div class="divider"></div>
+        <div class="sec-label">Artwork Tips</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;">
+          <div style="font-size:11px;color:var(--txt2);line-height:1.8;">
+            ✅ <strong>PNG (transparent bg)</strong> — best for logos<br>
+            ✅ <strong>SVG</strong> — vector, scales perfectly<br>
+            ⚠️ <strong>JPG</strong> — no transparency, white box<br>
+            📐 Aim for <strong>300 DPI+</strong> at final print size
+          </div>
+        </div>
 
         </div>
 
@@ -753,17 +807,6 @@ canvas#gc{
       <button class="vb" onclick="setSide('back',null);syncSideTab('back')">Back</button>
       <button class="vb" onclick="setSide('sleeve',null);syncSideTab('sleeve')">Sleeve</button>
     </div>
-    <button id="previewBtn" onclick="togglePrintZone()" style="
-      position:absolute;top:12px;right:12px;z-index:10;
-      display:flex;align-items:center;gap:5px;
-      font-family:var(--font);font-size:11px;font-weight:700;
-      letter-spacing:.06em;text-transform:uppercase;
-      padding:5px 12px;border-radius:12px;cursor:pointer;
-      border:none;transition:all .18s;
-      background:var(--txt);color:var(--ylw);">
-      <span id="previewBtnIcon">▶</span>
-      <span id="previewBtnLbl">Preview</span>
-    </button>
     <canvas id="gc" width="500" height="580"></canvas>
   </div>
 
@@ -771,54 +814,51 @@ canvas#gc{
   <div class="panel rp">
     <div class="pscroll">
 
-      <!-- Print Zone -->
-      <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
-        <div class="sec-label">Print Zone</div>
-        <div class="pz-hint-box" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span><strong>Corner dots</strong> resize &middot; <strong>Center</strong> + moves</span>
-          <button id="pzToggleBtn" onclick="togglePrintZone()" style="
-            flex-shrink:0;font-family:var(--font);font-size:11px;font-weight:600;
-            padding:4px 10px;border-radius:10px;cursor:pointer;
-            border:1.5px solid var(--red);background:var(--red);color:#fff;
-            transition:all .13s;white-space:nowrap;">Visible</button>
-        </div>
-        <div class="slider-row">
-          <span class="sl-lbl">Width</span>
-          <input type="range" class="red-thumb" id="pzW" min="10" max="143" value="143" oninput="setPZSlider()"/>
-          <span class="sl-val" id="pzWv">15.0"</span>
-        </div>
-        <div class="slider-row">
-          <span class="sl-lbl">Height</span>
-          <input type="range" class="red-thumb" id="pzH" min="10" max="124" value="124" oninput="setPZSlider()"/>
-          <span class="sl-val" id="pzHv">13.0"</span>
-        </div>
-        <div class="slider-row">
-          <span class="sl-lbl">Pos X</span>
-          <input type="range" class="red-thumb" id="pzX" min="140" max="177" value="177" oninput="setPZSlider()"/>
-          <span class="sl-val" id="pzXv">5.3"</span>
-        </div>
-        <div class="slider-row">
-          <span class="sl-lbl">Pos Y</span>
-          <input type="range" class="red-thumb" id="pzY" min="100" max="330" value="184" oninput="setPZSlider()"/>
-          <span class="sl-val" id="pzYv">5.3"</span>
-        </div>
-        <button class="btn btn-ghost fw mt8" style="font-size:12px;" onclick="resetPZ()">&#8635; Reset Print Zone</button>
-      </div>
-
       <!-- Text Edit Section (shown when text layer selected) -->
       <div class="edit-section" id="textEditSec" style="display:none;">
         <div class="edit-section-title">&#9998; Edit Selected Text</div>
         <input type="text" class="live-input" id="liveText" placeholder="Edit text..." oninput="applyEdit()"/>
         <div class="field-group" style="margin-bottom:8px;">
           <label class="field-label">Font</label>
-          <select class="field" id="liveFont" onchange="applyEdit()">
-            <option value="Impact">Impact</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Mono</option>
-            <option value="Arial Black">Arial Black</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Inter">Inter</option>
+          <select class="field font-select" id="liveFont" onchange="applyEdit();previewFont('liveFont','fontPreviewEdit')">
+            <optgroup label="— Bold &amp; Display —">
+              <option value="Bebas Neue">Bebas Neue</option>
+              <option value="Anton">Anton</option>
+              <option value="Oswald">Oswald</option>
+              <option value="Impact">Impact</option>
+              <option value="Arial Black">Arial Black</option>
+              <option value="Teko">Teko</option>
+              <option value="Fjalla One">Fjalla One</option>
+              <option value="Russo One">Russo One</option>
+              <option value="Alfa Slab One">Alfa Slab One</option>
+              <option value="Lilita One">Lilita One</option>
+              <option value="Bangers">Bangers (Comic)</option>
+            </optgroup>
+            <optgroup label="— Clean &amp; Modern —">
+              <option value="Inter" selected>Inter</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Raleway">Raleway</option>
+              <option value="Righteous">Righteous</option>
+              <option value="Boogaloo">Boogaloo</option>
+              <option value="Black Han Sans">Black Han Sans</option>
+            </optgroup>
+            <optgroup label="— Serif —">
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Merriweather">Merriweather</option>
+              <option value="Georgia">Georgia</option>
+            </optgroup>
+            <optgroup label="— Script &amp; Decorative —">
+              <option value="Pacifico">Pacifico</option>
+              <option value="Lobster">Lobster</option>
+              <option value="Dancing Script">Dancing Script</option>
+              <option value="Permanent Marker">Permanent Marker</option>
+            </optgroup>
+            <optgroup label="— Mono —">
+              <option value="Courier Prime">Courier Prime</option>
+              <option value="Courier New">Courier New</option>
+            </optgroup>
           </select>
+          <div id="fontPreviewEdit" style="margin-top:5px;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-size:18px;color:var(--txt);text-align:center;line-height:1.3;font-family:'Inter';">Aa — Design Lab</div>
         </div>
         <input type="hidden" id="liveSz" value="32"/>
         <!-- Bold / Italic / Alignment -->
@@ -1006,24 +1046,24 @@ canvas#gc{
           <div id="szBreakdown"></div>
           <div class="sumr" style="padding-top:2px;"><span style="font-weight:600;">Total Units</span><span id="sQty" style="font-weight:700;">0</span></div>
         </div>
-        <div class="sec-label" style="margin-top:12px;margin-bottom:8px;">Save Your Design</div>
-        <button class="btn btn-primary fw" onclick="dlMockup()" style="margin-bottom:6px;font-size:13px;padding:9px 13px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          Download Mockup PNG
-        </button>
-        <button class="btn btn-ghost fw" onclick="dlArtwork()" style="margin-bottom:12px;font-size:13px;padding:9px 13px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Download Artwork PNG
-        </button>
-        <div style="background:var(--grn-bg);border:1px solid var(--grn);border-radius:var(--radius);padding:11px 12px;text-align:center;">
-          <div style="font-size:11px;font-weight:600;color:var(--grn);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Get Pricing</div>
-          <div style="font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:6px;">Email your mockup with sizes &amp; quantities for a custom quote.</div>
-          <a href="mailto:dyefreshapparel@gmail.com?subject=Design Quote Request" style="display:block;background:var(--grn);color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:var(--radius-sm);text-decoration:none;">
-            &#9993; dyefreshapparel@gmail.com
-          </a>
-        </div>
-        <div style="margin-top:9px;font-size:10.5px;color:var(--txt3);text-align:center;">
-          7-12 business day turnaround
+        <!-- PLACE ORDER BUTTON -->
+        <div style="margin-top:4px;">
+          <button class="btn btn-primary fw" onclick="dlMockup()" style="margin-bottom:6px;font-size:13px;padding:9px 13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Download Mockup PNG
+          </button>
+          <button class="btn btn-ghost fw" onclick="dlArtwork()" style="margin-bottom:10px;font-size:13px;padding:9px 13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download Artwork PNG
+          </button>
+          <button class="btn btn-success fw" onclick="openOrderModal()" style="font-size:14px;font-weight:700;padding:11px 13px;letter-spacing:.01em;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Submit Your Order
+          </button>
+          <div style="margin-top:8px;font-size:11px;color:var(--txt3);text-align:center;line-height:1.6;">
+            We'll email you a quote within 24 hours.<br>
+            <strong style="color:var(--txt2);">7–12 business day turnaround</strong>
+          </div>
         </div>
       </div>
 
@@ -1040,17 +1080,48 @@ canvas#gc{
   <button class="mbb-btn" id="mbb-options" onclick="mbbToggle('options')">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg><br>Options
   </button>
-  <button class="mbb-btn" id="mbb-preview" onclick="togglePrintZone()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><br>Preview
+  <button class="mbb-btn" id="mbb-preview" onclick="dlMockup()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><br>Mockup
   </button>
-  <button class="mbb-btn" id="mbb-save" onclick="dlMockup()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><br>Save
+  <button class="mbb-btn" id="mbb-save" onclick="openOrderModal()" style="background:var(--red);color:#fff;border-color:var(--red);font-weight:700;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg><br>Order
   </button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── FONT PREVIEW ───
+function previewFont(selId, previewId){
+  const sel = document.getElementById(selId);
+  const preview = document.getElementById(previewId);
+  if(!sel || !preview) return;
+  const font = sel.value;
+  preview.style.fontFamily = '"' + font + '", sans-serif';
+  // Show the current text input value as preview if available
+  const txtIn = document.getElementById('txtIn');
+  const liveText = document.getElementById('liveText');
+  const sample = (txtIn && txtIn.value.trim()) || (liveText && liveText.value.trim()) || 'Aa — Design Lab';
+  preview.textContent = sample;
+}
+
+// ─── ART DRAG & DROP ───
+function artDragOver(e){
+  e.preventDefault();
+  document.getElementById('artDropZone').style.borderColor='var(--red)';
+  document.getElementById('artDropZone').style.background='var(--red-bg)';
+}
+function artDragLeave(e){
+  document.getElementById('artDropZone').style.borderColor='';
+  document.getElementById('artDropZone').style.background='';
+}
+function artDrop(e){
+  e.preventDefault();
+  artDragLeave(e);
+  const file = e.dataTransfer.files[0];
+  if(file) uploadImg({target:{files:[file]}});
+}
+
 // ─── UI HELPERS ───
 function showTool(name, btn) {
   document.querySelectorAll('.tpane').forEach(p => {
@@ -1236,7 +1307,7 @@ const S = {
   drag:null,
   views:{front:[],back:[],sleeve:[]},
   pz:{x:160,y:155,w:180,h:200},
-  pzVisible:true,
+  pzVisible:false,
 };
 
 const cv  = document.getElementById('gc');
@@ -1246,6 +1317,75 @@ const imgCache = {};
 // ─────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+//  URL PARAMETER LOADER
+//  Reads ?product=tshirt&color=black from
+//  the catalog page's "Customize It" links
+// ─────────────────────────────────────────
+function loadURLParams(){
+  const params = new URLSearchParams(window.location.search);
+  const product = params.get('product');
+  const color   = params.get('color');
+
+  // Map catalog color names → SHIRT_COLORS slugs
+  const COLOR_MAP = {
+    'black':       'black',
+    'white':       'white',
+    'navy':        'navy',
+    'red':         'red',
+    'grey':        'darkheathergrey',
+    'gray':        'darkheathergrey',
+    'heather':     'athleticheather',
+    'royal':       'royalblue',
+    'maroon':      'maroon',
+    'gold':        'gold',
+    'orange':      'orange',
+    'purple':      'purple',
+    'green':       'athletickelly',
+    'silver':      'silver',
+    'cardinal':    'cardinal',
+    'carolina':    'carolinablue',
+    'aquatic':     'aquaticblue',
+  };
+
+  // Set product
+  if(product){
+    const validProducts = ['tshirt','hoodie','hat','joggers'];
+    const p = product.toLowerCase().trim();
+    if(validProducts.includes(p)){
+      S.product = p;
+      // Highlight the matching product card
+      document.querySelectorAll('.prod-card').forEach(card => {
+        const cardFn = card.getAttribute('onclick') || '';
+        const isMatch = cardFn.includes(`'${p}'`);
+        card.classList.toggle('on', isMatch);
+        card.classList.toggle('active', isMatch);
+      });
+    }
+  }
+
+  // Set color — match against SHIRT_COLORS slugs
+  if(color){
+    const raw = color.toLowerCase().trim().replace(/[\s_-]/g,'');
+    const mapped = COLOR_MAP[raw] || raw;
+    const idx = SHIRT_COLORS.findIndex(c =>
+      (c.slug || '').replace(/[\s_-]/g,'').toLowerCase() === mapped ||
+      c.n.toLowerCase().replace(/[\s_-]/g,'') === mapped
+    );
+    if(idx !== -1){
+      S.tintIdx = idx;
+      // Update the color swatch highlight after buildColorSwatches runs
+      setTimeout(()=>{
+        highlightActiveSwatch();
+        const nameEl = document.getElementById('selectedColorName');
+        if(nameEl) nameEl.textContent = SHIRT_COLORS[idx].n;
+        // Load the garment photo for this color
+        loadPC54Images();
+      }, 50);
+    }
+  }
+}
+
 function init(){
   loadPC54Images();
   buildColorSwatches();
@@ -1253,6 +1393,7 @@ function init(){
   buildEditDots();
   preloadImages();
   syncPZSliders();
+  loadURLParams();  // ← reads ?product= and ?color= from catalog page
   render();
 }
 
@@ -1417,8 +1558,7 @@ function render(){
   ctx.shadowBlur = 0;
   drawPhoto();
   S.layers.forEach(l=>drawLayer(l));
-  if(S.selectedId && S.pzVisible) drawHandles();
-  if(S.pzVisible) drawPrintZone();   // only when not in preview mode
+  if(S.selectedId) drawHandles();
 }
 
 function drawPhoto(){
@@ -1864,7 +2004,7 @@ cv.addEventListener('touchend',  ()=>{ S.drag=null; });
 
 function mdown(mx,my){
   // 1. Selected layer corner handle?
-  if(S.selectedId && S.pzVisible){
+  if(S.selectedId){
     const sel=S.layers.find(l=>l.id===S.selectedId);
     if(sel){
       const h=layerCornerHit(mx,my,sel);
@@ -1887,18 +2027,10 @@ function mdown(mx,my){
   const hit=layerHit(mx,my);
   if(hit){
     S.selectedId=hit.id;
-    S.pzVisible=true;
-    setPZHint(false);
     S.drag={type:'lmove',ox:mx-hit.x,oy:my-hit.y};
     updLayers(); syncT(); render(); return;
   }
-  // 3. Print zone interactions only when visible
-  if(S.pzVisible){
-    const pc=pzCornerHit(mx,my);
-    if(pc){ S.drag={type:'pz_corner',h:pc,startPZ:{...S.pz}}; return; }
-    if(pzCenterHit(mx,my)){ S.drag={type:'pz_move',ox:mx-S.pz.x,oy:my-S.pz.y}; return; }
-  }
-  // 4. Clicked garment background → just deselect, print zone stays visible
+  // 3. Clicked garment background → deselect
   S.selectedId=null;
   S.drag=null;
   updLayers(); syncT(); render();
@@ -1962,24 +2094,6 @@ function mmove(mx,my){
       syncT();
     }
     render();
-  } else if(t==='pz_move'){
-    S.pz.x = mx - S.drag.ox;
-    S.pz.y = my - S.drag.oy;
-    clampPZ();
-    syncPZSliders();
-  } else if(t==='pz_corner'){
-    const sp=S.drag.startPZ, h=S.drag.h;
-    const dx=mx-sp.x-(h.includes('r')?sp.w:0);
-    const dy=my-sp.y-(h.includes('b')?sp.h:0);
-    if(h==='br'){S.pz.w=Math.max(20,sp.w+dx);S.pz.h=Math.max(20,sp.h+dy);}
-    else if(h==='bl'){const nw=Math.max(20,sp.w-dx);S.pz.x=sp.x+sp.w-nw;S.pz.w=nw;S.pz.h=Math.max(20,sp.h+dy);}
-    else if(h==='tr'){S.pz.w=Math.max(20,sp.w+dx);const nh=Math.max(20,sp.h-dy);S.pz.y=sp.y+sp.h-nh;S.pz.h=nh;}
-    else if(h==='tl'){
-      const nw=Math.max(20,sp.w-dx);S.pz.x=sp.x+sp.w-nw;S.pz.w=nw;
-      const nh=Math.max(20,sp.h-dy);S.pz.y=sp.y+sp.h-nh;S.pz.h=nh;
-    }
-    clampPZ();
-    syncPZSliders();
   }
   render();
 }
@@ -2933,5 +3047,708 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 init();
+</script>
+
+<!-- ══════════════════════════════════════════════
+     ORDER MODAL STYLES
+     ══════════════════════════════════════════════ -->
+<style>
+/* ── Order Modal Overlay ── */
+#orderModal{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(10,10,10,.72);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:16px;
+}
+#orderModal.open{ display:flex; }
+
+.om-box{
+  background:var(--surface);border-radius:14px;
+  box-shadow:0 24px 80px rgba(0,0,0,.28),0 4px 16px rgba(0,0,0,.12);
+  width:100%;max-width:600px;max-height:90vh;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── Modal header ── */
+.om-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px 14px;border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.om-hdr-left{ display:flex;flex-direction:column;gap:2px; }
+.om-title{ font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--txt); }
+.om-sub{ font-size:12px;color:var(--txt3); }
+.om-close{
+  width:32px;height:32px;border-radius:50%;
+  border:1.5px solid var(--border);background:var(--surface2);
+  cursor:pointer;font-size:16px;color:var(--txt2);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .13s;line-height:1;
+}
+.om-close:hover{ background:var(--border);color:var(--txt); }
+
+/* ── Step indicator ── */
+.om-steps{
+  display:flex;align-items:center;gap:0;
+  padding:14px 22px;border-bottom:1px solid var(--border);
+  background:var(--surface2);flex-shrink:0;
+}
+.om-step{
+  display:flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:600;color:var(--txt3);
+  flex:1;
+}
+.om-step-num{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--border2);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:var(--txt3);flex-shrink:0;
+  transition:all .2s;
+}
+.om-step.active .om-step-num{
+  background:var(--red);border-color:var(--red);color:#fff;
+}
+.om-step.active{ color:var(--txt); }
+.om-step.done .om-step-num{
+  background:var(--grn);border-color:var(--grn);color:#fff;
+}
+.om-step.done{ color:var(--grn); }
+.om-step-line{
+  flex:1;height:2px;background:var(--border);
+  margin:0 4px;border-radius:2px;
+  transition:background .2s;
+}
+.om-step.done + .om-step-line,
+.om-step-line.done{ background:var(--grn); }
+
+/* ── Modal body ── */
+.om-body{
+  flex:1;overflow-y:auto;padding:20px 22px;
+  min-height:0;
+}
+
+/* ── Step panels ── */
+.om-panel{ display:none; }
+.om-panel.active{ display:block; }
+
+/* ── Review grid ── */
+.rev-grid{
+  display:grid;grid-template-columns:180px 1fr;gap:16px;
+  margin-bottom:16px;
+}
+.rev-preview{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;display:flex;
+  align-items:center;justify-content:center;min-height:160px;
+}
+.rev-preview canvas{
+  max-width:100%;max-height:180px;
+  width:auto;height:auto;border-radius:6px;
+}
+.rev-details{ display:flex;flex-direction:column;gap:6px; }
+.rev-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:12.5px;padding:4px 0;
+  border-bottom:1px solid var(--surface3);
+}
+.rev-row:last-child{ border-bottom:none; }
+.rev-label{ color:var(--txt3);font-weight:500; }
+.rev-val{ font-weight:600;color:var(--txt);text-align:right;max-width:65%; }
+
+/* Size breakdown table */
+.sz-table{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  margin-bottom:12px;
+}
+.sz-col{ display:flex;flex-direction:column; }
+.sz-col:not(:last-child){ border-right:1px solid var(--border); }
+.sz-hdr{
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  font-size:10px;font-weight:700;text-align:center;
+  padding:5px 2px;color:var(--txt2);letter-spacing:.06em;
+}
+.sz-hdr.has-qty{ background:var(--txt);color:#fff; }
+.sz-qty{
+  font-size:15px;font-weight:700;color:var(--txt);
+  text-align:center;padding:8px 2px;
+}
+.sz-qty.zero{ color:var(--border2); }
+
+.rev-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;background:var(--surface2);
+  border-radius:8px;font-size:13px;font-weight:600;margin-bottom:4px;
+}
+
+/* ── Contact form ── */
+.om-form-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  margin-bottom:10px;
+}
+.om-form-grid.full{ grid-template-columns:1fr; }
+.om-field-wrap{ display:flex;flex-direction:column;gap:3px; }
+.om-label{
+  font-size:10.5px;font-weight:600;color:var(--txt3);
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.om-field{
+  width:100%;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:7px;color:var(--txt);font-family:var(--font);
+  font-size:13px;padding:9px 11px;outline:none;
+  transition:border-color .13s;
+}
+.om-field:focus{ border-color:var(--red);box-shadow:0 0 0 3px rgba(224,48,0,.08); }
+.om-field.error{ border-color:#e03000; }
+select.om-field{
+  cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%239a9690' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+}
+textarea.om-field{ resize:vertical;min-height:80px;line-height:1.5; }
+
+/* Print method cards */
+.method-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-bottom:4px;
+}
+.method-card{
+  border:2px solid var(--border);border-radius:10px;
+  padding:12px;cursor:pointer;background:var(--surface2);
+  transition:all .15s;text-align:center;
+}
+.method-card:hover{ border-color:var(--red-mid);background:var(--red-bg); }
+.method-card.on{ border-color:var(--red);background:var(--red-bg); }
+.method-card .mc-icon{ font-size:22px;margin-bottom:4px; }
+.method-card .mc-name{ font-size:12px;font-weight:700;color:var(--txt);margin-bottom:2px; }
+.method-card .mc-desc{ font-size:10.5px;color:var(--txt3);line-height:1.4; }
+.method-card.on .mc-name{ color:var(--red); }
+
+/* Rush checkbox */
+.rush-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:8px;
+  cursor:pointer;transition:all .13s;margin-bottom:4px;
+}
+.rush-row:hover{ border-color:var(--border2); }
+.rush-row input[type=checkbox]{ width:16px;height:16px;cursor:pointer;accent-color:var(--red); }
+.rush-label{ font-size:12.5px;font-weight:600;color:var(--txt); }
+.rush-note{ font-size:11px;color:var(--txt3); }
+
+/* ── Confirm panel ── */
+.confirm-card{
+  background:var(--grn-bg);border:2px solid var(--grn);
+  border-radius:12px;padding:24px;text-align:center;
+}
+.confirm-icon{ font-size:40px;margin-bottom:10px; }
+.confirm-title{ font-size:18px;font-weight:700;color:var(--grn);margin-bottom:6px; }
+.confirm-msg{ font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:16px; }
+.confirm-details{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:12px;text-align:left;font-size:12px;
+  color:var(--txt2);line-height:1.8;margin-bottom:12px;
+}
+.confirm-details strong{ color:var(--txt); }
+
+/* ── Modal footer ── */
+.om-footer{
+  padding:14px 22px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-shrink:0;background:var(--surface2);
+}
+.om-back{
+  font-family:var(--font);font-size:12.5px;font-weight:600;
+  color:var(--txt2);background:none;border:1.5px solid var(--border2);
+  border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .13s;
+}
+.om-back:hover{ background:var(--surface);color:var(--txt); }
+.om-next{
+  font-family:var(--font);font-size:13px;font-weight:700;
+  color:#fff;background:var(--red);border:none;
+  border-radius:8px;padding:10px 22px;cursor:pointer;
+  transition:all .13s;display:flex;align-items:center;gap:6px;
+  flex:1;justify-content:center;
+}
+.om-next:hover{ background:#c82800; }
+.om-next:disabled{ background:var(--border2);cursor:default; }
+.om-next.green{ background:var(--grn); }
+.om-next.green:hover{ background:#007a4e; }
+
+/* ── Sanmar brand tag ── */
+.sanmar-note{
+  display:flex;align-items:center;gap:6px;font-size:10.5px;
+  color:var(--txt3);margin-top:8px;justify-content:center;
+}
+.sanmar-badge{
+  background:#00205c;color:#fff;font-size:9px;font-weight:700;
+  padding:2px 6px;border-radius:4px;letter-spacing:.04em;
+}
+
+/* Error hint */
+.field-err{ font-size:10px;color:var(--red);margin-top:2px;display:none; }
+.field-err.show{ display:block; }
+
+@media(max-width:600px){
+  .om-box{ max-height:96vh; }
+  .rev-grid{ grid-template-columns:1fr; }
+  .om-form-grid{ grid-template-columns:1fr; }
+  .method-grid{ grid-template-columns:1fr 1fr; }
+  .om-body{ padding:14px 14px; }
+  .om-hdr,.om-footer{ padding-left:14px;padding-right:14px; }
+  .om-steps{ padding:10px 14px; }
+}
+</style>
+
+<!-- ══════════════════════════════════════════════
+     ORDER MODAL HTML
+     ══════════════════════════════════════════════ -->
+<div id="orderModal" role="dialog" aria-modal="true" aria-label="Place Order">
+  <div class="om-box">
+
+    <!-- Header -->
+    <div class="om-hdr">
+      <div class="om-hdr-left">
+        <span class="om-title">Place Your Order</span>
+        <span class="om-sub" id="omSubLine">Step 1 of 3 — Review your design</span>
+      </div>
+      <button class="om-close" onclick="closeOrderModal()" title="Close">✕</button>
+    </div>
+
+    <!-- Steps -->
+    <div class="om-steps">
+      <div class="om-step active" id="omStep1">
+        <div class="om-step-num">1</div>
+        <span>Review</span>
+      </div>
+      <div class="om-step-line" id="omLine1"></div>
+      <div class="om-step" id="omStep2">
+        <div class="om-step-num">2</div>
+        <span>Details</span>
+      </div>
+      <div class="om-step-line" id="omLine2"></div>
+      <div class="om-step" id="omStep3">
+        <div class="om-step-num">3</div>
+        <span>Submit</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="om-body">
+
+      <!-- ── STEP 1: REVIEW DESIGN ── -->
+      <div class="om-panel active" id="omPanel1">
+        <div style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:12px;">Confirm your design before ordering</div>
+
+        <div class="rev-grid">
+          <div class="rev-preview">
+            <canvas id="omPreviewCanvas" width="280" height="320"></canvas>
+          </div>
+          <div class="rev-details">
+            <div class="rev-row">
+              <span class="rev-label">Product</span>
+              <span class="rev-val" id="omRProd">—</span>
+            </div>
+            <div class="rev-row">
+              <span class="rev-label">Color</span>
+              <span class="rev-val" id="omRColor">—</span>
+            </div>
+            <div class="rev-row">
+              <span class="rev-label">Placement</span>
+              <span class="rev-val" id="omRPlacement">—</span>
+            </div>
+            <div class="rev-row">
+              <span class="rev-label">Design layers</span>
+              <span class="rev-val" id="omRLayers">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:600;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">Sizes &amp; Quantities</div>
+        <div class="sz-table" id="omSzTable"><!-- filled by JS --></div>
+        <div class="rev-total-row">
+          <span>Total Units</span>
+          <span id="omTotalUnits" style="font-size:16px;color:var(--red);">0</span>
+        </div>
+
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--txt2);line-height:1.7;margin-top:4px;">
+          <strong style="color:var(--txt);">Not sure about your design?</strong> That's OK — submit your order and we'll work with you to finalize it. You can also upload your own artwork files after submitting.
+        </div>
+      </div>
+
+      <!-- ── STEP 2: ORDER DETAILS ── -->
+      <div class="om-panel" id="omPanel2">
+
+        <!-- Contact Info -->
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Your Contact Info</div>
+        <div class="om-form-grid">
+          <div class="om-field-wrap">
+            <label class="om-label">First Name *</label>
+            <input class="om-field" id="omFirstName" type="text" placeholder="Maria" autocomplete="given-name"/>
+            <span class="field-err" id="errFirstName">Required</span>
+          </div>
+          <div class="om-field-wrap">
+            <label class="om-label">Last Name *</label>
+            <input class="om-field" id="omLastName" type="text" placeholder="Garcia" autocomplete="family-name"/>
+            <span class="field-err" id="errLastName">Required</span>
+          </div>
+        </div>
+        <div class="om-form-grid">
+          <div class="om-field-wrap">
+            <label class="om-label">Email *</label>
+            <input class="om-field" id="omEmail" type="email" placeholder="you@email.com" autocomplete="email"/>
+            <span class="field-err" id="errEmail">Valid email required</span>
+          </div>
+          <div class="om-field-wrap">
+            <label class="om-label">Phone</label>
+            <input class="om-field" id="omPhone" type="tel" placeholder="(631) 555-0100" autocomplete="tel"/>
+          </div>
+        </div>
+        <div class="om-form-grid full" style="margin-bottom:14px;">
+          <div class="om-field-wrap">
+            <label class="om-label">Organization / Team / School (optional)</label>
+            <input class="om-field" id="omOrg" type="text" placeholder="Lincoln High School Soccer"/>
+          </div>
+        </div>
+
+        <!-- Print Method -->
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Print Method</div>
+        <div class="method-grid" id="omMethodGrid">
+          <div class="method-card on" data-method="heat-press" onclick="selectMethod(this)">
+            <div class="mc-icon">🔥</div>
+            <div class="mc-name">Heat Press</div>
+            <div class="mc-desc">Vibrant full-color prints. No minimums. Best for small orders.</div>
+          </div>
+          <div class="method-card" data-method="screen-print" onclick="selectMethod(this)">
+            <div class="mc-icon">🖨️</div>
+            <div class="mc-name">Screen Print</div>
+            <div class="mc-desc">Durable & cost-effective for 12+ pieces. Up to 6 colors.</div>
+          </div>
+          <div class="method-card" data-method="embroidery" onclick="selectMethod(this)">
+            <div class="mc-icon">🧵</div>
+            <div class="mc-name">Embroidery</div>
+            <div class="mc-desc">Premium stitched logos. Best for hats, polos & left-chest.</div>
+          </div>
+          <div class="method-card" data-method="dtg" onclick="selectMethod(this)">
+            <div class="mc-icon">🎨</div>
+            <div class="mc-name">DTG / DTF</div>
+            <div class="mc-desc">Direct-to-garment printing. Photo-quality color on any shirt.</div>
+          </div>
+        </div>
+        <div class="sanmar-note">
+          <span class="sanmar-badge">SanMar</span>
+          All garments sourced from SanMar wholesale. Premium quality guaranteed.
+        </div>
+
+        <!-- Timeline -->
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-top:14px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Timeline</div>
+        <label class="rush-row" id="rushRow">
+          <input type="checkbox" id="omRush" onchange="toggleRush()"/>
+          <div>
+            <div class="rush-label">⚡ Rush Order (+50%)</div>
+            <div class="rush-note">Need it in 3–5 business days? Check this and we'll prioritize your order.</div>
+          </div>
+        </label>
+        <div style="font-size:11.5px;color:var(--txt3);margin-top:6px;line-height:1.6;">
+          Standard turnaround: <strong style="color:var(--txt);">7–12 business days</strong> after art approval.
+        </div>
+
+        <!-- Special Notes -->
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-top:14px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Notes &amp; Special Requests</div>
+        <div class="om-form-grid full">
+          <div class="om-field-wrap">
+            <label class="om-label">Anything we should know?</label>
+            <textarea class="om-field" id="omNotes" placeholder="e.g. Need all pieces by Nov 15th · Back design is separate · Exact color match to Pantone 286 · Include extra XL if possible"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: CONFIRM ── -->
+      <div class="om-panel" id="omPanel3">
+        <div class="confirm-card" id="omConfirmCard">
+          <div class="confirm-icon">✅</div>
+          <div class="confirm-title">Order Request Sent!</div>
+          <div class="confirm-msg">
+            Your email client opened with your full order details. Send that message and we'll get back to you with pricing within <strong>24 hours</strong>.
+          </div>
+          <div class="confirm-details" id="omConfirmDetails"><!-- filled by JS --></div>
+          <button class="btn btn-ghost fw" onclick="dlMockup()" style="font-size:13px;padding:10px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Also save your Mockup PNG
+          </button>
+          <div style="font-size:11px;color:var(--txt3);margin-top:10px;">
+            Questions? Call or text <strong style="color:var(--txt);">DyeFresh</strong> directly.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /om-body -->
+
+    <!-- Footer -->
+    <div class="om-footer">
+      <button class="om-back" id="omBackBtn" onclick="omGoBack()" style="display:none;">← Back</button>
+      <button class="om-next" id="omNextBtn" onclick="omGoNext()">
+        Review My Order →
+      </button>
+    </div>
+
+  </div><!-- /om-box -->
+</div><!-- /orderModal -->
+
+<!-- ══════════════════════════════════════════════
+     ORDER MODAL JS
+     ══════════════════════════════════════════════ -->
+<script>
+// ── State ──
+let omCurrentStep = 1;
+let omSelectedMethod = 'heat-press';
+
+// ── Sanmar Product labels ──
+const PROD_LABELS = {
+  tshirt:  'T-Shirt (Gildan G500 / SanMar PC54)',
+  hoodie:  'Hoodie (SanMar PC78H)',
+  hat:     'Structured Cap (SanMar C112)',
+  joggers: 'Joggers (SanMar F082)'
+};
+
+// ── OPEN MODAL ──
+function openOrderModal(){
+  // Reset to step 1
+  omCurrentStep = 1;
+  omUpdateStepUI();
+  omPopulateReview();
+  document.getElementById('orderModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// ── CLOSE MODAL ──
+function closeOrderModal(){
+  document.getElementById('orderModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on backdrop click
+document.getElementById('orderModal').addEventListener('click', function(e){
+  if(e.target === this) closeOrderModal();
+});
+
+// ── POPULATE REVIEW PANEL ──
+function omPopulateReview(){
+  // Mini preview canvas
+  const pv = document.getElementById('omPreviewCanvas');
+  const pvCtx = pv.getContext('2d');
+  pvCtx.clearRect(0,0,pv.width,pv.height);
+  // Scale down main canvas
+  pvCtx.drawImage(cv, 0,0, pv.width, pv.height);
+
+  // Product / color / placement
+  const colorName = document.getElementById('selectedColorName')?.textContent || '—';
+  const prodKey   = S.product || 'tshirt';
+  const prodLabel = PROD_LABELS[prodKey] || prodKey;
+  const side      = (S.side || 'front');
+  const placement = side.charAt(0).toUpperCase() + side.slice(1);
+  const layers    = (S.views[side] || S.layers || []).length;
+
+  document.getElementById('omRProd').textContent       = prodLabel;
+  document.getElementById('omRColor').textContent      = colorName;
+  document.getElementById('omRPlacement').textContent  = placement;
+  document.getElementById('omRLayers').textContent     = layers + ' element' + (layers!==1?'s':'');
+
+  // Sizes table
+  const table = document.getElementById('omSzTable');
+  const sizes = ['XS','S','M','L','XL','2XL'];
+  let totalUnits = 0;
+  let szHtml = '';
+  sizes.forEach(sz => {
+    const qty = parseInt(document.getElementById('q'+sz)?.value || 0);
+    totalUnits += qty;
+    szHtml += `<div class="sz-col">
+      <div class="sz-hdr ${qty>0?'has-qty':''}">${sz}</div>
+      <div class="sz-qty ${qty===0?'zero':''}">${qty||0}</div>
+    </div>`;
+  });
+  table.innerHTML = szHtml;
+  document.getElementById('omTotalUnits').textContent = totalUnits;
+}
+
+// ── VALIDATE STEP 2 ──
+function omValidateStep2(){
+  let ok = true;
+  const firstName = document.getElementById('omFirstName').value.trim();
+  const lastName  = document.getElementById('omLastName').value.trim();
+  const email     = document.getElementById('omEmail').value.trim();
+
+  const setErr = (id, errId, show) => {
+    document.getElementById(id).classList.toggle('error', show);
+    document.getElementById(errId).classList.toggle('show', show);
+    if(show) ok = false;
+  };
+
+  setErr('omFirstName','errFirstName', !firstName);
+  setErr('omLastName','errLastName', !lastName);
+  setErr('omEmail','errEmail', !email || !email.includes('@'));
+
+  return ok;
+}
+
+// ── BUILD EMAIL BODY ──
+function omBuildEmail(){
+  const sizes  = ['XS','S','M','L','XL','2XL'];
+  const colorName  = document.getElementById('selectedColorName')?.textContent || '—';
+  const prodKey    = S.product || 'tshirt';
+  const prodLabel  = PROD_LABELS[prodKey] || prodKey;
+  const side       = S.side || 'front';
+  const placement  = side.charAt(0).toUpperCase() + side.slice(1);
+  const firstName  = document.getElementById('omFirstName').value.trim();
+  const lastName   = document.getElementById('omLastName').value.trim();
+  const email      = document.getElementById('omEmail').value.trim();
+  const phone      = document.getElementById('omPhone').value.trim();
+  const org        = document.getElementById('omOrg').value.trim();
+  const rush       = document.getElementById('omRush').checked;
+  const notes      = document.getElementById('omNotes').value.trim();
+
+  // Build size list
+  let szLines = '';
+  let totalUnits = 0;
+  sizes.forEach(sz => {
+    const qty = parseInt(document.getElementById('q'+sz)?.value || 0);
+    if(qty > 0){ szLines += `  ${sz}: ${qty}\n`; totalUnits += qty; }
+  });
+  if(!szLines) szLines = '  (None entered — please confirm quantities)\n';
+
+  const methodMap = {
+    'heat-press': 'Heat Press (Full Color, No Minimums)',
+    'screen-print': 'Screen Print (12+ pcs, up to 6 colors)',
+    'embroidery': 'Embroidery',
+    'dtg': 'DTG / DTF (Direct-to-Garment)'
+  };
+  const methodLabel = methodMap[omSelectedMethod] || omSelectedMethod;
+
+  const subject = `DyeFresh Order Request — ${firstName} ${lastName} — ${totalUnits} ${prodLabel.split('(')[0].trim()}(s)`;
+
+  const body =
+`Hi DyeFresh team,
+
+I'm placing an order through the Design Lab. Here are my details:
+
+━━━━━━━━━━━ CUSTOMER INFO ━━━━━━━━━━━
+Name:         ${firstName} ${lastName}
+Email:        ${email}
+Phone:        ${phone || 'Not provided'}
+Organization: ${org || 'N/A'}
+
+━━━━━━━━━━━ ORDER DETAILS ━━━━━━━━━━━
+Product:      ${prodLabel}
+Garment Color:${colorName}
+Placement:    ${placement}
+Print Method: ${methodLabel}
+Rush Order:   ${rush ? 'YES — Rush (3–5 days)' : 'No — Standard (7–12 days)'}
+
+━━━━━━━━━━━ SIZES & QUANTITIES ━━━━━━━━━━━
+${szLines}Total Units:  ${totalUnits}
+
+━━━━━━━━━━━ SPECIAL NOTES ━━━━━━━━━━━
+${notes || 'None'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+I've attached my mockup PNG to this email.
+Please reply with pricing and art approval.
+
+Thank you!
+${firstName} ${lastName}`;
+
+  return { subject, body, firstName, lastName, email, totalUnits, prodLabel, methodLabel, rush };
+}
+
+// ── SUBMIT ORDER (open mailto) ──
+function omSubmitOrder(){
+  const { subject, body, firstName, lastName, email, totalUnits, prodLabel, methodLabel, rush } = omBuildEmail();
+  const mailtoHref = `mailto:dyefreshapparel@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoHref;
+
+  // Fill confirm card
+  document.getElementById('omConfirmDetails').innerHTML = `
+    <strong>Customer:</strong> ${firstName} ${lastName} (${email})<br>
+    <strong>Product:</strong> ${prodLabel}<br>
+    <strong>Print Method:</strong> ${methodLabel}<br>
+    <strong>Total Units:</strong> ${totalUnits}<br>
+    <strong>Rush:</strong> ${rush ? 'Yes ⚡' : 'No — Standard'}
+  `;
+}
+
+// ── NAVIGATION ──
+function omGoNext(){
+  if(omCurrentStep === 1){
+    omCurrentStep = 2;
+  } else if(omCurrentStep === 2){
+    if(!omValidateStep2()) return;
+    omSubmitOrder();
+    omCurrentStep = 3;
+  } else if(omCurrentStep === 3){
+    closeOrderModal();
+    return;
+  }
+  omUpdateStepUI();
+}
+
+function omGoBack(){
+  if(omCurrentStep > 1) omCurrentStep--;
+  omUpdateStepUI();
+}
+
+function omUpdateStepUI(){
+  // Update panels
+  [1,2,3].forEach(n => {
+    document.getElementById('omPanel'+n).classList.toggle('active', n===omCurrentStep);
+    const stepEl = document.getElementById('omStep'+n);
+    stepEl.classList.remove('active','done');
+    if(n < omCurrentStep) stepEl.classList.add('done');
+    else if(n === omCurrentStep) stepEl.classList.add('active');
+  });
+
+  // Step lines
+  document.getElementById('omLine1').classList.toggle('done', omCurrentStep > 1);
+  document.getElementById('omLine2').classList.toggle('done', omCurrentStep > 2);
+
+  // Sub line
+  const subs = ['Review your design','Your contact info & print details','Order submitted'];
+  document.getElementById('omSubLine').textContent = `Step ${omCurrentStep} of 3 — ${subs[omCurrentStep-1]}`;
+
+  // Back button
+  document.getElementById('omBackBtn').style.display = omCurrentStep > 1 && omCurrentStep < 3 ? 'block' : 'none';
+
+  // Next button
+  const nextBtn = document.getElementById('omNextBtn');
+  if(omCurrentStep === 1){
+    nextBtn.textContent = 'Continue to Details →';
+    nextBtn.className = 'om-next';
+  } else if(omCurrentStep === 2){
+    nextBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Send Order Request';
+    nextBtn.className = 'om-next green';
+  } else if(omCurrentStep === 3){
+    nextBtn.textContent = 'Done — Close';
+    nextBtn.className = 'om-next';
+  }
+
+  // Refresh review if going back to step 1
+  if(omCurrentStep === 1) omPopulateReview();
+}
+
+// ── Select print method ──
+function selectMethod(card){
+  document.querySelectorAll('.method-card').forEach(c => c.classList.remove('on'));
+  card.classList.add('on');
+  omSelectedMethod = card.dataset.method;
+}
+
+// ── Toggle rush styling ──
+function toggleRush(){
+  const r = document.getElementById('omRush').checked;
+  document.getElementById('rushRow').style.borderColor = r ? 'var(--red)' : '';
+}
+
+// ── Keyboard: Escape closes modal ──
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeOrderModal();
+});
 </script>
 </body>
