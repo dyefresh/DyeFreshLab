@@ -904,7 +904,9 @@ document.getElementById('colorPickerModal').addEventListener('click', function(e
 // ── SANMAR API INTEGRATION ────────────────────────────────────────
 // Set this to your deployed proxy URL once live on Railway/Render.
 // Leave as null to use hardcoded color data only (current fallback).
-const SANMAR_PROXY_URL = null; // e.g. 'https://dyefresh-proxy.up.railway.app'
+// Deployed on Railway — credentials pending from SanMar
+// Once credentials are set, this proxy auto-populates all product colors/images/inventory
+const SANMAR_PROXY_URL = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 
 // Maps SanMar color names to hex values for swatches
 // (API returns color names but not hex — we map them here)
