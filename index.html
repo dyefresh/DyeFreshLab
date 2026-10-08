@@ -1327,25 +1327,59 @@ function loadURLParams(){
   const product = params.get('product');
   const color   = params.get('color');
 
-  // Map catalog color names → SHIRT_COLORS slugs
+  // Map catalog color slugs → SHIRT_COLORS slugs
   const COLOR_MAP = {
-    'black':       'black',
-    'white':       'white',
-    'navy':        'navy',
-    'red':         'red',
-    'grey':        'darkheathergrey',
-    'gray':        'darkheathergrey',
-    'heather':     'athleticheather',
-    'royal':       'royalblue',
-    'maroon':      'maroon',
-    'gold':        'gold',
-    'orange':      'orange',
-    'purple':      'purple',
-    'green':       'athletickelly',
-    'silver':      'silver',
-    'cardinal':    'cardinal',
-    'carolina':    'carolinablue',
-    'aquatic':     'aquaticblue',
+    // exact matches
+    'white':           'white',
+    'orange':          'orange',
+    'silver':          'silver',
+    // black variants
+    'black':           'jetblack',
+    'jetblack':        'jetblack',
+    // navy variants
+    'navy':            'teamnavy',
+    'deepnavy':        'deepnavy',
+    'teamnavy':        'teamnavy',
+    // red variants
+    'red':             'athleticred',
+    'athleticred':     'athleticred',
+    'brightred':       'brightred',
+    // royal variants
+    'royal':           'trueroyal',
+    'royalblue':       'trueroyal',
+    'trueroyal':       'trueroyal',
+    'athleticroyal':   'athleticroyal',
+    // gold variants
+    'gold':            'brightgold',
+    'brightgold':      'brightgold',
+    'trophysgold':     'trophysgold',
+    // purple variants
+    'purple':          'teampurple',
+    'teampurple':      'teampurple',
+    // green variants
+    'green':           'athletickelly',
+    'lime':            'athletickelly',
+    'athletickelly':   'athletickelly',
+    // grey/heather variants
+    'grey':            'darkheathergrey',
+    'gray':            'darkheathergrey',
+    'darkheather':     'darkheathergrey',
+    'darkheathergrey': 'darkheathergrey',
+    'heather':         'athleticheather',
+    'ash':             'athleticheather',
+    // aquatic / carolina / teal
+    'aquaticblue':     'tidalwave',
+    'aquatic':         'tidalwave',
+    'carolina':        'lightblue',
+    'carolinablue':    'lightblue',
+    // maroon / cardinal
+    'maroon':          'athleticmaroon',
+    'cardinal':        'cardinalred',
+    'teamcardinal':    'teamcardinal',
+    // lemon yellow
+    'lemonyellow':     'yellow',
+    'lemon':           'yellow',
+    'yellow':          'yellow',
   };
 
   // Set product
