@@ -277,6 +277,8 @@ app.get('/api/colors', async (req, res) => {
         threeQ       : item.THREE_Q_MODEL          || null,
         frontFlat    : item.FRONT_FLAT_IMAGE_URL   || null,
         backFlat     : item.BACK_FLAT_IMAGE_URL    || null,
+        colorSwatch  : item.COLOR_SQUARE_IMAGE     || null,
+        brandedImage : item.BRAND_COLOR_IMAGE      || null,
       };
     });
 

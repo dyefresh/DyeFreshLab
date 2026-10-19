@@ -792,11 +792,12 @@ let pickerProductId = null;
 
 // ── BUILD INLINE SWATCHES ON EACH CARD ──────────────────────────
 function buildSwatches() {
+  const MAX_DOTS = 10;
   Object.entries(PRODUCTS).forEach(([id, prod]) => {
     const row = document.getElementById(id + '-swatches');
     if (!row) return;
-    const show = prod.colors.slice(0, 6);
-    const extra = prod.colors.length - 6;
+    const show  = prod.colors.slice(0, MAX_DOTS);
+    const extra = prod.colors.length - MAX_DOTS;
 
     show.forEach((c, i) => {
       const dot = document.createElement('div');
@@ -815,6 +816,8 @@ function buildSwatches() {
       const more = document.createElement('span');
       more.className = 'cswatch-more';
       more.textContent = '+' + extra + ' more';
+      more.style.cursor = 'pointer';
+      more.onclick = (e) => { e.stopPropagation(); openPicker(id); };
       row.appendChild(more);
     }
   });
@@ -1026,95 +1029,99 @@ const SANMAR_PROXY_URL = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 // Maps SanMar color names to hex values for swatches
 // (API returns color names but not hex — we map them here)
 const SANMAR_COLOR_HEX = {
-  'Athletic Heather':       '#b0a89e',
-  'White':                  '#f0f0f0',
-  'Navy':                   '#1a2952',
-  'Red':                    '#c0392b',
-  'Royal':                  '#2471a3',
-  'Royal Blue':             '#2471a3',
-  'Maroon':                 '#6b1a1a',
-  'Gold':                   '#d4a017',
-  'Jet Black':              '#111111',
-  'Black':                  '#111111',
-  'Dark Heather Grey':      '#4a4a4a',
-  'Dark Heather':           '#4a4a4a',
-  'Ash':                    '#c8c8c8',
-  'Cardinal':               '#8b1a2e',
-  'Carolina Blue':          '#7bafd4',
-  'Charcoal':               '#36454f',
-  'Cherry Blossom':         '#ffb7c5',
-  'Clover Green':           '#3a7d44',
-  'Coal Grey':              '#5c5c5c',
-  'Coyote Brown':           '#81613c',
-  'Creme':                  '#f5f0e0',
-  'Dark Chocolate Brown':   '#3b1f10',
-  'Dark Green':             '#1a3a2a',
-  'Dark Heather Grey':      '#4a4a4a',
-  'Duck Brown':             '#7b6437',
-  'Flush Pink':             '#ff6b8a',
-  'Forest Green Heather':   '#2d5a27',
-  'Graphite Heather':       '#6e6e6e',
-  'Heather Athletic Maroon':'#7a3b3b',
-  'Heather Dark Choc Brown':'#4a2f1a',
-  'Heather Navy':           '#2c3e6b',
-  'Heather Purple':         '#6b4fa0',
-  'Heather Red':            '#b85c5c',
-  'Heather Royal':          '#4a6fa5',
-  'Heather Sangria':        '#a0385a',
-  'Ivory':                  '#fffff0',
-  'Kelly':                  '#2a7a3b',
-  'Laurel Green':           '#7d9b6e',
-  'Lavender':               '#c8a8e9',
-  'Light Blue':             '#a8c8e8',
-  'Light Sand':             '#d4c9b0',
-  'Lime':                   '#a8d44a',
-  'Medium Grey':            '#9e9e9e',
-  'Natural':                '#f5f0e8',
-  'Neon Blue':              '#00b4ff',
-  'Neon Green':             '#39ff14',
-  'Neon Orange':            '#ff6624',
-  'Neon Pink':              '#ff44aa',
-  'Neon Yellow':            '#f5f500',
-  'Neptune Blue':           '#2c5f8a',
-  'Oatmeal Heather':        '#c8b89a',
-  'Olive':                  '#4a5c2a',
-  'Olive Drab Green':       '#5a5a2a',
-  'Olive Drab Grn Hther':   '#5a5a35',
-  'Orange':                 '#e86a20',
-  'Pale Blush':             '#f8d7da',
-  'Purple':                 '#4a1a7a',
-  'Sangria':                '#8b1a4a',
-  'Sapphire':               '#1a5fa0',
-  'Silver':                 '#c0c0c0',
-  'Steel Blue':             '#3a5a7a',
-  'Stonewashed Blue':       '#7a9ab0',
-  'Teal':                   '#1a7a7a',
-  'Team Purple':            '#4a1a8a',
-  'Tennessee Orange':       '#e85a1a',
-  'True Celadon':           '#9ad0b4',
-  'True Navy':              '#0a1a4a',
-  'True Royal':             '#1a3fa0',
-  'Tundra Blue':            '#7a9ac0',
-  'Woodland Brown':         '#5a4a2a',
-  'Yellow':                 '#f5e020',
-  'Aquatic Blue':           '#1ab4d4',
-  'Bright Aqua':            '#00d4d4',
-  'Candy Pink':             '#ff9ab4',
-  'Sand':                   '#c4a97a',
-  'S. Green':               '#a8e020',
-  'S. Orange':              '#ff7a20',
-  'Lemon Yellow':           '#f1c40f',
-  'Kelly Green':            '#2a7a3b',
-  'Khaki':                  '#c8a96e',
-  'Burgundy':               '#7a1a3a',
-  'Forest Green':           '#1a3a2a',
-  'Carolina Blue':          '#7bafd4',
-  'Light Steel':            '#a0b4c8',
-  'Graphite':               '#6e6e6e',
-  'Smoke':                  '#888888',
-  'Dark Green':             '#1a3a2a',
-  'Bright Royal':           '#1a4abe',
-  'Athletic Gold':          '#d4a017',
+  // ── Whites / Naturals ──
+  'White':                    '#f0f0f0',
+  'Ivory':                    '#f4f0e0',
+  'Natural':                  '#f0ebe0',
+  'Creme':                    '#f5f0e0',
+  'Oatmeal Heather':          '#c8b89a',
+  'Light Sand':               '#d4c9b0',
+  'Sand':                     '#c4a97a',
+  'Khaki':                    '#c8a96e',
+  // ── Greys / Blacks ──
+  'Black':                    '#111111',
+  'Jet Black':                '#111111',
+  'Charcoal':                 '#36454f',
+  'Dark Heather':             '#4a4a4a',
+  'Dark Heather Grey':        '#4a4a4a',
+  'Graphite':                 '#6e6e6e',
+  'Graphite Heather':         '#6e6e6e',
+  'Coal Grey':                '#5c5c5c',
+  'Smoke':                    '#7a7a7a',
+  'Ash':                      '#c8c8c8',
+  'Silver':                   '#b8b8b8',
+  'Light Steel':              '#a0b4c8',
+  'Medium Grey':              '#9e9e9e',
+  // ── Blues ──
+  'Navy':                     '#1a2952',
+  'True Navy':                '#0a1a4a',
+  'Heather Navy':             '#2c3e6b',
+  'Royal':                    '#2050a0',
+  'Royal Blue':               '#2050a0',
+  'True Royal':               '#1a3fa0',
+  'Bright Royal':             '#1a4abe',
+  'Heather Royal':            '#4a6fa5',
+  'Carolina Blue':            '#7bafd4',
+  'Steel Blue':               '#3a5a7a',
+  'Stonewashed Blue':         '#7a9ab0',
+  'Neptune Blue':             '#2c5f8a',
+  'Tundra Blue':              '#7a9ac0',
+  'Sapphire':                 '#1a5fa0',
+  'Aquatic Blue':             '#1ab4d4',
+  'Bright Aqua':              '#00d4d4',
+  'Light Blue':               '#a8c8e8',
+  'Neon Blue':                '#00b4ff',
+  // ── Reds / Pinks ──
+  'Red':                      '#c0392b',
+  'Heather Red':              '#b85c5c',
+  'Cardinal':                 '#8b1a2e',
+  'Maroon':                   '#6b1a1a',
+  'Heather Athletic Maroon':  '#7a3b3b',
+  'Burgundy':                 '#7a1a3a',
+  'Sangria':                  '#8b1a4a',
+  'Heather Sangria':          '#a0385a',
+  'Tennessee Orange':         '#e85a1a',
+  'Cherry Blossom':           '#ffb7c5',
+  'Candy Pink':               '#ff9ab4',
+  'Pale Blush':               '#f8d7da',
+  'Flush Pink':               '#e8748a',
+  'Neon Pink':                '#ff44aa',
+  // ── Oranges / Yellows ──
+  'Orange':                   '#e86a20',
+  'Neon Orange':              '#ff6624',
+  'S. Orange':                '#ff7a20',
+  'Gold':                     '#d4a017',
+  'Athletic Gold':            '#d4a017',
+  'Yellow':                   '#f5e020',
+  'Lemon Yellow':             '#f1c40f',
+  'Neon Yellow':              '#f5f500',
+  // ── Greens ──
+  'Kelly':                    '#2a7a3b',
+  'Kelly Green':              '#2a7a3b',
+  'Forest Green':             '#1a4a28',
+  'Dark Green':               '#1a3a22',
+  'Forest Green Heather':     '#2d5a27',
+  'Clover Green':             '#3a7d44',
+  'Laurel Green':             '#7d9b6e',
+  'True Celadon':             '#9ad0b4',
+  'Teal':                     '#1a7a7a',
+  'Olive':                    '#4a5c2a',
+  'Olive Drab Green':         '#5a5a2a',
+  'Olive Drab Grn Hther':     '#5a5a35',
+  'Lime':                     '#a8d44a',
+  'S. Green':                 '#a8e020',
+  'Neon Green':               '#39ff14',
+  // ── Purples ──
+  'Purple':                   '#5a2080',
+  'Team Purple':              '#4a1a8a',
+  'Heather Purple':           '#6b4fa0',
+  'Lavender':                 '#c8a8e9',
+  // ── Browns / Earthy ──
+  'Dark Chocolate Brown':     '#3b1f10',
+  'Heather Dark Choc Brown':  '#4a2f1a',
+  'Duck Brown':               '#7b6437',
+  'Coyote Brown':             '#81613c',
+  'Woodland Brown':           '#5a4a2a',
 };
 
 // Light colors that need a border on their swatch dot
@@ -1122,7 +1129,8 @@ const LIGHT_COLORS = new Set([
   'White','Ivory','Natural','Creme','Oatmeal Heather','Light Sand',
   'Silver','Ash','Cherry Blossom','Pale Blush','Light Blue','Lavender',
   'Neon Yellow','True Celadon','Khaki','Light Steel','Lemon Yellow',
-  'Sand','Athletic Heather'
+  'Sand','Athletic Heather','Candy Pink','Flush Pink','Neon Green',
+  'Neon Blue','True Celadon','Light Steel','Medium Grey','Bright Aqua',
 ]);
 
 /**
@@ -1164,19 +1172,51 @@ async function fetchSanMarInventory(style, color) {
  */
 function sanMarColorToInternal(apiColor) {
   const name = apiColor.name || apiColor.colorName || '';
-  const hex  = SANMAR_COLOR_HEX[name] || '#888888';
+  const hex  = SANMAR_COLOR_HEX[name] || deriveHexFromName(name);
+  // Prefer model front image; fall back to swatch image (still a real product photo)
+  const img  = apiColor.front || apiColor.frontFlat || apiColor.colorSwatch || null;
   return {
     name,
     slug        : name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     hex,
     light       : LIGHT_COLORS.has(name),
-    img         : apiColor.front    || null,
-    imgBack     : apiColor.back     || null,
-    imgSide     : apiColor.side     || null,
-    imgThreeQ   : apiColor.threeQ   || null,
+    img,
+    imgBack     : apiColor.back      || null,
+    imgSide     : apiColor.side      || null,
+    imgThreeQ   : apiColor.threeQ    || null,
+    imgFlat     : apiColor.frontFlat || null,
+    colorSwatch : apiColor.colorSwatch || null,
     catalogColor: apiColor.catalogColor || name,
     _fromAPI    : true,
   };
+}
+
+/**
+ * Derive a reasonable hex from a color name when it's not in our map.
+ * Better than a flat grey — at least it's in the right color family.
+ */
+function deriveHexFromName(name) {
+  const n = name.toLowerCase();
+  if (n.includes('black'))        return '#111111';
+  if (n.includes('white'))        return '#f0f0f0';
+  if (n.includes('navy'))         return '#1a2952';
+  if (n.includes('red'))          return '#c0392b';
+  if (n.includes('royal'))        return '#2050a0';
+  if (n.includes('blue'))         return '#2a6ab0';
+  if (n.includes('green'))        return '#2a6a3a';
+  if (n.includes('gold') || n.includes('yellow')) return '#d4a017';
+  if (n.includes('orange'))       return '#e07020';
+  if (n.includes('purple'))       return '#5a2080';
+  if (n.includes('maroon') || n.includes('cardinal')) return '#7a1a28';
+  if (n.includes('grey') || n.includes('gray') || n.includes('heather')) return '#888888';
+  if (n.includes('brown'))        return '#7b5c3a';
+  if (n.includes('pink'))         return '#e8a0b0';
+  if (n.includes('teal'))         return '#1a8080';
+  if (n.includes('olive'))        return '#5a5a2a';
+  if (n.includes('sand') || n.includes('khaki') || n.includes('tan')) return '#c4a97a';
+  if (n.includes('silver') || n.includes('ash')) return '#c0c0c0';
+  if (n.includes('charcoal'))     return '#3a3a3a';
+  return '#666666'; // fallback: dark grey rather than mid grey
 }
 
 /**
@@ -1205,7 +1245,8 @@ async function autoPopulateProduct(productId) {
   const swatchRow = document.getElementById(`${productId}-swatches`);
   if (swatchRow) {
     swatchRow.innerHTML = '';
-    const show = prod.colors.slice(0, 8);
+    const MAX_DOTS = 10;
+    const show = prod.colors.slice(0, MAX_DOTS);
     show.forEach((c, i) => {
       const dot = document.createElement('div');
       dot.className = 'cswatch' + (i === selectedIdx[productId] ? ' active' : '');
@@ -1215,10 +1256,12 @@ async function autoPopulateProduct(productId) {
       dot.onclick = () => selectColorOnCard(productId, i);
       swatchRow.appendChild(dot);
     });
-    if (prod.colors.length > 8) {
-      const more = document.createElement('div');
+    if (prod.colors.length > MAX_DOTS) {
+      const more = document.createElement('span');
       more.className = 'cswatch-more';
-      more.textContent = `+${prod.colors.length - 8}`;
+      more.textContent = `+${prod.colors.length - MAX_DOTS} more`;
+      more.style.cursor = 'pointer';
+      more.onclick = (e) => { e.stopPropagation(); openPicker(productId); };
       swatchRow.appendChild(more);
     }
   }
