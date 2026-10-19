@@ -467,10 +467,14 @@ body{
       </div>
     </article>
 
-    <!-- HAT placeholder -->
+    <!-- HAT -->
     <article class="card" data-cat="hats" data-product-id="hat">
-      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
-        <div class="card-photo-placeholder">🧢</div>
+      <div class="card-image">
+        <img class="card-photo" id="hat-card-img"
+          src="https://cdnp.sanmar.com/medias/sys_master/images/hf4/ha7/8907779964958/C112_Black_Model_Front_2017/C112-Black-Model-Front-2017.jpg"
+          alt="Structured Cap" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">🧢</div>
         <div class="card-badge popular">Popular</div>
       </div>
       <div class="card-swatch-row" id="hat-swatches"></div>
@@ -601,7 +605,7 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg' },
       { name:'Red',          slug:'red',         hex:'#c0392b',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg' },
-      { name:'Royal Blue',   slug:'royal',       hex:'#2471a3',
+      { name:'Royal',        slug:'royal',       hex:'#2471a3',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg' },
       { name:'Gold',         slug:'gold',        hex:'#d4a017',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg' },
@@ -611,11 +615,18 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg' },
       { name:'Maroon',       slug:'maroon',      hex:'#6b1a1a' },
       { name:'Dark Heather', slug:'grey',        hex:'#4a4a4a' },
+      { name:'Black',        slug:'black',       hex:'#111111' },
+      { name:'Kelly',        slug:'kelly',       hex:'#2a7a3b' },
+      { name:'Orange',       slug:'orange',      hex:'#e86a20' },
+      { name:'Carolina Blue',slug:'carolina',    hex:'#7bafd4' },
+      { name:'Forest Green Heather',slug:'forest-green-heather', hex:'#2d5a27' },
+      { name:'Charcoal',     slug:'charcoal',    hex:'#36454f' },
     ]
   },
   pc61: {
     name: 'Essential Tee',
     style: 'SanMar PC61',
+    sanMarStyle: 'PC61',
     designLabKey: 'tshirt',
     defaultColor: 0,
     colors: [
@@ -627,7 +638,7 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/he2/h02/29138197151774/1200W_1634_Navy-0-PC61NavyModelFront4/1200W-1634-Navy-0-PC61NavyModelFront4.jpg' },
       { name:'Red',          slug:'red',      hex:'#c0392b',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h4b/hec/29138205409310/1200W_1634_Red-0-PC61RedModelFront4/1200W-1634-Red-0-PC61RedModelFront4.jpg' },
-      { name:'Royal Blue',   slug:'royal',    hex:'#2471a3',
+      { name:'Royal',        slug:'royal',    hex:'#2471a3',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hcd/h0d/29138207768606/1200W_1634_Royal-0-PC61RoyalModelFront4/1200W-1634-Royal-0-PC61RoyalModelFront4.jpg' },
       { name:'Gold',         slug:'gold',     hex:'#d4a017',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg' },
@@ -635,11 +646,16 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg' },
       { name:'Black',        slug:'black',    hex:'#111111' },
       { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3' },
+      { name:'Kelly',        slug:'kelly',    hex:'#2a7a3b' },
+      { name:'Maroon',       slug:'maroon',   hex:'#6b1a1a' },
+      { name:'Purple',       slug:'purple',   hex:'#7d3c98' },
+      { name:'Ash',          slug:'ash',      hex:'#c8c8c8', light:true },
     ]
   },
   pc600: {
     name: 'Bouncer Tee',
     style: 'SanMar PC600',
+    sanMarStyle: 'PC600',
     designLabKey: 'tshirt',
     defaultColor: 0,
     colors: [
@@ -650,9 +666,11 @@ const PRODUCTS = {
       { name:'Black',        slug:'black',   hex:'#111111' },
       { name:'Navy',         slug:'navy',    hex:'#1a2952' },
       { name:'Red',          slug:'red',     hex:'#c0392b' },
-      { name:'Royal Blue',   slug:'royal',   hex:'#2471a3' },
+      { name:'Royal',        slug:'royal',   hex:'#2471a3' },
       { name:'Purple',       slug:'purple',  hex:'#7d3c98' },
       { name:'Orange',       slug:'orange',  hex:'#e67e22' },
+      { name:'Kelly',        slug:'kelly',   hex:'#2a7a3b' },
+      { name:'Maroon',       slug:'maroon',  hex:'#6b1a1a' },
     ]
   },
   hoodie: {
@@ -686,15 +704,30 @@ const PRODUCTS = {
   hat: {
     name: 'Structured Cap',
     style: 'SanMar C112',
+    sanMarStyle: 'C112',
     designLabKey: 'hat',
     defaultColor: 0,
     colors: [
-      { name:'Black',        slug:'black',  hex:'#111111' },
-      { name:'Navy',         slug:'navy',   hex:'#1a2952' },
-      { name:'Red',          slug:'red',    hex:'#c0392b' },
-      { name:'White',        slug:'white',  hex:'#f0f0f0', light:true },
-      { name:'Royal Blue',   slug:'royal',  hex:'#2471a3' },
-      { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
+      { name:'Black',          slug:'black',   hex:'#111111',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hf4/ha7/8907779964958/C112_Black_Model_Front_2017/C112-Black-Model-Front-2017.jpg' },
+      { name:'Navy',           slug:'navy',    hex:'#1a2952',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h4d/h6b/8907779833886/C112_Navy_Model_Front_2017/C112-Navy-Model-Front-2017.jpg' },
+      { name:'Red',            slug:'red',     hex:'#c0392b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h8c/hb5/8907779997726/C112_Red_Model_Front_2017/C112-Red-Model-Front-2017.jpg' },
+      { name:'White',          slug:'white',   hex:'#f0f0f0', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h27/h28/8907780030494/C112_White_Model_Front_2017/C112-White-Model-Front-2017.jpg' },
+      { name:'Royal',          slug:'royal',   hex:'#2471a3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hb6/h04/8907780063262/C112_Royal_Model_Front_2017/C112-Royal-Model-Front-2017.jpg' },
+      { name:'Dark Heather',   slug:'grey',    hex:'#4a4a4a' },
+      { name:'Khaki',          slug:'khaki',   hex:'#c8a96e', light:true },
+      { name:'Gold',           slug:'gold',    hex:'#d4a017' },
+      { name:'Kelly',          slug:'kelly',   hex:'#2a7a3b' },
+      { name:'Maroon',         slug:'maroon',  hex:'#6b1a1a' },
+      { name:'Burgundy',       slug:'burgundy',hex:'#7a1a3a' },
+      { name:'Forest Green',   slug:'forest',  hex:'#1a3a2a' },
+      { name:'Carolina Blue',  slug:'carolina',hex:'#7bafd4' },
+      { name:'Purple',         slug:'purple',  hex:'#4a1a7a' },
+      { name:'Steel Blue',     slug:'steel',   hex:'#3a5a7a' },
     ]
   },
   joggers: {
@@ -988,13 +1021,26 @@ const SANMAR_COLOR_HEX = {
   'Sand':                   '#c4a97a',
   'S. Green':               '#a8e020',
   'S. Orange':              '#ff7a20',
+  'Lemon Yellow':           '#f1c40f',
+  'Kelly Green':            '#2a7a3b',
+  'Khaki':                  '#c8a96e',
+  'Burgundy':               '#7a1a3a',
+  'Forest Green':           '#1a3a2a',
+  'Carolina Blue':          '#7bafd4',
+  'Light Steel':            '#a0b4c8',
+  'Graphite':               '#6e6e6e',
+  'Smoke':                  '#888888',
+  'Dark Green':             '#1a3a2a',
+  'Bright Royal':           '#1a4abe',
+  'Athletic Gold':          '#d4a017',
 };
 
 // Light colors that need a border on their swatch dot
 const LIGHT_COLORS = new Set([
   'White','Ivory','Natural','Creme','Oatmeal Heather','Light Sand',
   'Silver','Ash','Cherry Blossom','Pale Blush','Light Blue','Lavender',
-  'Neon Yellow','True Celadon'
+  'Neon Yellow','True Celadon','Khaki','Light Steel','Lemon Yellow',
+  'Sand','Athletic Heather'
 ]);
 
 /**
