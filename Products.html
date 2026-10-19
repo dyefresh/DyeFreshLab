@@ -508,6 +508,33 @@ body{
       </div>
     </article>
 
+    <!-- GARMENT WASHED CAP -->
+    <article class="card" data-cat="hats" data-product-id="pwu">
+      <div class="card-image" style="background:var(--surface2);position:relative;">
+        <img class="card-photo" id="pwu-card-img"
+          src=""
+          alt="Garment Washed Cap" loading="lazy"
+          style="width:100%;height:100%;object-fit:cover;display:none;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:flex">🧢</div>
+        <div class="card-badge" style="background:#4a7c59;">Vintage Look</div>
+      </div>
+      <div class="card-swatch-row" id="pwu-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PWU · Port Authority</div>
+        <div class="card-name">Garment Washed Cap</div>
+        <div class="card-desc">Unstructured low-profile dad cap with a relaxed, broken-in feel right out of the bag. Garment washed for a soft vintage look. Adjustable strap closure.</div>
+        <div class="card-meta">
+          <div class="card-price">From $12 <span>/ piece</span></div>
+          <div class="card-color-label" id="pwu-color-label">Faded Blue</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pwu')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
     <!-- JOGGERS placeholder -->
     <article class="card" data-cat="bottoms" data-product-id="joggers">
       <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
@@ -767,6 +794,27 @@ const PRODUCTS = {
       { name:'Carolina Blue',  slug:'carolina',hex:'#7bafd4' },
       { name:'Purple',         slug:'purple',  hex:'#4a1a7a' },
       { name:'Steel Blue',     slug:'steel',   hex:'#3a5a7a' },
+    ]
+  },
+  pwu: {
+    name: 'Garment Washed Cap',
+    style: 'SanMar PWU',
+    sanMarStyle: 'PWU',
+    designLabKey: 'hat',
+    defaultColor: 6,
+    colors: [
+      { name:'Berry',         slug:'berry',         hex:'#8b2252' },
+      { name:'Black',         slug:'black',         hex:'#111111' },
+      { name:'Bright Pink',   slug:'bright-pink',   hex:'#ff44aa', light:true },
+      { name:'Chrome',        slug:'chrome',        hex:'#a8a8b8', light:true },
+      { name:'Cooked Carrot', slug:'cooked-carrot', hex:'#d4541a' },
+      { name:'Dandelion',     slug:'dandelion',     hex:'#f0c020', light:true },
+      { name:'Faded Blue',    slug:'faded-blue',    hex:'#7090b8' },
+      { name:'Green',         slug:'green',         hex:'#2a6a3a' },
+      { name:'Khaki',         slug:'khaki',         hex:'#c8a96e', light:true },
+      { name:'Maroon',        slug:'maroon',        hex:'#6b1a1a' },
+      { name:'Steel Blue',    slug:'steel-blue',    hex:'#3a5a7a' },
+      { name:'Stone',         slug:'stone',         hex:'#c8b89a', light:true },
     ]
   },
   joggers: {
@@ -1122,6 +1170,14 @@ const SANMAR_COLOR_HEX = {
   'Duck Brown':               '#7b6437',
   'Coyote Brown':             '#81613c',
   'Woodland Brown':           '#5a4a2a',
+  // ── PWU / Garment Washed specific ──
+  'Berry':                    '#8b2252',
+  'Bright Pink':              '#ff44aa',
+  'Chrome':                   '#a8a8b8',
+  'Cooked Carrot':            '#d4541a',
+  'Dandelion':                '#f0c020',
+  'Faded Blue':               '#7090b8',
+  'Stone':                    '#c8b89a',
 };
 
 // Light colors that need a border on their swatch dot
@@ -1131,6 +1187,7 @@ const LIGHT_COLORS = new Set([
   'Neon Yellow','True Celadon','Khaki','Light Steel','Lemon Yellow',
   'Sand','Athletic Heather','Candy Pink','Flush Pink','Neon Green',
   'Neon Blue','True Celadon','Light Steel','Medium Grey','Bright Aqua',
+  'Chrome','Dandelion','Stone',
 ]);
 
 /**
