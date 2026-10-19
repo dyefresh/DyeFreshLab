@@ -262,9 +262,24 @@ body{
 }
 .picker-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
 .picker-product-img{
-  width:100%;aspect-ratio:16/9;object-fit:cover;
+  width:100%;aspect-ratio:3/2;object-fit:cover;
   border-radius:8px;margin-bottom:16px;
   background:var(--surface2);transition:opacity .2s;
+}
+.picker-img-placeholder{
+  width:100%;aspect-ratio:3/2;
+  border-radius:8px;margin-bottom:16px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:10px;transition:background .3s;
+}
+.picker-img-placeholder .ph-swatch{
+  width:60px;height:60px;border-radius:50%;
+  background:currentColor;border:3px solid rgba(255,255,255,.25);
+}
+.picker-img-placeholder .ph-label{
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.85);
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
 }
 .picker-title{
   font-family:var(--font-display);font-size:22px;letter-spacing:.04em;
@@ -559,7 +574,11 @@ body{
       <button class="pvt-btn" data-view="back" onclick="switchPickerView('back',this)">Back</button>
       <button class="pvt-btn" data-view="side" onclick="switchPickerView('side',this)">Side</button>
     </div>
-    <img class="picker-product-img" id="pickerPreviewImg" src="" alt="Product preview" onerror="this.style.opacity='.2'">
+    <img class="picker-product-img" id="pickerPreviewImg" src="" alt="Product preview" onerror="this.style.display='none';document.getElementById('pickerImgPlaceholder').style.display='flex'">
+    <div class="picker-img-placeholder" id="pickerImgPlaceholder" style="display:none">
+      <div class="ph-swatch"></div>
+      <span class="ph-label">Select a color</span>
+    </div>
     <div class="picker-section-label">Select Color</div>
     <div id="colorGrid"></div>
     <button id="pickerGoBtn" onclick="launchDesignLab()">
@@ -613,12 +632,18 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg' },
       { name:'Ash',          slug:'heather',     hex:'#c8c8c8', light:true,
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg' },
-      { name:'Maroon',       slug:'maroon',      hex:'#6b1a1a' },
-      { name:'Dark Heather', slug:'grey',        hex:'#4a4a4a' },
-      { name:'Black',        slug:'black',       hex:'#111111' },
-      { name:'Kelly',        slug:'kelly',       hex:'#2a7a3b' },
-      { name:'Orange',       slug:'orange',      hex:'#e86a20' },
-      { name:'Carolina Blue',slug:'carolina',    hex:'#7bafd4' },
+      { name:'Maroon',       slug:'maroon',      hex:'#6b1a1a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h50/h31/30603757027358/1200W_3985_Maroon-0-PC54MaroonModelFront3/1200W-3985-Maroon-0-PC54MaroonModelFront3.jpg' },
+      { name:'Dark Heather', slug:'grey',        hex:'#4a4a4a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hfc/ha2/30592427606046/1200W_3985_DkHthr-0-PC54DkHthrModelFront3/1200W-3985-DkHthr-0-PC54DkHthrModelFront3.jpg' },
+      { name:'Black',        slug:'black',       hex:'#111111',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hbd/h0d/30603752800286/1200W_3985_Black-0-PC54BlackModelFront3/1200W-3985-Black-0-PC54BlackModelFront3.jpg' },
+      { name:'Kelly',        slug:'kelly',       hex:'#2a7a3b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h7b/h0c/30603756175390/1200W_3985_Kelly-0-PC54KellyModelFront3/1200W-3985-Kelly-0-PC54KellyModelFront3.jpg' },
+      { name:'Orange',       slug:'orange',      hex:'#e86a20',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h6a/h5b/30603757748254/1200W_3985_Orange-0-PC54OrangeModelFront3/1200W-3985-Orange-0-PC54OrangeModelFront3.jpg' },
+      { name:'Carolina Blue',slug:'carolina',    hex:'#7bafd4',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h31/h1c/30592424312862/1200W_3985_CarolinaB-0-PC54CarolinaBModelFront3/1200W-3985-CarolinaB-0-PC54CarolinaBModelFront3.jpg' },
       { name:'Forest Green Heather',slug:'forest-green-heather', hex:'#2d5a27' },
       { name:'Charcoal',     slug:'charcoal',    hex:'#36454f' },
     ]
@@ -644,12 +669,18 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg' },
       { name:'Orange',       slug:'orange',   hex:'#e67e22',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg' },
-      { name:'Black',        slug:'black',    hex:'#111111' },
-      { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3' },
-      { name:'Kelly',        slug:'kelly',    hex:'#2a7a3b' },
-      { name:'Maroon',       slug:'maroon',   hex:'#6b1a1a' },
-      { name:'Purple',       slug:'purple',   hex:'#7d3c98' },
-      { name:'Ash',          slug:'ash',      hex:'#c8c8c8', light:true },
+      { name:'Black',        slug:'black',    hex:'#111111',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/ha6/h7e/29138189795358/1200W_1634_Black-0-PC61BlackModelFront4/1200W-1634-Black-0-PC61BlackModelFront4.jpg' },
+      { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h48/ha7/29138187303966/1200W_1634_CarolinaB-0-PC61CarolinaBModelFront4/1200W-1634-CarolinaB-0-PC61CarolinaBModelFront4.jpg' },
+      { name:'Kelly',        slug:'kelly',    hex:'#2a7a3b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h1d/h1c/29138198332446/1200W_1634_Kelly-0-PC61KellyModelFront4/1200W-1634-Kelly-0-PC61KellyModelFront4.jpg' },
+      { name:'Maroon',       slug:'maroon',   hex:'#6b1a1a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hb3/h57/29138201346078/1200W_1634_Maroon-0-PC61MaroonModelFront4/1200W-1634-Maroon-0-PC61MaroonModelFront4.jpg' },
+      { name:'Purple',       slug:'purple',   hex:'#7d3c98',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hde/h04/29138206654494/1200W_1634_Purple-0-PC61PurpleModelFront4/1200W-1634-Purple-0-PC61PurpleModelFront4.jpg' },
+      { name:'Ash',          slug:'ash',      hex:'#c8c8c8', light:true,
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h67/hfe/29138187042846/1200W_1634_Ash-0-PC61AshModelFront4/1200W-1634-Ash-0-PC61AshModelFront4.jpg' },
     ]
   },
   pc600: {
@@ -663,14 +694,22 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg' },
       { name:'White',        slug:'white',   hex:'#f0f0f0', light:true,
         img:'https://cdnp.sanmar.com/medias/sys_master/images/h58/h1b/29318232735774/1200W_10578_White-0-PC600WhiteModelFront1/1200W-10578-White-0-PC600WhiteModelFront1.jpg' },
-      { name:'Black',        slug:'black',   hex:'#111111' },
-      { name:'Navy',         slug:'navy',    hex:'#1a2952' },
-      { name:'Red',          slug:'red',     hex:'#c0392b' },
-      { name:'Royal',        slug:'royal',   hex:'#2471a3' },
-      { name:'Purple',       slug:'purple',  hex:'#7d3c98' },
-      { name:'Orange',       slug:'orange',  hex:'#e67e22' },
-      { name:'Kelly',        slug:'kelly',   hex:'#2a7a3b' },
-      { name:'Maroon',       slug:'maroon',  hex:'#6b1a1a' },
+      { name:'Black',        slug:'black',   hex:'#111111',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h57/h53/29318218973214/1200W_10578_Black-0-PC600BlackModelFront1/1200W-10578-Black-0-PC600BlackModelFront1.jpg' },
+      { name:'Navy',         slug:'navy',    hex:'#1a2952',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hf5/h27/29318221791262/1200W_10578_Navy-0-PC600NavyModelFront1/1200W-10578-Navy-0-PC600NavyModelFront1.jpg' },
+      { name:'Red',          slug:'red',     hex:'#c0392b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h9e/h8d/29318225657886/1200W_10578_Red-0-PC600RedModelFront1/1200W-10578-Red-0-PC600RedModelFront1.jpg' },
+      { name:'Royal',        slug:'royal',   hex:'#2471a3',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h28/hd4/29318226313246/1200W_10578_Royal-0-PC600RoyalModelFront1/1200W-10578-Royal-0-PC600RoyalModelFront1.jpg' },
+      { name:'Purple',       slug:'purple',  hex:'#7d3c98',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hfe/hb1/29318224740382/1200W_10578_Purple-0-PC600PurpleModelFront1/1200W-10578-Purple-0-PC600PurpleModelFront1.jpg' },
+      { name:'Orange',       slug:'orange',  hex:'#e67e22',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hca/hdb/29318222118942/1200W_10578_Orange-0-PC600OrangeModelFront1/1200W-10578-Orange-0-PC600OrangeModelFront1.jpg' },
+      { name:'Kelly',        slug:'kelly',   hex:'#2a7a3b',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/h07/hdc/29318219825182/1200W_10578_Kelly-0-PC600KellyModelFront1/1200W-10578-Kelly-0-PC600KellyModelFront1.jpg' },
+      { name:'Maroon',       slug:'maroon',  hex:'#6b1a1a',
+        img:'https://cdnp.sanmar.com/medias/sys_master/images/hf2/hdf/29318221594654/1200W_10578_Maroon-0-PC600MaroonModelFront1/1200W-10578-Maroon-0-PC600MaroonModelFront1.jpg' },
     ]
   },
   hoodie: {
@@ -837,15 +876,34 @@ function switchPickerView(view, btn) {
 
 function setPickerImage(color) {
   const prevImg = document.getElementById('pickerPreviewImg');
+  const placeholder = document.getElementById('pickerImgPlaceholder');
   const url = getPickerImgForView(color, pickerView);
   if (url) {
     prevImg.style.opacity = '0.4';
+    prevImg.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
     const tmp = new Image();
     tmp.onload = () => { prevImg.src = url; prevImg.style.opacity = '1'; };
-    tmp.onerror = () => { prevImg.style.opacity = '.1'; };
+    tmp.onerror = () => {
+      // Image failed — show color swatch placeholder
+      prevImg.style.display = 'none';
+      if (placeholder) {
+        placeholder.style.display = 'flex';
+        placeholder.style.background = color.hex || '#eee';
+        const lbl = placeholder.querySelector('.ph-label');
+        if (lbl) lbl.textContent = color.name;
+      }
+    };
     tmp.src = url;
   } else {
-    prevImg.src = ''; prevImg.style.opacity = '.1';
+    // No image URL — show color block with hex
+    prevImg.style.display = 'none';
+    if (placeholder) {
+      placeholder.style.display = 'flex';
+      placeholder.style.background = color.hex || '#eee';
+      const lbl = placeholder.querySelector('.ph-label');
+      if (lbl) lbl.textContent = color.name;
+    }
   }
 }
 
@@ -885,12 +943,14 @@ function openPicker(productId) {
       btn.classList.add('selected');
       selectedIdx[productId] = i;
       setPickerImage(c);
+      syncPickerGoBtn();
     };
     grid.appendChild(btn);
   });
 
   document.getElementById('colorPickerModal').classList.add('open');
   document.body.style.overflow = 'hidden';
+  syncPickerGoBtn();
 }
 
 function closePicker() {
@@ -903,23 +963,40 @@ function closePicker() {
   pickerProductId = null;
 }
 
-function launchDesignLab() {
-  if (!pickerProductId) return;
+function buildDesignLabURL() {
+  if (!pickerProductId) return null;
   const prod = PRODUCTS[pickerProductId];
   const color = prod.colors[selectedIdx[pickerProductId]];
   let url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
-  // Pass the direct garment photo URL so Design Lab can show it immediately
-  // regardless of which product type or color mapping is being used
   if (color.img) {
     url += `&img=${encodeURIComponent(color.img)}`;
   }
-  // Try window.open first; if blocked by popup blocker, fall back to same-tab navigation
-  const win = window.open(url, '_blank');
-  if (!win || win.closed || typeof win.closed === 'undefined') {
-    // Popup blocked — navigate in current tab
-    window.location.href = url;
-  }
+  return url;
+}
+
+function launchDesignLab() {
+  const url = buildDesignLabURL();
+  if (!url) return;
+  // Use a hidden <a> element with target="_blank" — this is NOT blocked by mobile
+  // browsers because it's a real anchor click, not a scripted window.open call
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   closePicker();
+}
+
+// Keep the picker "Start Designing" button href in sync so long-pressing
+// on mobile also works as a direct link
+function syncPickerGoBtn() {
+  const url = buildDesignLabURL();
+  const btn = document.getElementById('pickerGoBtn');
+  if (btn && url) {
+    btn.setAttribute('data-href', url);
+  }
 }
 
 // ── FILTER PILLS ─────────────────────────────────────────────────

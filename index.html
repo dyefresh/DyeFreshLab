@@ -547,30 +547,48 @@ canvas#gc{
     color:var(--red);
     background:var(--red-bg);
   }
-  /* Header adjustments */
+  /* Header adjustments — mobile */
   header .logo-sub{ display:none; }
+  /* On mobile hide ALL header action button text and make them icon-only */
   .hdr-actions .btn span:not(.btn-icon){ display:none; }
+  .hdr-actions .btn{ padding:5px 7px; }
+  /* Move the Front/Back/Sleeve tabs out of absolute centering into the flex flow */
+  .hdr-center{
+    position:static;
+    transform:none;
+    left:auto;
+    flex:1;
+    justify-content:center;
+    min-width:0;
+  }
+  .hdr-center .hdr-tab{ padding:4px 10px; font-size:11px; }
 }
 
 /* ── Mobile portrait: <600px ────────────────────────────── */
 @media (max-width: 599px){
   :root{ --hdr:44px; }
   header{
-    padding:0 8px;
+    padding:0 6px;
+    gap:6px;
   }
-  .logo-name{ font-size:14px; }
+  .logo-name{ font-size:13px; }
+  /* Hide logo text on very small screens to give header room */
+  .logo-name{ display:none; }
   .hdr-center{
     gap:2px;
   }
-  .hdr-center .pill-btn{
+  .hdr-center .hdr-tab{
     font-size:10px;
-    padding:4px 8px;
+    padding:3px 8px;
   }
+  /* Hide PNG and Mockup buttons on tiny screens — only keep Place Order */
+  .hdr-actions .btn:not(:last-child){ display:none; }
+  .hdr-actions .btn:last-child{ display:inline-flex; }
   .sidebar{
     width:46px;
   }
   .tbtn{
-    width:40px;height:44px;
+    width:40px !important; height:44px !important;
     font-size:8px;
   }
   .tbtn svg{width:16px;height:16px;}
@@ -578,7 +596,7 @@ canvas#gc{
     grid-template-columns:46px 1fr;
   }
   canvas#gc{
-    max-height:calc(55vh);
+    max-height:calc(100vh - var(--hdr) - 60px);
   }
   .sidebar-df{
     width:28px;height:28px;
