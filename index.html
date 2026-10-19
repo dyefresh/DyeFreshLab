@@ -440,119 +440,155 @@ canvas#gc{
     --lp: 0px;
     --rp: 0px;
     --hdr: 48px;
+    --mbb: 58px; /* mobile bottom bar height */
   }
-  /* Stack: canvas fills most of screen, bottom bar below */
+  /* Stack: sidebar left, canvas fills right, bottom bar spans full width */
   .app{
     grid-template-columns: 52px 1fr;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr var(--mbb);
     grid-template-areas:
       "sidebar canvas"
       "sidebar bottom-bar";
     height: calc(100vh - var(--hdr));
     overflow: hidden;
   }
-  /* Prevent children from overflowing on this layout */
   .app > *{ height: auto; }
-  /* Sidebar stays left, narrower */
+
+  /* Sidebar: icon-only tool strip */
   .sidebar{
     width:52px;
     grid-area: sidebar;
-    padding:6px 0;
+    padding:8px 0 0;
     gap:2px;
     height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .tbtn{
     width:44px !important; height:46px !important;
-    font-size:8.5px;
+    font-size:8px;
   }
-  .tbtn svg{ width:17px;height:17px; }
-  /* Canvas area fills center */
+  .tbtn svg{ width:18px; height:18px; }
+
+  /* Canvas area: centered, fills all available space */
   .ca{
     grid-area: canvas;
-    padding:8px 8px 8px;
+    padding: 6px 6px 0;
     display:flex;
     align-items:center;
     justify-content:center;
+    overflow: hidden;
   }
   canvas#gc{
-    max-width:100%;
-    max-height:calc(100vh - var(--hdr) - 60px);
     display:block;
+    max-width:100%;
+    max-height: calc(100vh - var(--hdr) - var(--mbb) - 12px);
   }
-  /* Left panel becomes a slide-up bottom sheet */
+
+  /* ── Bottom sheet panels ── */
+  /* Left (Design) panel: hidden by default, slides up from bottom-left */
   .panel:not(.rp){
-    display:none; /* hidden by default, shown via JS */
+    display:none;
   }
-  /* Right panel becomes bottom drawer */
-  .panel.rp{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    width:100%;
-    height:auto;
-    max-height:45vh;
-    border-top:1px solid var(--border);
-    border-left:none;
-    border-radius:12px 12px 0 0;
-    z-index:200;
-    transform:translateY(100%);
-    transition:transform .28s cubic-bezier(.4,0,.2,1);
-    box-shadow:0 -4px 24px rgba(0,0,0,.12);
-  }
-  .panel.rp.rp-open{
-    transform:translateY(0);
-  }
-  .panel.rp .pscroll{
-    max-height:calc(45vh - 40px);
-    padding-bottom:16px;
-  }
-  /* Left content panel becomes bottom sheet too */
   .panel:not(.rp).panel-open{
     display:flex;
     position:fixed;
-    bottom:0; left:52px; right:0;
-    height:auto;
-    max-height:55vh;
-    border-top:1px solid var(--border);
-    border-right:none;
-    border-radius:12px 12px 0 0;
-    z-index:200;
-    box-shadow:0 -4px 24px rgba(0,0,0,.12);
-    flex-direction:column;
+    bottom: var(--mbb); left:52px; right:0;
+    height: auto;
+    max-height: 60vh;
+    border-top: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    z-index: 300;
+    box-shadow: 0 -6px 32px rgba(0,0,0,.22);
+    flex-direction: column;
+    overflow: hidden;
   }
-  /* Bottom bar for toggling panels */
+  .panel:not(.rp).panel-open .pscroll{
+    flex:1;
+    overflow-y:auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 20px;
+  }
+
+  /* Right (Options/Summary) panel: slides up from bottom */
+  .panel.rp{
+    position:fixed;
+    bottom: var(--mbb); left:0; right:0;
+    width:100%;
+    height:auto;
+    max-height: 55vh;
+    border-top: 1px solid var(--border);
+    border-left: none;
+    border-radius: 14px 14px 0 0;
+    z-index: 300;
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 -6px 32px rgba(0,0,0,.22);
+  }
+  .panel.rp.rp-open{
+    transform: translateY(0);
+  }
+  .panel.rp .pscroll{
+    max-height: calc(55vh - 44px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 20px;
+  }
+
+  /* Drag handle on bottom sheets */
+  .panel:not(.rp).panel-open::before,
+  .panel.rp::before{
+    content:'';
+    display:block;
+    width:36px; height:4px;
+    background:var(--border);
+    border-radius:2px;
+    margin: 8px auto 4px;
+    flex-shrink:0;
+  }
+
+  /* ── Mobile bottom bar ── */
   .mobile-bottom-bar{
     grid-area: bottom-bar;
     display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:6px 8px;
+    align-items:stretch;
+    justify-content:stretch;
+    gap:0;
+    padding:0;
     background:var(--surface);
     border-top:1px solid var(--border);
+    height: var(--mbb);
   }
   .mbb-btn{
-    flex:1;max-width:90px;
-    padding:7px 4px;
-    border:1.5px solid var(--border);
-    border-radius:8px;
+    flex:1;
+    padding:8px 4px 6px;
+    border:none;
+    border-right: 1px solid var(--border);
+    border-radius:0;
     background:var(--surface);
     font-family:var(--font);
-    font-size:10px;font-weight:600;
-    color:var(--txt2);cursor:pointer;
+    font-size:10px; font-weight:600;
+    color:var(--txt2); cursor:pointer;
     text-align:center;
-    transition:all .15s;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:3px;
+    transition: background .12s, color .12s;
+    -webkit-tap-highlight-color: transparent;
   }
+  .mbb-btn:last-child{ border-right:none; }
+  .mbb-btn svg{ display:block; }
   .mbb-btn.active{
-    border-color:var(--red);
-    color:var(--red);
-    background:var(--red-bg);
+    background: var(--red-bg, rgba(232,41,11,.1));
+    color: var(--red);
   }
-  /* Header adjustments — mobile */
+
+  /* Header: compact on mobile */
   header .logo-sub{ display:none; }
-  /* On mobile hide ALL header action button text and make them icon-only */
   .hdr-actions .btn span:not(.btn-icon){ display:none; }
-  .hdr-actions .btn{ padding:5px 7px; }
-  /* Move the Front/Back/Sleeve tabs out of absolute centering into the flex flow */
+  .hdr-actions .btn{ padding:5px 8px; }
+
+  /* Front/Back/Sleeve tabs: stay in the flex row (not absolute) */
   .hdr-center{
     position:static;
     transform:none;
@@ -566,61 +602,35 @@ canvas#gc{
 
 /* ── Mobile portrait: <600px ────────────────────────────── */
 @media (max-width: 599px){
-  :root{ --hdr:44px; }
-  header{
-    padding:0 6px;
-    gap:6px;
-  }
-  .logo-name{ font-size:13px; }
-  /* Hide logo text on very small screens to give header room */
+  :root{ --hdr:44px; --mbb:56px; }
+  header{ padding:0 6px; gap:4px; }
   .logo-name{ display:none; }
-  .hdr-center{
-    gap:2px;
-  }
-  .hdr-center .hdr-tab{
-    font-size:10px;
-    padding:3px 8px;
-  }
-  /* Hide PNG and Mockup buttons on tiny screens — only keep Place Order */
+  .hdr-center{ gap:2px; }
+  .hdr-center .hdr-tab{ font-size:10px; padding:3px 8px; }
+
+  /* Keep only Place Order button in header */
   .hdr-actions .btn:not(:last-child){ display:none; }
   .hdr-actions .btn:last-child{ display:inline-flex; }
-  .sidebar{
-    width:46px;
+
+  .sidebar{ width:46px; }
+  .tbtn{ width:40px !important; height:44px !important; font-size:8px; }
+  .tbtn svg{ width:16px; height:16px; }
+  .app{ grid-template-columns:46px 1fr; }
+
+  .panel:not(.rp).panel-open{
+    left: 46px;
   }
-  .tbtn{
-    width:40px !important; height:44px !important;
-    font-size:8px;
-  }
-  .tbtn svg{width:16px;height:16px;}
-  .app{
-    grid-template-columns:46px 1fr;
-  }
-  canvas#gc{
-    max-height:calc(100vh - var(--hdr) - 60px);
-  }
-  .sidebar-df{
-    width:28px;height:28px;
-    font-size:9px;
-  }
+
+  .mbb-btn{ font-size:9px; padding:7px 3px 5px; }
+  .sidebar-df{ width:28px; height:28px; font-size:9px; }
 }
 
-/* ── Landscape phone (600-900px, short height) ──────────── */
+/* ── Landscape phone (≤900px wide, ≤500px tall) ──────────── */
 @media (max-width:900px) and (max-height:500px){
-  :root{ --hdr:40px; }
-  canvas#gc{
-    max-height:calc(100vh - var(--hdr) - 60px);
-  }
-  .panel.rp{
-    max-height:50vh;
-  }
-  .mobile-bottom-bar{
-    padding:4px 6px;
-    gap:5px;
-  }
-  .mbb-btn{
-    padding:5px 4px;
-    font-size:9px;
-  }
+  :root{ --hdr:40px; --mbb:48px; }
+  .panel.rp{ max-height:50vh; }
+  .panel:not(.rp).panel-open{ max-height:55vh; }
+  .mbb-btn{ padding:5px 4px 4px; font-size:9px; }
 }
 
 /* Desktop: show static layout */
@@ -1104,16 +1114,20 @@ canvas#gc{
 <!-- Mobile bottom bar -->
 <div class="mobile-bottom-bar" id="mobileBottomBar">
   <button class="mbb-btn" id="mbb-design" onclick="mbbToggle('design')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><br>Design
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    Design
   </button>
   <button class="mbb-btn" id="mbb-options" onclick="mbbToggle('options')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg><br>Options
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Options
   </button>
   <button class="mbb-btn" id="mbb-preview" onclick="dlMockup()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><br>Mockup
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    Mockup
   </button>
-  <button class="mbb-btn" id="mbb-save" onclick="openOrderModal()" style="background:var(--red);color:#fff;border-color:var(--red);font-weight:700;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg><br>Order
+  <button class="mbb-btn" id="mbb-save" onclick="openOrderModal()" style="background:var(--red);color:#fff;border-right-color:var(--red);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    Order
   </button>
 </div>
 
@@ -3088,46 +3102,56 @@ let mbbActive = null;
 
 function isMobile(){ return window.innerWidth <= 1024; }
 
+function mbbSetButtons(active){
+  document.getElementById('mbb-design')?.classList.toggle('active', active === 'design');
+  document.getElementById('mbb-options')?.classList.toggle('active', active === 'options');
+}
+
 function mbbToggle(panel){
   if(!isMobile()) return;
   const leftPanel  = document.querySelector('.panel:not(.rp)');
   const rightPanel = document.querySelector('.panel.rp');
-  const mbbDesign  = document.getElementById('mbb-design');
-  const mbbOptions = document.getElementById('mbb-options');
 
   if(mbbActive === panel){
-    // Close current panel
-    if(leftPanel)  leftPanel.classList.remove('panel-open');
-    if(rightPanel) rightPanel.classList.remove('rp-open');
-    mbbDesign?.classList.remove('active');
-    mbbOptions?.classList.remove('active');
-    mbbActive = null;
+    // Tap same button again → close
+    closeMobilePanels();
     return;
   }
 
   mbbActive = panel;
   if(panel === 'design'){
-    if(leftPanel)  leftPanel.classList.add('panel-open');
-    if(rightPanel) rightPanel.classList.remove('rp-open');
-    mbbDesign?.classList.add('active');
-    mbbOptions?.classList.remove('active');
+    leftPanel?.classList.add('panel-open');
+    rightPanel?.classList.remove('rp-open');
   } else if(panel === 'options'){
-    if(rightPanel) rightPanel.classList.add('rp-open');
-    if(leftPanel)  leftPanel.classList.remove('panel-open');
-    mbbOptions?.classList.add('active');
-    mbbDesign?.classList.remove('active');
+    rightPanel?.classList.add('rp-open');
+    leftPanel?.classList.remove('panel-open');
   }
+  mbbSetButtons(panel);
+
+  // Show backdrop
+  let bd = document.getElementById('mbb-backdrop');
+  if(!bd){
+    bd = document.createElement('div');
+    bd.id = 'mbb-backdrop';
+    bd.style.cssText = 'position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.32);';
+    bd.addEventListener('touchstart', closeMobilePanels, {passive:true});
+    bd.addEventListener('click', closeMobilePanels);
+    document.body.appendChild(bd);
+  }
+  bd.style.display = 'block';
 }
 
-// Close mobile panels when tapping canvas
+// Close mobile panels when tapping canvas or backdrop
 function closeMobilePanels(){
   if(!isMobile()) return;
   const leftPanel  = document.querySelector('.panel:not(.rp)');
   const rightPanel = document.querySelector('.panel.rp');
-  if(leftPanel)  leftPanel.classList.remove('panel-open');
-  if(rightPanel) rightPanel.classList.remove('rp-open');
-  document.querySelectorAll('.mbb-btn').forEach(b=>b.classList.remove('active'));
+  leftPanel?.classList.remove('panel-open');
+  rightPanel?.classList.remove('rp-open');
+  mbbSetButtons(null);
   mbbActive = null;
+  const bd = document.getElementById('mbb-backdrop');
+  if(bd) bd.style.display = 'none';
 }
 
 // Scale canvas to fit on mobile
@@ -3139,12 +3163,13 @@ function fitCanvasToScreen(){
     gc.style.height = '';
     return;
   }
-  // Calculate available width and height
+  const cs       = getComputedStyle(document.documentElement);
   const sidebarW = window.innerWidth <= 599 ? 46 : 52;
-  const availW   = window.innerWidth - sidebarW - 16;
-  const bottomH  = 60; // bottom bar
-  const headerH  = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 48;
-  const availH   = window.innerHeight - headerH - bottomH - 16;
+  const headerH  = parseInt(cs.getPropertyValue('--hdr')) || 48;
+  const bottomH  = parseInt(cs.getPropertyValue('--mbb')) || 58;
+  const pad      = 12; // 6px top + 6px right padding from .ca
+  const availW   = window.innerWidth - sidebarW - pad;
+  const availH   = window.innerHeight - headerH - bottomH - pad;
   const scaleW   = availW / 500;   // canvas native width
   const scaleH   = availH / 580;   // canvas native height
   const scale    = Math.min(scaleW, scaleH, 1);
