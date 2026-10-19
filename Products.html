@@ -514,9 +514,8 @@ body{
         <img class="card-photo" id="pwu-card-img"
           src=""
           alt="Garment Washed Cap" loading="lazy"
-          style="width:100%;height:100%;object-fit:cover;display:none;"
           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-        <div class="card-photo-placeholder" style="display:flex">🧢</div>
+        <div class="card-photo-placeholder" style="display:none">🧢</div>
         <div class="card-badge" style="background:#4a7c59;">Vintage Look</div>
       </div>
       <div class="card-swatch-row" id="pwu-swatches"></div>
@@ -883,10 +882,21 @@ function selectColorOnCard(productId, colorIdx) {
                     document.getElementById(productId + '-img');
   if (cardImgEl && color.img) {
     cardImgEl.style.opacity = '0.5';
+    const placeholder = cardImgEl.nextElementSibling;
     const newImg = new Image();
-    // No crossOrigin — SanMar CDN blocks cross-origin requests
-    newImg.onload = () => { cardImgEl.src = color.img; cardImgEl.style.opacity = '1'; };
-    newImg.onerror = () => { cardImgEl.style.opacity = '1'; };
+    newImg.onload = () => {
+      cardImgEl.src = color.img;
+      cardImgEl.style.display = 'block';
+      cardImgEl.style.opacity = '1';
+      if (placeholder && placeholder.classList.contains('card-photo-placeholder'))
+        placeholder.style.display = 'none';
+    };
+    newImg.onerror = () => {
+      cardImgEl.style.opacity = '1';
+      cardImgEl.style.display = 'none';
+      if (placeholder && placeholder.classList.contains('card-photo-placeholder'))
+        placeholder.style.display = 'flex';
+    };
     newImg.src = color.img;
   }
 

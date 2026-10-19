@@ -625,6 +625,13 @@ canvas#gc{
   .sidebar-df{ width:28px; height:28px; font-size:9px; }
 }
 
+/* ── Hat style sub-selector buttons ── */
+.hat-style-btn.active{
+  background:var(--red)!important;
+  border-color:var(--red)!important;
+  color:#fff!important;
+  font-weight:600;
+}
 /* ── Landscape phone (≤900px wide, ≤500px tall) ──────────── */
 @media (max-width:900px) and (max-height:500px){
   :root{ --hdr:40px; --mbb:48px; }
@@ -722,6 +729,23 @@ canvas#gc{
           <div class="prod-card" onclick="setProd('hoodie',this)"><span class="emo">🧥</span><span class="lbl">Hoodie</span></div>
           <div class="prod-card" onclick="setProd('hat',this)"><span class="emo">🧢</span><span class="lbl">Cap</span></div>
           <div class="prod-card" onclick="setProd('joggers',this)"><span class="emo">👖</span><span class="lbl">Joggers</span></div>
+        </div>
+
+        <!-- Hat sub-type selector — only shown when hat is selected -->
+        <div id="hatStyleSub" style="display:none;margin-top:8px;">
+          <div class="sec-label" style="margin-bottom:4px;">Cap Style</div>
+          <div style="display:flex;gap:5px;">
+            <button class="hat-style-btn active" data-style="c112"
+              onclick="setHatStyle('c112')"
+              style="flex:1;font-size:11px;padding:5px 4px;border-radius:6px;border:1.5px solid var(--border2);background:var(--surface2);cursor:pointer;color:var(--txt);">
+              C112 Structured
+            </button>
+            <button class="hat-style-btn" data-style="pwu"
+              onclick="setHatStyle('pwu')"
+              style="flex:1;font-size:11px;padding:5px 4px;border-radius:6px;border:1.5px solid var(--border2);background:var(--surface2);cursor:pointer;color:var(--txt);">
+              PWU Washed
+            </button>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -1344,6 +1368,8 @@ let uid = 0;
 // ─────────────────────────────────────────
 const S = {
   product:'tshirt', side:'front',
+  hatStyle:'c112',  // 'c112' or 'pwu'
+  hatTintIdx:0,     // index into active hat color array
   tintIdx:28, // defaults to Silver
   sizeQtys:{XS:0,S:0,M:0,L:0,XL:0,'2XL':0},
   layers:[], selectedId:null,
@@ -1512,6 +1538,9 @@ function loadURLParams(){
 
 function init(){
   loadPC54Images();
+  // Preload hat colors from SanMar proxy for both cap styles
+  loadHatColors('c112');
+  loadHatColors('pwu');
   buildColorSwatches();
   buildTCDots();
   buildEditDots();
@@ -1610,6 +1639,21 @@ function setProd(p,el){
   S.product = p;
   document.querySelectorAll('.prod-card').forEach(t=>t.classList.remove('on','active'));
   if(el){ el.classList.add('on'); el.classList.add('active'); }
+
+  // Show/hide hat sub-selector
+  const hatSub = document.getElementById('hatStyleSub');
+  if(hatSub) hatSub.style.display = (p === 'hat') ? 'block' : 'none';
+
+  // Build appropriate color swatches
+  if(p === 'hat') {
+    buildHatColorSwatches();
+    if(HAT_COLORS[S.hatStyle].length) preloadHatImage(S.hatTintIdx);
+  } else {
+    buildColorSwatches();
+    const nameEl = document.getElementById('selectedColorName');
+    if(nameEl) nameEl.textContent = SHIRT_COLORS[S.tintIdx].n;
+  }
+
   applyDefaultPZ();
   updSum(); render();
 }
@@ -1694,7 +1738,7 @@ function drawPhoto(){
   // Use real per-color SanMar image if loaded (works for any product type),
   // then fall back to the generic product photo from imgCache
   const side = S.side;
-  const colorImg = getColorImg(side);
+  const colorImg = (S.product === 'hat') ? getHatColorImg(side) : getColorImg(side);
   const photo = colorImg || imgCache[S.product]?.[S.side];
   ctx.save();
   if(photo){
@@ -2725,7 +2769,7 @@ function dlMockup(){
   oc2.fillRect(0, 0, oc.width, oc.height);
 
   // Draw garment photo (color-specific if available, else generic product photo)
-  const photo = getColorImg(S.side) || imgCache[S.product]?.[S.side];
+  const photo = ((S.product === 'hat') ? getHatColorImg(S.side) : getColorImg(S.side)) || imgCache[S.product]?.[S.side];
   if(photo){
     const scale = Math.min(cv.width/photo.naturalWidth, cv.height/photo.naturalHeight);
     const dw = photo.naturalWidth*scale, dh = photo.naturalHeight*scale;
@@ -2892,40 +2936,184 @@ function highlightActiveSwatch(){
 
 // ─── PROXY SERVER URL ─────────────────────────────────────────────────────────
 // Point this at your deployed proxy. During local dev: http://localhost:3001/api
-// In production: https://your-railway-url.up.railway.app/api
-const PROXY_BASE = 'http://localhost:3001/api';
+// SanMar proxy — Railway deployment
+const PROXY_BASE = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 
 // ─── PC54 COLOR IMAGE SYSTEM ─────────────────────────────────────────────────
 // Loads real SanMar product photos for each color via Shopify storefront API.
 // Falls back to swatch color if image not yet loaded.
 
 const colorImgCache = {}; // colorImgCache[colorIndex][side] = Image or null
-let pc54ImageMap = null;   // slug → {front, back, sleeve} URLs from Shopify API
+let pc54ImageMap = null;   // colorName → {front, back, frontFlat, colorSwatch} URLs
 
-// Fetch all PC54 color image URLs from sanmarsports.com Shopify API
+// Fetch all PC54 color image URLs from SanMar proxy
 async function loadPC54Images(){
   try {
-    // Call our proxy server — it fetches Shopify server-side, avoiding CORS
-    const res = await fetch(PROXY_BASE + '/garment-images?style=pc54');
+    const res = await fetch(PROXY_BASE + '/api/colors?style=PC54');
     if(!res.ok) return;
-    const data = await res.json();
+    const arr = await res.json(); // array of {name, front, back, frontFlat, colorSwatch, ...}
 
-    // data.colors is { colorslug: { front, back, sleeve } }
-    pc54ImageMap = data.colors || {};
+    // Build name→urls map
+    pc54ImageMap = {};
+    arr.forEach(c => {
+      if(!c.name) return;
+      pc54ImageMap[c.name] = {
+        front:  c.front    || c.frontFlat || c.colorSwatch || null,
+        back:   c.back     || c.front     || c.colorSwatch || null,
+        sleeve: c.side     || c.front     || c.colorSwatch || null,
+      };
+    });
     console.log('[DyeFresh] PC54 images loaded for', Object.keys(pc54ImageMap).length, 'colors');
 
     // Preload current color immediately
     preloadColorImages(S.tintIdx);
   } catch(e){
-    console.warn('[DyeFresh] Could not load PC54 images (is proxy running?):', e.message);
+    console.warn('[DyeFresh] Could not load PC54 images:', e.message);
   }
+}
+
+// ─── HAT COLOR IMAGE SYSTEM ──────────────────────────────────────────────────
+// Hat colors loaded live from SanMar proxy for the active hat style (C112 or PWU)
+const HAT_COLORS = { c112: [], pwu: [] }; // populated by loadHatColors()
+const hatColorImgCache = {}; // hatColorImgCache[style][idx][side] = Image or null
+
+async function loadHatColors(style) {
+  const styleNum = style === 'pwu' ? 'PWU' : 'C112';
+  try {
+    const res = await fetch(PROXY_BASE + '/api/colors?style=' + styleNum);
+    if(!res.ok) return;
+    const arr = await res.json();
+    HAT_COLORS[style] = arr.map(c => ({
+      n:    c.name,
+      h:    '#888888', // hex is cosmetic only; real image used for rendering
+      lt:   false,
+      slug: (c.name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+      front: c.front    || c.frontFlat || c.colorSwatch || null,
+      back:  c.back     || c.front     || c.colorSwatch || null,
+      side:  c.side     || c.front     || c.colorSwatch || null,
+    }));
+    console.log('[DyeFresh] Hat colors loaded for', styleNum, ':', HAT_COLORS[style].length);
+
+    if(S.product === 'hat' && S.hatStyle === style) {
+      buildHatColorSwatches();
+      preloadHatImage(S.hatTintIdx);
+    }
+  } catch(e) {
+    console.warn('[DyeFresh] Could not load hat colors for', styleNum, ':', e.message);
+  }
+}
+
+function preloadHatImage(idx) {
+  const style = S.hatStyle;
+  const colors = HAT_COLORS[style];
+  const c = colors[idx];
+  if(!c) return;
+
+  if(!hatColorImgCache[style]) hatColorImgCache[style] = {};
+  if(!hatColorImgCache[style][idx]) hatColorImgCache[style][idx] = {};
+
+  ['front','back','side'].forEach(side => {
+    if(hatColorImgCache[style][idx][side]) return;
+    const url = c[side] || c.front;
+    if(!url) return;
+    const img = new Image();
+    img.onload = () => {
+      hatColorImgCache[style][idx][side] = img;
+      if(S.product === 'hat' && S.hatStyle === style && S.hatTintIdx === idx) render();
+    };
+    img.onerror = () => { hatColorImgCache[style][idx][side] = null; };
+    img.src = url;
+  });
+}
+
+function getHatColorImg(side) {
+  const style = S.hatStyle;
+  const idx = S.hatTintIdx;
+  if(!hatColorImgCache[style] || !hatColorImgCache[style][idx]) return null;
+  return hatColorImgCache[style][idx][side]
+      || hatColorImgCache[style][idx].front
+      || null;
+}
+
+function buildHatColorSwatches() {
+  const grid = document.getElementById('colorSwatches');
+  if(!grid) return;
+  const colors = HAT_COLORS[S.hatStyle];
+  if(!colors || !colors.length) return;
+  grid.innerHTML = '';
+  colors.forEach((c,i) => {
+    const sw = document.createElement('div');
+    sw.title = c.n;
+    sw.style.cssText = `
+      width:22px;height:22px;border-radius:50%;cursor:pointer;
+      background:${c.h};
+      border:2px solid ${c.lt ? '#ccc' : 'transparent'};
+      box-shadow:0 1px 3px rgba(0,0,0,.2);
+      transition:transform .1s,box-shadow .1s;
+      flex-shrink:0;
+    `;
+    // If front image available, use it as swatch background
+    if(c.front) {
+      sw.style.backgroundImage = `url(${c.front})`;
+      sw.style.backgroundSize = 'cover';
+    }
+    sw.addEventListener('mouseenter',()=>{ sw.style.transform='scale(1.2)'; sw.style.boxShadow='0 2px 6px rgba(0,0,0,.3)'; });
+    sw.addEventListener('mouseleave',()=>{ sw.style.transform='scale(1)'; sw.style.boxShadow='0 1px 3px rgba(0,0,0,.2)'; });
+    sw.addEventListener('click',()=>selectHatColor(i));
+    sw.dataset.idx = i;
+    grid.appendChild(sw);
+  });
+  highlightActiveHatSwatch();
+}
+
+function selectHatColor(idx) {
+  S.hatTintIdx = idx;
+  highlightActiveHatSwatch();
+  const nameEl = document.getElementById('selectedColorName');
+  const colors = HAT_COLORS[S.hatStyle];
+  if(nameEl && colors[idx]) nameEl.textContent = colors[idx].n;
+  preloadHatImage(idx);
+  render();
+}
+
+function highlightActiveHatSwatch() {
+  const grid = document.getElementById('colorSwatches');
+  if(!grid) return;
+  grid.querySelectorAll('div').forEach(sw => {
+    const i = parseInt(sw.dataset.idx);
+    if(i === S.hatTintIdx) {
+      sw.style.outline = '2.5px solid var(--red)';
+      sw.style.outlineOffset = '2px';
+    } else {
+      sw.style.outline = 'none';
+    }
+  });
+}
+
+function setHatStyle(style) {
+  S.hatStyle = style;
+  S.hatTintIdx = 0;
+  // Update sub-selector buttons
+  document.querySelectorAll('.hat-style-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.style === style);
+  });
+  buildHatColorSwatches();
+  preloadHatImage(0);
+  const nameEl = document.getElementById('selectedColorName');
+  if(nameEl) {
+    const colors = HAT_COLORS[style];
+    if(nameEl && colors && colors[0]) nameEl.textContent = colors[0].n;
+    else nameEl.textContent = '';
+  }
+  render();
 }
 
 // Preload images for a given color index
 function preloadColorImages(idx){
   const c = SHIRT_COLORS[idx];
   if(!c || !pc54ImageMap) return;
-  const urlMap = pc54ImageMap[c.slug];
+  // Try matching by name first, then by slug
+  const urlMap = pc54ImageMap[c.n] || pc54ImageMap[c.slug];
   if(!urlMap) return;
 
   if(!colorImgCache[idx]) colorImgCache[idx] = {};
@@ -3647,7 +3835,9 @@ let omSelectedMethod = 'heat-press';
 const PROD_LABELS = {
   tshirt:  'T-Shirt (Gildan G500 / SanMar PC54)',
   hoodie:  'Hoodie (SanMar PC78H)',
-  hat:     'Structured Cap (SanMar C112)',
+  hat:     () => S.hatStyle === 'pwu'
+    ? 'Garment Washed Cap (SanMar PWU)'
+    : 'Structured Cap (SanMar C112)',
   joggers: 'Joggers (SanMar F082)'
 };
 
@@ -3684,7 +3874,8 @@ function omPopulateReview(){
   // Product / color / placement
   const colorName = document.getElementById('selectedColorName')?.textContent || '—';
   const prodKey   = S.product || 'tshirt';
-  const prodLabel = PROD_LABELS[prodKey] || prodKey;
+  const _pl = PROD_LABELS[prodKey];
+  const prodLabel = (typeof _pl === 'function' ? _pl() : _pl) || prodKey;
   const side      = (S.side || 'front');
   const placement = side.charAt(0).toUpperCase() + side.slice(1);
   const layers    = (S.views[side] || S.layers || []).length;
@@ -3736,7 +3927,8 @@ function omBuildEmail(){
   const sizes  = ['XS','S','M','L','XL','2XL'];
   const colorName  = document.getElementById('selectedColorName')?.textContent || '—';
   const prodKey    = S.product || 'tshirt';
-  const prodLabel  = PROD_LABELS[prodKey] || prodKey;
+  const _pl2 = PROD_LABELS[prodKey];
+  const prodLabel  = (typeof _pl2 === 'function' ? _pl2() : _pl2) || prodKey;
   const side       = S.side || 'front';
   const placement  = side.charAt(0).toUpperCase() + side.slice(1);
   const firstName  = document.getElementById('omFirstName').value.trim();
