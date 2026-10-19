@@ -422,51 +422,62 @@ canvas#gc{
    RESPONSIVE LAYOUT — Mobile, Tablet, Desktop
    ═══════════════════════════════════════════════════════ */
 
-/* ── Tablet portrait: 600px–1024px ─────────────────────── */
+/* ── Tablet portrait: 769px–1024px ─────────────────────── */
 @media (max-width: 1024px){
   :root{
-    --lp: 190px;
-    --rp: 240px;
+    --lp: 180px;
+    --rp: 220px;
   }
+  /* Slightly smaller sidebar on tablets */
+  .sidebar{ width:56px; }
+  .app{ grid-template-columns: 56px var(--lp) 1fr var(--rp); }
+  .tbtn{ width:48px !important; height:50px !important; font-size:8.5px; }
 }
 
-/* ── Tablet portrait narrow: 600px–768px ───────────────── */
+/* ── Mobile / narrow tablet: ≤768px ───────────────── */
 @media (max-width: 768px){
   :root{
     --lp: 0px;
     --rp: 0px;
     --hdr: 48px;
   }
-  /* Stack: canvas fills most of screen */
+  /* Stack: canvas fills most of screen, bottom bar below */
   .app{
     grid-template-columns: 52px 1fr;
     grid-template-rows: 1fr auto;
     grid-template-areas:
       "sidebar canvas"
       "sidebar bottom-bar";
+    height: calc(100vh - var(--hdr));
+    overflow: hidden;
   }
+  /* Prevent children from overflowing on this layout */
+  .app > *{ height: auto; }
   /* Sidebar stays left, narrower */
   .sidebar{
     width:52px;
     grid-area: sidebar;
     padding:6px 0;
     gap:2px;
+    height: 100%;
   }
   .tbtn{
-    width:44px;height:46px;
+    width:44px !important; height:46px !important;
     font-size:8.5px;
   }
   .tbtn svg{ width:17px;height:17px; }
   /* Canvas area fills center */
   .ca{
     grid-area: canvas;
-    padding:44px 8px 8px;
+    padding:8px 8px 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   canvas#gc{
     max-width:100%;
-    max-height:calc(60vh);
-    width:auto !important;
-    height:auto !important;
+    max-height:calc(100vh - var(--hdr) - 60px);
+    display:block;
   }
   /* Left panel becomes a slide-up bottom sheet */
   .panel:not(.rp){
@@ -1383,19 +1394,23 @@ function loadURLParams(){
     'yellow':          'yellow',
   };
 
-  // Set product
+  // Set product — call setProd() so applyDefaultPZ() and updSum() fire
   if(product){
     const validProducts = ['tshirt','hoodie','hat','joggers'];
     const p = product.toLowerCase().trim();
     if(validProducts.includes(p)){
-      S.product = p;
-      // Highlight the matching product card
+      // Find the product card that matches and simulate a click through setProd
+      let matchCard = null;
       document.querySelectorAll('.prod-card').forEach(card => {
         const cardFn = card.getAttribute('onclick') || '';
-        const isMatch = cardFn.includes(`'${p}'`);
-        card.classList.toggle('on', isMatch);
-        card.classList.toggle('active', isMatch);
+        if(cardFn.includes(`'${p}'`)) matchCard = card;
       });
+      if(matchCard){
+        setProd(p, matchCard);
+      } else {
+        // Fallback: set state directly if card not found yet
+        S.product = p;
+      }
     }
   }
 
@@ -1422,11 +1437,13 @@ function loadURLParams(){
           // causes the browser to block the load. drawImage() works fine without it.
           img.onload = () => {
             // Populate BOTH caches so getColorImg() and imgCache both find it
+            const prod = S.product || 'tshirt';
             if(!colorImgCache[idx]) colorImgCache[idx] = {};
             colorImgCache[idx]['front'] = img;
             colorImgCache[idx]['back']  = img;
-            imgCache['tshirt']['front_color_'+idx] = img;
-            imgCache['tshirt']['front'] = img;
+            if(!imgCache[prod]) imgCache[prod] = {};
+            imgCache[prod]['front_color_'+idx] = img;
+            imgCache[prod]['front'] = img;
             render();
           };
           img.onerror = (e) => { console.warn('Failed to load garment image:', c.img, e); };

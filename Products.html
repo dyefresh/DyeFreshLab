@@ -913,7 +913,12 @@ function launchDesignLab() {
   if (color.img) {
     url += `&img=${encodeURIComponent(color.img)}`;
   }
-  window.open(url, '_blank');
+  // Try window.open first; if blocked by popup blocker, fall back to same-tab navigation
+  const win = window.open(url, '_blank');
+  if (!win || win.closed || typeof win.closed === 'undefined') {
+    // Popup blocked — navigate in current tab
+    window.location.href = url;
+  }
   closePicker();
 }
 
