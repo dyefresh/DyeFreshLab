@@ -1186,6 +1186,20 @@ select.field { cursor:pointer; }
           <input type="range" id="slOp" min="10" max="100" value="100" style="flex:1;" oninput="apOp(this.value)">
           <span id="vOp" style="font-size:.75rem;font-weight:700;color:var(--txt);min-width:40px;text-align:right;">100%</span>
         </div>
+        <!-- Image-specific controls -->
+        <div id="imgEdit" style="display:none;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;">Upload Size</div>
+            <div id="imgSizeDisplay" style="font-size:.85rem;font-weight:700;color:var(--txt);">— " × —"</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+            <span style="font-size:.82rem;font-weight:600;color:var(--txt);">Remove White Background</span>
+            <label style="position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;">
+              <input type="checkbox" id="removeWhiteToggle" style="opacity:0;width:0;height:0;" onchange="apRemoveWhite(this.checked)">
+              <span id="removeWhiteSlider" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:20px;transition:.3s;"></span>
+            </label>
+          </div>
+        </div>
         <!-- Text-specific fields -->
         <div id="txtEdit" style="display:none;">
           <div style="margin-bottom:5px;">
@@ -2678,7 +2692,13 @@ function drawLayer(layer) {
   ctx.translate(-layer.w/2, -layer.h/2);
 
   if (layer.type === 'img' && layer.image) {
+    if (layer.removeWhite) {
+      ctx.globalCompositeOperation = 'multiply';
+    }
     ctx.drawImage(layer.image, 0, 0, layer.w, layer.h);
+    if (layer.removeWhite) {
+      ctx.globalCompositeOperation = 'source-over';
+    }
   }
   ctx.restore();
 }
@@ -3313,19 +3333,31 @@ document.getElementById('uploadInput').addEventListener('change', e => {
     const img = new Image();
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
-      const h = 160, w = h * aspect;
+      // Cap at 13" wide (312px at 24px/in), scale height proportionally
+      const MAX_W_PX = 13 * PX_PER_INCH; // 312px
+      let w = Math.min(img.naturalWidth, MAX_W_PX);
+      let h = w / aspect;
+      // Also cap height at 16" (print zone height)
+      const MAX_H_PX = 16 * PX_PER_INCH; // 384px
+      if (h > MAX_H_PX) { h = MAX_H_PX; w = h * aspect; }
+      // Centre within print zone
+      const pzX = (CANVAS_W - PRINT_ZONE_W) / 2;
+      const pzY = PRINT_ZONE_Y !== undefined ? PRINT_ZONE_Y : Math.round(CANVAS_H * 0.20);
       const layer = {
         id:    Date.now(),
         type:  'img',
         image: img,
         label: file.name,
-        x:     CANVAS_W/2 - w/2,
-        y:     CANVAS_H/2 - h/2,
+        x:     pzX + (PRINT_ZONE_W - w) / 2,
+        y:     pzY + (PRINT_ZONE_H - h) / 2,
         w, h,
+        _origW: w,
+        _origH: h,
         rot:      0,
         rotation: 0,
         opacity:  1,
         flipH:    false,
+        removeWhite: false,
       };
       S.layers.push(layer);
       S.activeLayer = layer.id;
@@ -3397,6 +3429,18 @@ function syncT() {
   const lbl = document.getElementById('rightPanelLabel');
   if (lbl) lbl.textContent = isImg ? 'Edit Image' : 'Edit Text';
   if (txtEdit) txtEdit.style.display = isImg ? 'none' : 'block';
+  const imgEdit = document.getElementById('imgEdit');
+  if (imgEdit) imgEdit.style.display = isImg ? 'block' : 'none';
+  if (isImg) {
+    const wIn = (l.w / PX_PER_INCH).toFixed(2);
+    const hIn = (l.h / PX_PER_INCH).toFixed(2);
+    const sizeEl = document.getElementById('imgSizeDisplay');
+    if (sizeEl) sizeEl.textContent = wIn + '" × ' + hIn + '"';
+    const rwToggle = document.getElementById('removeWhiteToggle');
+    const rwSlider = document.getElementById('removeWhiteSlider');
+    if (rwToggle) rwToggle.checked = !!l.removeWhite;
+    if (rwSlider) rwSlider.style.background = l.removeWhite ? 'var(--red)' : '#ccc';
+  }
 
   // Populate text fields
   if (!isImg) {
@@ -3603,6 +3647,13 @@ function apOp(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   l.opacity = v/100;
   const vOp=document.getElementById('vOp'); if(vOp) vOp.textContent=Math.round(v)+'%';
+  drawAll();
+}
+function apRemoveWhite(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  l.removeWhite = !!v;
+  const rwSlider = document.getElementById('removeWhiteSlider');
+  if (rwSlider) rwSlider.style.background = v ? 'var(--red)' : '#ccc';
   drawAll();
 }
 function delSel() {
