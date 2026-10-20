@@ -749,6 +749,24 @@ select.field { cursor:pointer; }
             <input class="field" id="textColorHex" type="text" value="#ffffff" maxlength="7" placeholder="#ffffff">
           </div>
         </div>
+        <div class="input-row">
+          <label class="input-label">Shape</label>
+          <select class="field" id="textShapeSelect">
+            <option value="normal">— Normal —</option>
+            <option value="arch_up">⌒ Arch Up</option>
+            <option value="arch_down">⌣ Arch Down</option>
+            <option value="circle">◯ Full Circle</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label class="input-label">Outline</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="textOutlineOn" style="width:16px;height:16px;cursor:pointer;" title="Enable outline">
+            <input class="field" type="color" id="textOutlineColor" value="#000000" style="width:36px;height:28px;border:none;cursor:pointer;" title="Outline color">
+            <input class="field" id="textOutlineWidth" type="range" min="1" max="10" value="2" style="flex:1;" title="Outline thickness">
+            <span id="textOutlineWidthVal" style="font-size:.75rem;font-weight:700;min-width:20px;text-align:right;">2</span>
+          </div>
+        </div>
         <button class="btn-add-text" id="btnAddText">+ Add Text</button>
       </div>
     </div>
@@ -865,6 +883,31 @@ select.field { cursor:pointer; }
             <div style="display:flex;gap:6px;align-items:center;">
               <input type="color" id="propColor" style="width:36px;height:28px;border:none;cursor:pointer;background:none;">
               <input class="field" id="propColorHex" type="text" maxlength="7" style="flex:1;">
+            </div>
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Shape</div>
+            <select class="field" id="propShape" style="width:100%;" onchange="applyTextShape(this.value)">
+              <option value="normal">— Normal —</option>
+              <option value="arch_up">⌒ Arch Up</option>
+              <option value="arch_down">⌣ Arch Down</option>
+              <option value="circle">◯ Full Circle</option>
+            </select>
+          </div>
+          <div id="propArchRow" style="margin-bottom:5px;display:none;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Arc Angle</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="range" id="propArchAngle" min="30" max="340" value="120" style="flex:1;" oninput="applyTextArchAngle(this.value)">
+              <span id="propArchAngleVal" style="font-size:.75rem;font-weight:700;min-width:36px;text-align:right;">120°</span>
+            </div>
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Outline</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" id="propOutlineOn" style="width:16px;height:16px;cursor:pointer;" onchange="applyTextOutline()">
+              <input type="color" id="propOutlineColor" value="#000000" style="width:36px;height:28px;border:none;cursor:pointer;" oninput="applyTextOutline()">
+              <input type="range" id="propOutlineWidth" min="1" max="10" value="2" style="flex:1;" oninput="document.getElementById('propOutlineWidthVal').textContent=this.value; applyTextOutline()">
+              <span id="propOutlineWidthVal" style="font-size:.75rem;font-weight:700;min-width:20px;text-align:right;">2</span>
             </div>
           </div>
         </div>
@@ -2068,6 +2111,116 @@ function drawAll() {
 function drawLayer(layer) {
   ctx.save();
   ctx.globalAlpha = layer.opacity ?? 1;
+
+  if (layer.type === 'text') {
+    const displayText = layer.uppercase ? (layer.text || '').toUpperCase() : (layer.text || '');
+    const effectiveSize = Math.round((layer.size || 48) * (layer.scale || 1));
+    const fontStyle = `${layer.italic?'italic ':''} ${layer.bold?'bold ':''} ${effectiveSize}px "${layer.font}"`;
+    ctx.font = fontStyle;
+    ctx.textBaseline = 'alphabetic';
+
+    const shape = layer.shape || 'normal';
+    const archAngle = layer.archAngle || 120;
+
+    if (shape === 'normal') {
+      const m = ctx.measureText(displayText);
+      layer.w = m.width + 4;
+      layer.h = effectiveSize * 1.35;
+
+      // Centre transform
+      const cx = layer.x + layer.w / 2;
+      const cy = layer.y + layer.h / 2;
+      ctx.translate(cx, cy);
+      const rot = layer.rotation || layer.rot || 0;
+      if (rot) ctx.rotate(rot * Math.PI / 180);
+      if (layer.flipH) ctx.scale(-1, 1);
+      ctx.translate(-layer.w / 2, -layer.h / 2);
+
+      const tx = 2, ty = effectiveSize;
+      // outline (draw first so fill sits on top)
+      if (layer.outline && layer.outlineColor) {
+        ctx.strokeStyle = layer.outlineColor;
+        ctx.lineWidth = (layer.outlineWidth || 2) * 2;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(displayText, tx, ty);
+      }
+      ctx.fillStyle = layer.color;
+      ctx.fillText(displayText, tx, ty);
+      // underline
+      if (layer.underline) {
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = Math.max(1, effectiveSize * 0.06);
+        ctx.beginPath();
+        ctx.moveTo(tx, ty + effectiveSize * 0.12);
+        ctx.lineTo(tx + m.width, ty + effectiveSize * 0.12);
+        ctx.stroke();
+      }
+    } else {
+      // Arch / Circle text along a curved path
+      ctx.font = fontStyle;
+      const chars = displayText.split('');
+      const sweepRad = (archAngle * Math.PI) / 180;
+      const totalW = ctx.measureText(displayText).width;
+      const radius = Math.max(totalW / sweepRad, effectiveSize * 1.5);
+      const isDown = shape === 'arch_down';
+      const isCircle = shape === 'circle';
+      const actualSweep = isCircle ? Math.PI * 2 * 0.9 : sweepRad;
+
+      // Bounding box
+      const arcW = 2 * radius * Math.sin(actualSweep / 2);
+      const arcH = radius - radius * Math.cos(actualSweep / 2) + effectiveSize * 1.5;
+      layer.w = Math.max(arcW + effectiveSize, effectiveSize * 3);
+      layer.h = Math.max(arcH, effectiveSize * 2);
+
+      // Centre transform
+      const cx = layer.x + layer.w / 2;
+      const cy = layer.y + layer.h / 2;
+      ctx.translate(cx, cy);
+      const rot = layer.rotation || layer.rot || 0;
+      if (rot) ctx.rotate(rot * Math.PI / 180);
+      if (layer.flipH) ctx.scale(-1, 1);
+
+      // Arc pivot point
+      const pivotY = isDown ? -(layer.h / 2 - effectiveSize * 0.5) : (layer.h / 2 - effectiveSize * 0.5);
+      ctx.save();
+      ctx.translate(0, pivotY);
+
+      const startAngle = isDown
+        ? (Math.PI / 2) - actualSweep / 2
+        : -(Math.PI / 2) - actualSweep / 2;
+
+      let angle = startAngle;
+      ctx.textBaseline = 'top';
+      for (let i = 0; i < chars.length; i++) {
+        const charW = ctx.measureText(chars[i]).width;
+        const charAngle = charW / radius;
+        angle += charAngle / 2;
+        ctx.save();
+        if (isDown) {
+          ctx.rotate(angle);
+          ctx.translate(0, -radius);
+        } else {
+          ctx.rotate(angle);
+          ctx.translate(0, -radius);
+        }
+        if (layer.outline && layer.outlineColor) {
+          ctx.strokeStyle = layer.outlineColor;
+          ctx.lineWidth = (layer.outlineWidth || 2) * 2;
+          ctx.lineJoin = 'round';
+          ctx.strokeText(chars[i], -charW / 2, isDown ? -effectiveSize : 0);
+        }
+        ctx.fillStyle = layer.color;
+        ctx.fillText(chars[i], -charW / 2, isDown ? -effectiveSize : 0);
+        angle += charAngle / 2;
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+    return;
+  }
+
+  // Image layers
   const cx = layer.x + layer.w/2;
   const cy = layer.y + layer.h/2;
   ctx.translate(cx, cy);
@@ -2076,29 +2229,7 @@ function drawLayer(layer) {
   if (layer.flipH) { ctx.scale(-1, 1); }
   ctx.translate(-layer.w/2, -layer.h/2);
 
-  if (layer.type === 'text') {
-    const displayText = layer.uppercase ? (layer.text || '').toUpperCase() : (layer.text || '');
-    const effectiveSize = Math.round((layer.size || 48) * (layer.scale || 1));
-    const fontStyle = `${layer.italic?'italic ':''} ${layer.bold?'bold ':''} ${effectiveSize}px "${layer.font}"`;
-    ctx.font = fontStyle;
-    ctx.fillStyle = layer.color;
-    ctx.textBaseline = 'top';
-    // update layer dimensions from measured text
-    const m = ctx.measureText(displayText);
-    layer.w = m.width + 4;
-    layer.h = effectiveSize * 1.25;
-    ctx.fillText(displayText, 2, 2);
-    // underline
-    if (layer.underline) {
-      ctx.strokeStyle = layer.color;
-      ctx.lineWidth = Math.max(1, effectiveSize * 0.06);
-      const uy = effectiveSize * 1.05;
-      ctx.beginPath();
-      ctx.moveTo(2, uy);
-      ctx.lineTo(2 + m.width, uy);
-      ctx.stroke();
-    }
-  } else if (layer.type === 'img' && layer.image) {
+  if (layer.type === 'img' && layer.image) {
     ctx.drawImage(layer.image, 0, 0, layer.w, layer.h);
   }
   ctx.restore();
@@ -2407,6 +2538,31 @@ function toggleLayerStyle(style) {
   drawAll(); syncT();
 }
 
+function applyTextShape(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l.shape = val;
+  const archRow = document.getElementById('propArchRow');
+  if (archRow) archRow.style.display = (val !== 'normal') ? 'block' : 'none';
+  drawAll();
+}
+function applyTextArchAngle(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l.archAngle = parseInt(val, 10);
+  const lbl = document.getElementById('propArchAngleVal');
+  if (lbl) lbl.textContent = val + '°';
+  drawAll();
+}
+function applyTextOutline() {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l.outline      = document.getElementById('propOutlineOn').checked;
+  l.outlineColor = document.getElementById('propOutlineColor').value;
+  l.outlineWidth = parseInt(document.getElementById('propOutlineWidth').value, 10) || 2;
+  drawAll();
+}
+
 function togglePrintZone() {
   S.showPrintZone = S.showPrintZone === false ? true : false;
   const btn = document.getElementById('btnPrintZone');
@@ -2414,12 +2570,20 @@ function togglePrintZone() {
   drawAll();
 }
 
+document.getElementById('textOutlineWidth').addEventListener('input', () => {
+  document.getElementById('textOutlineWidthVal').textContent = document.getElementById('textOutlineWidth').value;
+});
+
 document.getElementById('btnAddText').addEventListener('click', () => {
   const text = document.getElementById('textInput').value.trim();
   if (!text) { document.getElementById('textInput').focus(); return; }
   const size = parseInt(document.getElementById('textSizeInput').value,10) || 48;
   const font = document.getElementById('fontSelect').value;
   const color = textColorInput.value || '#ffffff';
+  const shape = document.getElementById('textShapeSelect').value;
+  const outlineOn = document.getElementById('textOutlineOn').checked;
+  const outlineColor = document.getElementById('textOutlineColor').value;
+  const outlineWidth = parseInt(document.getElementById('textOutlineWidth').value, 10) || 2;
 
   const layer = {
     id:    Date.now(),
@@ -2432,6 +2596,11 @@ document.getElementById('btnAddText').addEventListener('click', () => {
     italic:    textStyleState.italic,
     underline: textStyleState.underline,
     uppercase: textStyleState.uppercase,
+    shape:     shape,
+    archAngle: 120,
+    outline:      outlineOn,
+    outlineColor: outlineColor,
+    outlineWidth: outlineWidth,
     x:     CANVAS_W/2 - size*text.length*0.3,
     y:     CANVAS_H/2 - size/2,
     w:     size * text.length * 0.6,
@@ -2560,6 +2729,24 @@ function syncT() {
       const cap = s.charAt(0).toUpperCase() + s.slice(1);
       document.getElementById('prop' + cap)?.classList.toggle('active', !!l[s]);
     });
+    // Shape
+    const ps = document.getElementById('propShape');
+    if (ps) ps.value = l.shape || 'normal';
+    const archRow = document.getElementById('propArchRow');
+    if (archRow) archRow.style.display = (l.shape && l.shape !== 'normal') ? 'block' : 'none';
+    const paa = document.getElementById('propArchAngle');
+    const paaV = document.getElementById('propArchAngleVal');
+    if (paa) paa.value = l.archAngle || 120;
+    if (paaV) paaV.textContent = (l.archAngle || 120) + '°';
+    // Outline
+    const poOn = document.getElementById('propOutlineOn');
+    const poCol = document.getElementById('propOutlineColor');
+    const poW  = document.getElementById('propOutlineWidth');
+    const poWV = document.getElementById('propOutlineWidthVal');
+    if (poOn)  poOn.checked   = !!l.outline;
+    if (poCol) poCol.value    = l.outlineColor || '#000000';
+    if (poW)   poW.value      = l.outlineWidth || 2;
+    if (poWV)  poWV.textContent = (l.outlineWidth || 2);
   }
 
   // Scale slider
