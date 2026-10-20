@@ -762,7 +762,7 @@ select.field { cursor:pointer; }
           <label class="input-label">Outline</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <input type="checkbox" id="textOutlineOn" style="width:16px;height:16px;cursor:pointer;" title="Enable outline">
-            <input class="field" type="color" id="textOutlineColor" value="#000000" style="width:36px;height:28px;border:none;cursor:pointer;" title="Outline color">
+            <input class="field" type="color" id="textOutlineColor" value="#000000" style="width:36px;height:28px;border:2px solid var(--border,#444);border-radius:4px;cursor:pointer;padding:2px;" title="Outline color">
             <input class="field" id="textOutlineWidth" type="range" min="1" max="10" value="2" style="flex:1;" title="Outline thickness">
             <span id="textOutlineWidthVal" style="font-size:.75rem;font-weight:700;min-width:20px;text-align:right;">2</span>
           </div>
@@ -905,7 +905,7 @@ select.field { cursor:pointer; }
             <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Outline</div>
             <div style="display:flex;align-items:center;gap:6px;">
               <input type="checkbox" id="propOutlineOn" style="width:16px;height:16px;cursor:pointer;" onchange="applyTextOutline()">
-              <input type="color" id="propOutlineColor" value="#000000" style="width:36px;height:28px;border:none;cursor:pointer;" oninput="applyTextOutline()">
+              <input type="color" id="propOutlineColor" value="#000000" style="width:36px;height:28px;border:2px solid var(--border,#444);border-radius:4px;cursor:pointer;padding:2px;" oninput="applyTextOutline()">
               <input type="range" id="propOutlineWidth" min="1" max="10" value="2" style="flex:1;" oninput="document.getElementById('propOutlineWidthVal').textContent=this.value; applyTextOutline()">
               <span id="propOutlineWidthVal" style="font-size:.75rem;font-weight:700;min-width:20px;text-align:right;">2</span>
             </div>
@@ -2156,79 +2156,88 @@ function drawLayer(layer) {
         ctx.stroke();
       }
     } else {
-      // Arch / Circle text along a curved path
+      // ── Arch / Circle curved text ──────────────────────────────────────────
+      // Each character is placed individually around an imaginary circle.
+      //
+      // Arch Up  : text arcs upward (smile). Arc centre is below. Characters
+      //            sit on top of the arc, sweeping clockwise L→R.
+      //
+      // Arch Down: text arcs downward (frown). Arc centre is above. Characters
+      //            hang below the arc. We sweep counter-clockwise so reading
+      //            order stays L→R when viewed from outside the circle.
+      //
+      // Circle   : same geometry as Arch Up but with a ~324° sweep.
+      //
+      // Per-character pattern:
+      //   1. rotate(angle)          — point toward position on circle
+      //   2. translate(0, -radius)  — move out to the rim (upward in local coords)
+      //   3. fillText(char)         — draw character upright, centred on the rim
+      //   For arch_down we negate the angle increment so the sweep goes the
+      //   other way, which keeps the reading order left-to-right.
+
       ctx.font = fontStyle;
+      ctx.textBaseline = 'alphabetic';
+
       const chars = displayText.split('');
       const sweepRad = (archAngle * Math.PI) / 180;
       const totalW = ctx.measureText(displayText).width;
-      const radius = Math.max(totalW / sweepRad, effectiveSize * 1.5);
       const isDown = shape === 'arch_down';
       const isCircle = shape === 'circle';
-      const actualSweep = isCircle ? Math.PI * 2 * 0.9 : sweepRad;
+      const actualSweep = isCircle ? (Math.PI * 2 * 0.9) : sweepRad;
 
-      // Bounding box — width is chord of the arc, height includes the arc depth + text
-      const arcW = 2 * radius * Math.sin(actualSweep / 2);
-      const arcDepth = radius - radius * Math.cos(actualSweep / 2);
-      layer.w = Math.max(arcW + effectiveSize, effectiveSize * 3);
-      layer.h = Math.max(arcDepth + effectiveSize * 2, effectiveSize * 2.5);
+      // Radius: large enough that all characters fit on the arc
+      const radius = Math.max(totalW / actualSweep, effectiveSize * 1.5);
 
-      // Centre transform
-      const cx = layer.x + layer.w / 2;
-      const cy = layer.y + layer.h / 2;
-      ctx.translate(cx, cy);
+      // Bounding box
+      const chord   = 2 * radius * Math.sin(actualSweep / 2);
+      const sagitta = radius * (1 - Math.cos(actualSweep / 2));
+      layer.w = Math.max(chord + effectiveSize, effectiveSize * 3);
+      layer.h = Math.max(sagitta + effectiveSize * 2, effectiveSize * 2.5);
+
+      // Move canvas origin to layer centre; apply layer rotation & flip
+      ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
 
-      // Place each character along the arc
-      // Arch Up:   arc opens upward  — characters sit on top of a circle, reading L→R
-      // Arch Down: arc opens downward — characters hang below a circle, reading L→R
-      // Circle:    full circle, arch up style
-      //
-      // Strategy: translate to an arc centre-point, then for each char
-      //   rotate by its angle, translate by radius, draw upright.
-      //   For arch_up  the arc centre is BELOW the text → translate(0, +radius) → chars on top
-      //   For arch_down the arc centre is ABOVE the text → translate(0, -radius) → chars on bottom
-
-      ctx.textBaseline = 'alphabetic';
-
-      // Arc centre offset from layer centre
-      const arcCY = isDown ? -(radius - effectiveSize * 0.6) : (radius - effectiveSize * 0.6);
+      // Shift origin to the arc pivot point.
+      // Arch Up  → pivot is below  layer centre (positive Y), text appears at top.
+      // Arch Down → pivot is above layer centre (negative Y), text appears at bottom.
+      const pivotY = isDown
+        ? -(radius - sagitta / 2)
+        :  (radius - sagitta / 2);
       ctx.save();
-      ctx.translate(0, arcCY);
+      ctx.translate(0, pivotY);
 
-      // startAngle: first char starts here; sweep left-to-right
-      // arch_up:   sweep starts at -π/2 - half-sweep (top of circle, going clockwise)
-      // arch_down: sweep starts at  π/2 - half-sweep (bottom of circle, going clockwise)
+      // Starting angle and sweep direction.
+      // Arch Up  : begin left of top (-π/2 − sweep/2), sweep clockwise (+).
+      // Arch Down: begin right of bottom (+π/2 + sweep/2), sweep counter-CW (−).
       const startAngle = isDown
-        ? (Math.PI / 2) - actualSweep / 2
+        ? (Math.PI / 2) + actualSweep / 2
         : -(Math.PI / 2) - actualSweep / 2;
+      const dir = isDown ? -1 : 1;
 
       let angle = startAngle;
       for (let i = 0; i < chars.length; i++) {
-        const charW = ctx.measureText(chars[i]).width;
-        const charAngle = charW / radius;
-        angle += charAngle / 2;
+        const ch = chars[i];
+        const charW = ctx.measureText(ch).width;
+        const delta = (charW / radius) * dir;
+        angle += delta / 2;
+
         ctx.save();
         ctx.rotate(angle);
-        if (isDown) {
-          // arc centre above → translate downward to reach char baseline
-          ctx.translate(0, radius);
-          // rotate char 180° so it reads normally (not upside-down)
-          ctx.rotate(Math.PI);
-        } else {
-          // arc centre below → translate upward to reach char baseline
-          ctx.translate(0, -radius);
-        }
+        ctx.translate(0, -radius); // move out to rim
+
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
           ctx.lineWidth = (layer.outlineWidth || 2) * 2;
           ctx.lineJoin = 'round';
-          ctx.strokeText(chars[i], -charW / 2, 0);
+          ctx.strokeText(ch, -charW / 2, 0);
         }
         ctx.fillStyle = layer.color;
-        ctx.fillText(chars[i], -charW / 2, 0);
-        angle += charAngle / 2;
+        ctx.fillText(ch, -charW / 2, 0);
+
+        angle += delta / 2;
         ctx.restore();
       }
       ctx.restore();
