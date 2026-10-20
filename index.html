@@ -779,6 +779,24 @@ const CANVAS_H = 720;
   document.getElementById('prodStyle').textContent = STYLE_NUMS[productKey] || '';
 
   showLoading(true);
+
+  // If a garment image URL was passed directly (from Products page),
+  // start loading it immediately — don't wait for the colors API call.
+  // This hides the Railway cold-start latency completely.
+  if (directImg) {
+    const proxied = proxyImg(directImg);
+    const earlyImg = new Image();
+    earlyImg.onload = () => {
+      imgCache[proxied] = earlyImg;
+      S.garmentImg = earlyImg;
+      showLoading(false);
+      drawAll();
+    };
+    imgCache[proxied] = 'loading';
+    earlyImg.src = proxied;
+  }
+
+  // Fetch colors in parallel — updates swatches + color panel when ready
   fetchColors(productKey, colorSlug, directImg);
 })();
 
@@ -821,7 +839,11 @@ async function fetchColors(productKey, targetSlug, directImg) {
     preloadColorImages(S.colors[S.colorIdx]);
     S.colors.forEach((c, i) => { if (i !== S.colorIdx) preloadColorImages(c); });
 
-    loadGarmentImage(directImg && idx === 0 ? proxyImg(directImg) : null);
+    // Only trigger a garment image load if the early-load (from directImg) didn't already
+    // put an image on the canvas. directImg takes priority since it's the exact color chosen.
+    if (!S.garmentImg) {
+      loadGarmentImage(directImg ? proxyImg(directImg) : null);
+    }
 
   } catch(err) {
     console.error('fetchColors failed:', err);
