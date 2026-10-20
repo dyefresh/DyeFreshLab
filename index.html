@@ -2580,42 +2580,9 @@ function drawLayer(layer) {
       }
     } else {
       // ── Arch / Circle curved text ─────────────────────────────────────────
-      //
-      // COORDINATE MODEL (pivot = origin):
-      //   arch_up  : pivot is BELOW the text.
-      //              Characters at angle a sit at (0,-radius) then drawn normally.
-      //              Pivot canvas position: (boxCentreX, layer.y + boxH - radius + sagitta)
-      //              where sagitta = radius*(1-cos(halfSweep)) is how tall the arc band is.
-      //              Simplification: pivot.y = layer.y + boxH - radius
-      //                so the lowest point of the text (baseline) touches layer.y+boxH-radius+radius = layer.y+boxH  ✓
-      //              Actually we want text TOP at layer.y, text BASELINE at layer.y+fontSize.
-      //              pivot.y = layer.y + radius   (text at angle=-π/2 has baseline at pivot.y - radius = layer.y)
-      //              But the box must be tall enough: boxH = sagitta + fontSize*1.3
-      //
-      //   arch_down: pivot is ABOVE the text.
-      //              Characters at angle a sit at (0,+radius), flipped π.
-      //              pivot.y = layer.y + (boxH - sagitta - fontSize*1.3) = layer.y
-      //              Simplest: pivot.y = layer.y  → text bottom at layer.y + radius
-      //              boxH = sagitta + fontSize*1.3, pivot.y = layer.y + fontSize*1.3 - something...
-      //
-      // SIMPLEST CORRECT APPROACH:
-      //   1. Compute radius from totalTextWidth / sweep.
-      //   2. boxW = 2*R*sin(sweep/2),  boxH = R*(1-cos(sweep/2)) + fontSize
-      //   3. arch_up  pivot: canvas (layer.x+boxW/2,  layer.y + boxH - fontSize*0.1)
-      //      The highest point of the arc from the pivot is at -radius (straight up).
-      //      With pivot.y = layer.y + boxH - fontSize*0.1 :
-      //        top of arc  = pivot.y - radius = layer.y + boxH - fontSize - radius*(1-cos0)...
-      //   -------
-      //   FINAL CLEAN MODEL (no approximations):
-      //
-      //   arch_up:
-      //     pivot.y  = layer.y + R            ← so text at top (angle=-π/2) has baseline at 0 above pivot = layer.y
-      //     boxH     = R*(1-cos(sweep/2)) + fontSize*1.2
-      //     (the arc descends by sagitta below the top, plus one line of text height)
-      //
-      //   arch_down:
-      //     pivot.y  = layer.y + boxH - R     ← text at bottom (angle=+π/2) has baseline at layer.y+boxH
-      //     boxH     = R*(1-cos(sweep/2)) + fontSize*1.2
+      // Pivot is offset from box CENTRE so arc is always centred in the box.
+      // arch_up: pivot below centre, text curves upward (smile)
+      // arch_down: pivot above centre, text curves downward (arch/banner)
 
       ctx.textBaseline = 'alphabetic';
       const chars = displayText.split('');
@@ -2630,34 +2597,31 @@ function drawLayer(layer) {
       const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
       // Radius: arc length must equal total text width
-      const R = Math.max(totalW / sweep, effectiveSize * 1.0);
+      const R = Math.max(totalW / sweep, effectiveSize * 1.2);
 
-      // Bounding box
-      const sagitta = R * (1 - Math.cos(halfSweep));
+      // Bounding box dimensions
+      const sagitta = R * (1 - Math.cos(halfSweep));  // arc band height
       const boxW    = 2 * R * Math.sin(halfSweep);
-      const boxH    = sagitta + effectiveSize * 1.2;
-      layer.w = Math.max(boxW, effectiveSize * 1.5);
+      const boxH    = sagitta + effectiveSize * 1.3;
+      layer.w = Math.max(boxW, effectiveSize * 2);
       layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      // Pivot in canvas coordinates
-      //   arch_up:   pivot.y = layer.y + R   (text top == layer.y)
-      //   arch_down: pivot.y = layer.y + layer.h - R  (text bottom == layer.y + layer.h)
-      const pivotCanvasX = layer.x + layer.w / 2;
-      const pivotCanvasY = isDown
-        ? layer.y + layer.h - R
-        : layer.y + R;
+      // Pivot offset FROM BOX CENTRE so text is always centred in the box.
+      // The arc band spans sagitta vertically; the text occupies fontSize height.
+      // Box centre is at sagitta/2 + fontSize*0.65 from the top of the box.
+      // Pivot for arch_up is below box centre; for arch_down is above box centre.
+      // Pivot-to-top-of-arc = R, so pivot offset from centre = R - (sagitta/2 + fontSize*0.65)
+      const pivotOffset = (R - sagitta / 2 - effectiveSize * 0.65) * (isDown ? -1 : 1);
 
       // All drawing happens relative to pivot; wrap in save/restore
       ctx.save();
 
-      // Translate to layer centre, apply rotation/flip, then offset to pivot
-      const lcx = layer.x + layer.w / 2;
-      const lcy = layer.y + layer.h / 2;
-      ctx.translate(lcx, lcy);
+      // Translate to box centre, apply rotation/flip, shift to pivot
+      ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
-      ctx.translate(0, pivotCanvasY - lcy);  // x is always 0 (centred)
+      ctx.translate(0, pivotOffset);
 
       // Walk characters along arc from left to right
       // Start angle: -π/2 puts us at top (straight up from pivot)
