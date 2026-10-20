@@ -213,8 +213,7 @@ body{
 
 /* inline color swatch row on card */
 .card-swatch-row{
-  display:flex;gap:5px;align-items:center;
-  padding:8px 14px 0;flex-wrap:wrap;
+  display:none; /* swatches only shown inside the "Customize It" picker */
 }
 .cswatch{
   width:18px;height:18px;border-radius:50%;cursor:pointer;flex-shrink:0;
@@ -1015,7 +1014,9 @@ function buildDesignLabURL() {
   const color = prod.colors[selectedIdx[pickerProductId]];
   let url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
   if (color.img) {
-    url += `&img=${encodeURIComponent(proxyImg(color.img))}`;
+    // Pass the RAW cdnp.sanmar.com URL — the Design Lab's own proxyImg() will wrap it.
+    // Do NOT proxy here or the Design Lab will double-proxy and the URL will be invalid.
+    url += `&img=${encodeURIComponent(color.img)}`;
   }
   return url;
 }
@@ -1394,7 +1395,23 @@ async function initSanMarIntegration() {
   console.log('✅ SanMar product data loaded.');
 }
 
-// Init
+// Init — proxy all card <img> src URLs so they load through Railway (avoids CORS + CDN blocks)
+function initCardImages() {
+  Object.entries(PRODUCTS).forEach(([id, prod]) => {
+    const defColor = prod.colors[prod.defaultColor] || prod.colors[0];
+    if (!defColor || !defColor.img) return;
+    const imgEl = document.getElementById(id + '-card-img') ||
+                  document.getElementById(id + '-img');
+    if (!imgEl) return;
+    const proxied = proxyImg(defColor.img);
+    imgEl.src = proxied;
+    // Update color label to match default
+    const lbl = document.getElementById(id + '-color-label');
+    if (lbl) lbl.textContent = defColor.name;
+  });
+}
+
 buildSwatches();
+initCardImages();
 initSanMarIntegration();
 </script>

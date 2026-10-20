@@ -712,6 +712,8 @@ function proxyImg(url) {
   if (!url) return null;
   // Already a data URL or same-origin — use as-is
   if (url.startsWith('data:') || url.startsWith('/')) return url;
+  // Already proxied through our own server — don't double-wrap
+  if (url.includes(PROXY) || url.includes('img-proxy')) return url;
   return `${PROXY}/api/img-proxy?url=${encodeURIComponent(url)}`;
 }
 const PRODUCTS_URL = 'https://dyefresh.com/products';
