@@ -424,7 +424,183 @@ select.field { cursor:pointer; }
 .success-sub { font-size:.85rem; color:var(--txt2); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
+/* ── MOBILE FLOATING CONTROLS ────────────────────────────────────────────── */
+/* Floating handles around selected layer on canvas */
+.layer-handle {
+  position:absolute; width:36px; height:36px; border-radius:50%;
+  background:#fff; border:2px solid #e0e0e0;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:15px; z-index:50;
+  transition:background .15s, border-color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.layer-handle:active { background:var(--surface2); }
+.layer-handle.del { border-color:#e53935; background:#fff; color:#e53935; }
+.layer-handle.del:active { background:#ffeaea; }
+#layerHandles { position:absolute; pointer-events:none; z-index:49; inset:0; }
+#layerHandles .layer-handle { pointer-events:all; }
+
+/* ── MOBILE BOTTOM TOOLBAR ───────────────────────────────────────────────── */
+.mob-toolbar {
+  display:none; /* shown only on mobile */
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  background:#fff; border-top:1.5px solid var(--border);
+  box-shadow:0 -2px 12px rgba(0,0,0,.10);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.mob-toolbar::-webkit-scrollbar { display:none; }
+.mob-toolbar-inner {
+  display:flex; align-items:stretch; min-width:max-content;
+  padding:0 4px;
+}
+.mob-tb-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:10px 14px; min-width:64px; cursor:pointer;
+  background:none; border:none; font-family:var(--font-body);
+  font-size:.6rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--txt2); -webkit-tap-highlight-color:transparent;
+  transition:color .15s;
+}
+.mob-tb-btn:active { color:var(--red); }
+.mob-tb-btn .tb-icon { font-size:20px; line-height:1; }
+.mob-tb-btn.primary { color:var(--red); }
+.mob-tb-btn.primary .tb-icon { font-size:22px; }
+.mob-tb-sep { width:1px; background:var(--border); margin:10px 0; align-self:stretch; flex-shrink:0; }
+
+/* ── MOBILE "START DESIGNING" FAB ────────────────────────────────────────── */
+.mob-fab {
+  display:none;
+  position:fixed; bottom:80px; right:18px; z-index:201;
+  width:54px; height:54px; border-radius:50%;
+  background:var(--red); color:#fff; border:none;
+  font-size:26px; cursor:pointer; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(232,41,11,.40);
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s;
+}
+.mob-fab:active { background:var(--red-hover); }
+
+/* ── MOBILE START DESIGNING SHEET ────────────────────────────────────────── */
+.mob-sheet-overlay {
+  display:none; position:fixed; inset:0; z-index:300;
+  background:rgba(0,0,0,.45); align-items:flex-end; justify-content:center;
+}
+.mob-sheet-overlay.open { display:flex; }
+.mob-sheet {
+  background:#fff; border-radius:20px 20px 0 0;
+  padding:20px 20px 36px; width:100%; max-width:480px;
+  box-shadow:0 -4px 32px rgba(0,0,0,.18);
+  animation:slideUp .22s ease-out;
+}
+@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.mob-sheet-handle {
+  width:40px; height:4px; border-radius:2px; background:var(--border);
+  margin:0 auto 20px; display:block;
+}
+.mob-sheet-title {
+  font-family:var(--font-display); font-size:1.5rem; letter-spacing:.04em;
+  margin-bottom:16px; text-align:center;
+}
+.mob-sheet-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;
+}
+.mob-sheet-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; padding:18px 12px; border-radius:14px;
+  border:1.5px solid var(--border); background:#fff; cursor:pointer;
+  font-family:var(--font-body); font-size:.75rem; font-weight:600;
+  color:var(--txt); transition:border-color .15s, background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mob-sheet-btn:active { border-color:var(--red); background:var(--red-dim); color:var(--red); }
+.mob-sheet-btn .sh-icon { font-size:28px; }
+.mob-sheet-upload {
+  grid-column:1 / -1; background:var(--txt); color:#fff; border-color:var(--txt);
+  flex-direction:row; gap:10px; padding:16px 20px; border-radius:14px;
+}
+.mob-sheet-upload:active { background:#333; border-color:#333; color:#fff; }
+.mob-sheet-upload .sh-icon { font-size:22px; }
+.mob-sheet-close {
+  display:block; width:100%; margin-top:14px; padding:13px;
+  background:var(--surface); border:none; border-radius:12px;
+  font-family:var(--font-label); font-size:.8rem; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--txt2);
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+
+/* ── MOBILE CONTEXTUAL BOTTOM SHEET (Transform / Text edit) ─────────────── */
+.mob-ctx-sheet {
+  position:fixed; bottom:0; left:0; right:0; z-index:250;
+  background:#fff; border-radius:20px 20px 0 0;
+  box-shadow:0 -4px 24px rgba(0,0,0,.14);
+  transform:translateY(100%); transition:transform .22s ease-out;
+  max-height:60vh; overflow-y:auto;
+}
+.mob-ctx-sheet.open { transform:translateY(0); }
+.mob-ctx-drag {
+  width:40px; height:4px; border-radius:2px; background:var(--border);
+  margin:12px auto 16px; display:block; cursor:pointer;
+}
+.mob-ctx-body { padding:0 18px 40px; }
+.mob-ctx-title {
+  font-family:var(--font-label); font-size:.7rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--txt3);
+  margin-bottom:14px;
+}
+.mob-ctx-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.mob-ctx-label { font-size:.72rem; font-weight:600; color:var(--txt2); min-width:52px; text-transform:uppercase; letter-spacing:.06em; }
+.mob-ctx-val { font-size:.8rem; font-weight:700; color:var(--txt); min-width:44px; text-align:right; background:var(--surface); padding:3px 8px; border-radius:6px; }
+
+/* ── MOBILE MEDIA QUERY ──────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  /* Hide desktop sidebars and show mobile chrome */
+  .panel-left, .panel-right { display:none !important; }
+  .mob-toolbar { display:flex; }
+  .mob-fab { display:flex; }
+
+  /* Full-bleed layout */
+  .lab-wrap {
+    display:block;
+    min-height:calc(100vh - 52px);
+  }
+  .canvas-area {
+    padding:0; background:var(--surface);
+    min-height:calc(100vh - 52px - 60px); /* minus topbar + toolbar */
+    display:flex; align-items:flex-start; justify-content:center;
+    padding-top:16px; padding-bottom:72px; /* space for toolbar */
+  }
+  .canvas-wrap {
+    border-radius:8px;
+    box-shadow:0 2px 20px rgba(0,0,0,.12);
+  }
+  #labCanvas {
+    max-height:calc(100vh - 52px - 60px - 32px);
+    max-width:calc(100vw - 24px);
+  }
+
+  /* Topbar mobile adjustments */
+  .topbar-title { display:none; }
+  .topbar-back { padding:6px 10px; font-size:.7rem; }
+
+  /* Print zone button visible on mobile */
+  #printZoneToggle { margin-top:6px; }
+
+  /* Hide desktop print area toggle text */
+  #btnPrintZone { font-size:.65rem; padding:3px 10px; }
+}
+
+@media (min-width: 701px) {
+  /* On desktop: hide all mobile-only UI */
+  .mob-toolbar { display:none !important; }
+  .mob-fab { display:none !important; }
+  .mob-sheet-overlay { display:none !important; }
+  .mob-ctx-sheet { display:none !important; }
+  #layerHandles { display:none !important; }
+}
+
+@media (max-width: 900px) and (min-width: 701px) {
   .lab-wrap {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
@@ -434,12 +610,8 @@ select.field { cursor:pointer; }
   .panel-left  { border-right:none; border-bottom:1.5px solid var(--border); order: 1; }
   .canvas-area { order: 2; min-height:360px; }
   .panel-right { border-left:none; border-top:1.5px solid var(--border); order: 3; }
-
-  /* On mobile: move Export & Order section to very bottom of right panel */
   .panel-right { display:flex; flex-direction:column; }
   .panel-right .export-order-section { order: 99; margin-top: auto; }
-
-  /* On mobile: hide view section border and let canvas follow directly */
   #viewSection { border-bottom: none; }
 }
 
@@ -603,12 +775,14 @@ select.field { cursor:pointer; }
 
   <!-- CANVAS -->
   <main class="canvas-area">
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" style="position:relative;">
       <canvas id="labCanvas" width="600" height="720"></canvas>
       <div class="canvas-loading" id="canvasLoading">
         <div class="spinner"></div>
         <div class="loading-txt">Loading garment…</div>
       </div>
+      <!-- Mobile floating handles — shown only when a layer is selected on mobile -->
+      <div id="layerHandles"></div>
     </div>
     <!-- Print area guide toggle -->
     <div style="text-align:center;margin-top:8px;">
@@ -733,6 +907,168 @@ select.field { cursor:pointer; }
     </div>
 
   </aside>
+</div>
+
+<!-- ── MOBILE UI ─────────────────────────────────────────────────────────── -->
+
+<!-- Mobile Bottom Toolbar (always visible on mobile) -->
+<div class="mob-toolbar" id="mobToolbar">
+  <div class="mob-toolbar-inner" id="mobToolbarInner">
+    <!-- Default state: main actions -->
+    <div id="mtbDefault" style="display:flex;">
+      <button class="mob-tb-btn primary" onclick="openMobSheet()">
+        <span class="tb-icon">✦</span>Add
+      </button>
+      <div class="mob-tb-sep"></div>
+      <button class="mob-tb-btn" onclick="mobPickColor()">
+        <span class="tb-icon">🎨</span>Color
+      </button>
+      <button class="mob-tb-btn" onclick="mobPickView('front')">
+        <span class="tb-icon">👕</span>Front
+      </button>
+      <button class="mob-tb-btn" onclick="mobPickView('back')">
+        <span class="tb-icon">↩</span>Back
+      </button>
+      <div class="mob-tb-sep"></div>
+      <button class="mob-tb-btn" onclick="openQuoteModal()">
+        <span class="tb-icon">📋</span>Order
+      </button>
+      <button class="mob-tb-btn" onclick="downloadCanvas()">
+        <span class="tb-icon">⬇</span>Save
+      </button>
+    </div>
+    <!-- Selection state: shown when a layer is active -->
+    <div id="mtbSel" style="display:none;">
+      <button class="mob-tb-btn" onclick="closeMobCtxSheet()">
+        <span class="tb-icon">←</span>Back
+      </button>
+      <div class="mob-tb-sep"></div>
+      <button class="mob-tb-btn primary" id="mtbEditText" style="display:none;" onclick="openMobTextEdit()">
+        <span class="tb-icon">✏️</span>Edit Text
+      </button>
+      <button class="mob-tb-btn" onclick="openMobTransform()">
+        <span class="tb-icon">↔</span>Resize
+      </button>
+      <button class="mob-tb-btn" onclick="openMobRotate()">
+        <span class="tb-icon">↻</span>Rotate
+      </button>
+      <button class="mob-tb-btn" id="mtbTextColor" style="display:none;" onclick="openMobTextColor()">
+        <span class="tb-icon">🎨</span>Color
+      </button>
+      <button class="mob-tb-btn" id="mtbTextStyle" style="display:none;" onclick="openMobTextStyle()">
+        <span class="tb-icon">Aa</span>Style
+      </button>
+      <div class="mob-tb-sep"></div>
+      <button class="mob-tb-btn" onclick="dupeSel()">
+        <span class="tb-icon">⧉</span>Copy
+      </button>
+      <button class="mob-tb-btn" style="color:#e53935;" onclick="delSel()">
+        <span class="tb-icon">✕</span>Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile FAB (+ button) -->
+<button class="mob-fab" id="mobFab" onclick="openMobSheet()" title="Add design element">＋</button>
+
+<!-- Mobile "Start Designing" bottom sheet -->
+<div class="mob-sheet-overlay" id="mobSheet">
+  <div class="mob-sheet">
+    <span class="mob-sheet-handle"></span>
+    <div class="mob-sheet-title">Start Designing</div>
+    <button class="mob-sheet-btn mob-sheet-upload" onclick="document.getElementById('fileUpload').click();closeMobSheet()">
+      <span class="sh-icon">☁</span>
+      <span style="font-size:.85rem;font-weight:700;">Upload Image or Art</span>
+    </button>
+    <div class="mob-sheet-grid">
+      <button class="mob-sheet-btn" onclick="closeMobSheet();document.getElementById('textInput').focus();document.getElementById('textInput').scrollIntoView({behavior:'smooth'});">
+        <span class="sh-icon">T</span>
+        <span>Add Text</span>
+      </button>
+      <button class="mob-sheet-btn" onclick="closeMobSheet();mobPickColor()">
+        <span class="sh-icon">🎨</span>
+        <span>Change Color</span>
+      </button>
+      <button class="mob-sheet-btn" onclick="closeMobSheet();mobPickView('front')">
+        <span class="sh-icon">👕</span>
+        <span>View Front</span>
+      </button>
+      <button class="mob-sheet-btn" onclick="closeMobSheet();mobPickView('back')">
+        <span class="sh-icon">↩</span>
+        <span>View Back</span>
+      </button>
+    </div>
+    <!-- Quick text add field -->
+    <div style="margin-top:14px;">
+      <div style="font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;">Quick Add Text</div>
+      <div style="display:flex;gap:8px;">
+        <input id="mobTextInput" class="field" type="text" placeholder="Type text here…" style="flex:1;font-size:.95rem;">
+        <button class="btn-primary" style="padding:10px 16px;" onclick="mobAddText()">Add</button>
+      </div>
+    </div>
+    <button class="mob-sheet-close" onclick="closeMobSheet()">Cancel</button>
+  </div>
+</div>
+
+<!-- Mobile Contextual Sheet (Transform / Rotate / Text) -->
+<div class="mob-ctx-sheet" id="mobCtxSheet">
+  <span class="mob-ctx-drag" onclick="closeMobCtxSheet()"></span>
+  <div class="mob-ctx-body">
+    <div class="mob-ctx-title" id="mobCtxTitle">Transform</div>
+
+    <!-- Scale -->
+    <div class="mob-ctx-row" id="mobCtxScaleRow">
+      <span class="mob-ctx-label">Scale</span>
+      <input type="range" id="mobSlSc" min="10" max="300" value="100" style="flex:1;" oninput="apSc(this.value);mobSyncCtx()">
+      <span class="mob-ctx-val" id="mobVSc">100%</span>
+    </div>
+
+    <!-- Rotate -->
+    <div class="mob-ctx-row" id="mobCtxRotRow">
+      <span class="mob-ctx-label">Rotate</span>
+      <input type="range" id="mobSlRo" min="-180" max="180" value="0" style="flex:1;" oninput="apRo(this.value);mobSyncCtx()">
+      <span class="mob-ctx-val" id="mobVRo">0°</span>
+    </div>
+
+    <!-- Opacity -->
+    <div class="mob-ctx-row" id="mobCtxOpRow">
+      <span class="mob-ctx-label">Opacity</span>
+      <input type="range" id="mobSlOp" min="10" max="100" value="100" style="flex:1;" oninput="apOp(this.value);mobSyncCtx()">
+      <span class="mob-ctx-val" id="mobVOp">100%</span>
+    </div>
+
+    <!-- Text edit area -->
+    <div id="mobCtxTextArea" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <div class="mob-ctx-label" style="margin-bottom:5px;">Text</div>
+        <input class="field" id="mobPropText" type="text" style="width:100%;font-size:1rem;" oninput="mobUpdateText(this.value)">
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="mob-ctx-label" style="margin-bottom:5px;">Style</div>
+        <div class="text-style-btns">
+          <button type="button" class="style-btn" id="mobPropBold" title="Bold" onclick="toggleLayerStyle('bold')"><b>B</b></button>
+          <button type="button" class="style-btn" id="mobPropItalic" title="Italic" onclick="toggleLayerStyle('italic')"><i>I</i></button>
+          <button type="button" class="style-btn" id="mobPropUnderline" title="Underline" onclick="toggleLayerStyle('underline')"><u>U</u></button>
+          <button type="button" class="style-btn" id="mobPropUppercase" title="ALL CAPS" onclick="toggleLayerStyle('uppercase')">AA</button>
+        </div>
+      </div>
+      <div>
+        <div class="mob-ctx-label" style="margin-bottom:5px;">Color</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="color" id="mobPropColor" style="width:44px;height:36px;border:none;cursor:pointer;background:none;" oninput="mobUpdateTextColor(this.value)">
+          <input class="field" id="mobPropColorHex" type="text" maxlength="7" style="flex:1;font-size:.9rem;" oninput="mobUpdateTextColorHex(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile color picker (shirt color) -->
+    <div id="mobCtxColorArea" style="display:none;">
+      <div class="mob-ctx-label" style="margin-bottom:10px;">Shirt Color</div>
+      <div id="mobColorGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-height:180px;overflow-y:auto;"></div>
+    </div>
+
+  </div>
 </div>
 
 <!-- QUOTE MODAL -->
@@ -2721,6 +3057,323 @@ function showNoProduct() {
 
 // Initial draw (white canvas)
 drawAll();
+
+// ── MOBILE HELPERS ────────────────────────────────────────────────────────
+
+function isMobile() { return window.innerWidth <= 700; }
+
+// Named functions used by mobile toolbar (inline onclick)
+function downloadCanvas() {
+  const prev = S.activeLayer; S.activeLayer = null; drawAll();
+  const link = document.createElement('a');
+  link.download = 'dyefresh-design.png';
+  link.href = canvas.toDataURL('image/png'); link.click();
+  S.activeLayer = prev; drawAll();
+}
+function openQuoteModal() {
+  syncSidebarToModal();
+  document.getElementById('quoteModal').classList.add('open');
+}
+function dupeSel() {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  const copy = { ...l, id: Date.now(), x: l.x+20, y: l.y+20 };
+  if (l.image) copy.image = l.image;
+  S.layers.push(copy); S.activeLayer = copy.id;
+  renderLayerList(); syncT(); drawAll(); updateMobUI();
+}
+
+// ── MOBILE SHEET / FAB ────────────────────────────────────────────────────
+function openMobSheet() {
+  document.getElementById('mobSheet').classList.add('open');
+}
+function closeMobSheet() {
+  document.getElementById('mobSheet').classList.remove('open');
+}
+// Close sheet on backdrop tap
+document.getElementById('mobSheet')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeMobSheet();
+});
+
+// ── MOBILE CONTEXT SHEET ─────────────────────────────────────────────────
+function openMobCtxSheet(mode) {
+  const sheet = document.getElementById('mobCtxSheet');
+  const title = document.getElementById('mobCtxTitle');
+  const scRow  = document.getElementById('mobCtxScaleRow');
+  const roRow  = document.getElementById('mobCtxRotRow');
+  const opRow  = document.getElementById('mobCtxOpRow');
+  const txArea = document.getElementById('mobCtxTextArea');
+  const colArea= document.getElementById('mobCtxColorArea');
+
+  // Hide all panels first
+  [scRow,roRow,opRow,txArea,colArea].forEach(el=>{ if(el) el.style.display='none'; });
+
+  if (mode === 'transform') {
+    title.textContent = 'Resize';
+    if(scRow) scRow.style.display='flex';
+    if(opRow) opRow.style.display='flex';
+  } else if (mode === 'rotate') {
+    title.textContent = 'Rotate';
+    if(roRow) roRow.style.display='flex';
+  } else if (mode === 'text') {
+    title.textContent = 'Edit Text';
+    if(txArea) txArea.style.display='block';
+  } else if (mode === 'textcolor') {
+    title.textContent = 'Text Color';
+    if(txArea) { txArea.style.display='block'; }
+  } else if (mode === 'color') {
+    title.textContent = 'Shirt Color';
+    if(colArea) { colArea.style.display='block'; buildMobColorGrid(); }
+  } else {
+    // 'all' mode - show transform + rotate
+    title.textContent = 'Transform';
+    if(scRow) scRow.style.display='flex';
+    if(roRow) roRow.style.display='flex';
+    if(opRow) opRow.style.display='flex';
+  }
+
+  mobSyncCtx();
+  sheet.classList.add('open');
+}
+function closeMobCtxSheet() {
+  document.getElementById('mobCtxSheet')?.classList.remove('open');
+}
+
+function openMobTransform() { openMobCtxSheet('transform'); }
+function openMobRotate()    { openMobCtxSheet('rotate'); }
+function openMobTextEdit()  { openMobCtxSheet('text'); }
+function openMobTextColor() { openMobCtxSheet('textcolor'); }
+function mobPickColor()     { openMobCtxSheet('color'); }
+
+// Sync mobile sliders from current layer state
+function mobSyncCtx() {
+  const l = S.layers.find(x => x.id === S.activeLayer);
+  // Scale
+  const mobSlSc = document.getElementById('mobSlSc');
+  const mobVSc  = document.getElementById('mobVSc');
+  if (mobSlSc && mobVSc) {
+    if (l) {
+      const pct = l.type === 'text'
+        ? Math.round((l.scale || 1) * 100)
+        : (l._origW ? Math.round((l.w / l._origW) * 100) : 100);
+      mobSlSc.value = pct;
+      mobVSc.textContent = pct + '%';
+    }
+  }
+  // Rotate
+  const mobSlRo = document.getElementById('mobSlRo');
+  const mobVRo  = document.getElementById('mobVRo');
+  if (mobSlRo && mobVRo && l) {
+    const deg = Math.round((l.rot || l.rotation || 0) * 180 / Math.PI);
+    mobSlRo.value = deg; mobVRo.textContent = deg + '°';
+  }
+  // Opacity
+  const mobSlOp = document.getElementById('mobSlOp');
+  const mobVOp  = document.getElementById('mobVOp');
+  if (mobSlOp && mobVOp && l) {
+    const op = Math.round((l.opacity ?? 1) * 100);
+    mobSlOp.value = op; mobVOp.textContent = op + '%';
+  }
+  // Text
+  if (l && l.type === 'text') {
+    const mobPropText = document.getElementById('mobPropText');
+    const mobPropColor = document.getElementById('mobPropColor');
+    const mobPropColorHex = document.getElementById('mobPropColorHex');
+    if(mobPropText) mobPropText.value = l.text || '';
+    if(mobPropColor) mobPropColor.value = l.color || '#000000';
+    if(mobPropColorHex) mobPropColorHex.value = l.color || '#000000';
+    // Sync style buttons
+    ['bold','italic','underline','uppercase'].forEach(s => {
+      const btn = document.getElementById('mobProp' + s.charAt(0).toUpperCase() + s.slice(1));
+      if(btn) btn.classList.toggle('active', !!l[s]);
+    });
+  }
+}
+
+function mobUpdateText(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if(!l||l.type!=='text') return;
+  l.text = val; drawAll();
+  // Keep desktop prop in sync
+  const pt = document.getElementById('propText'); if(pt) pt.value = val;
+}
+function mobUpdateTextColor(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if(!l||l.type!=='text') return;
+  l.color = val; drawAll();
+  const mh = document.getElementById('mobPropColorHex'); if(mh) mh.value = val;
+  const pc = document.getElementById('propColor'); if(pc) pc.value = val;
+}
+function mobUpdateTextColorHex(val) {
+  if(!/^#[0-9a-f]{6}$/i.test(val)) return;
+  mobUpdateTextColor(val);
+  const mc = document.getElementById('mobPropColor'); if(mc) mc.value = val;
+}
+
+// ── MOBILE VIEW PICKER ────────────────────────────────────────────────────
+function mobPickView(v) {
+  // Mirror the desktop view buttons
+  const btn = document.querySelector(`[data-view="${v}"]`);
+  if (btn) btn.click();
+  else {
+    // Fallback: set directly
+    S.view = v;
+    const c = S.colors[S.colorIdx];
+    if (c) { S.img = v === 'back' ? c.imgBack : v === 'side' ? c.imgSide : c.img; }
+    drawAll();
+  }
+}
+
+// ── MOBILE COLOR GRID ─────────────────────────────────────────────────────
+function buildMobColorGrid() {
+  const grid = document.getElementById('mobColorGrid');
+  if (!grid || grid.children.length) return; // already built
+  const colors = S.colors || [];
+  grid.innerHTML = colors.map((c, i) => `
+    <div onclick="mobSelectColor(${i})" title="${c.name}"
+      style="width:100%;aspect-ratio:1;border-radius:50%;background:${c.hex};
+      border:2px solid ${i===S.colorIdx?'var(--red)':'rgba(0,0,0,.12)'};
+      cursor:pointer;box-sizing:border-box;transition:border-color .15s;"
+      id="mobCC${i}">
+    </div>
+  `).join('');
+}
+function mobSelectColor(idx) {
+  // Delegate to desktop color button
+  const btn = document.querySelectorAll('.color-swatch')[idx];
+  if (btn) { btn.click(); }
+  else { S.colorIdx = idx; updateProductInfo(S.colors[idx]); drawAll(); }
+  // Update mobile grid selection
+  document.querySelectorAll('#mobColorGrid > div').forEach((el,i) => {
+    el.style.borderColor = i===idx ? 'var(--red)' : 'rgba(0,0,0,.12)';
+    el.style.borderWidth = i===idx ? '3px' : '2px';
+  });
+}
+
+// ── MOBILE QUICK TEXT ADD ─────────────────────────────────────────────────
+function mobAddText() {
+  const inp = document.getElementById('mobTextInput');
+  const txt = inp?.value.trim();
+  if (!txt) return;
+  // Mirror desktop add text flow by populating the desktop input and clicking add
+  const desktopInput = document.getElementById('textInput');
+  const desktopBtn   = document.getElementById('btnAddText');
+  if (desktopInput && desktopBtn) {
+    desktopInput.value = txt;
+    desktopBtn.click();
+  }
+  inp.value = '';
+  closeMobSheet();
+  updateMobUI();
+}
+
+// ── MOBILE LAYER HANDLES ─────────────────────────────────────────────────
+function updateMobHandles() {
+  const handlesDiv = document.getElementById('layerHandles');
+  if (!handlesDiv || !isMobile()) { if(handlesDiv) handlesDiv.innerHTML=''; return; }
+
+  const l = S.layers.find(x => x.id === S.activeLayer);
+  if (!l) { handlesDiv.innerHTML = ''; return; }
+
+  // Get canvas display scale
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width  / canvas.width;
+  const scaleY = rect.height / canvas.height;
+
+  // Layer bounding box in display coords
+  const lx = l.x * scaleX;
+  const ly = l.y * scaleY;
+  const lw = l.w * scaleX;
+  const lh = l.h * scaleY;
+  const cx = lx + lw/2;
+  const cy = ly + lh/2;
+
+  const hs = 36; // handle size
+  const pad = 24; // padding outside layer
+
+  handlesDiv.innerHTML = `
+    <!-- Delete: top-left -->
+    <div class="layer-handle del" style="left:${lx-pad}px;top:${ly-pad}px;transform:translate(-50%,-50%);"
+      onclick="delSel();updateMobUI()">✕</div>
+    <!-- Rotate: top-right -->
+    <div class="layer-handle" style="left:${lx+lw+pad}px;top:${ly-pad}px;transform:translate(-50%,-50%);"
+      id="mobRotHandle" title="Rotate">↻</div>
+    <!-- Duplicate: bottom-left -->
+    <div class="layer-handle" style="left:${lx-pad}px;top:${ly+lh+pad}px;transform:translate(-50%,-50%);"
+      onclick="dupeSel()">⧉</div>
+    <!-- Resize: bottom-right -->
+    <div class="layer-handle" style="left:${lx+lw+pad}px;top:${ly+lh+pad}px;transform:translate(-50%,-50%);"
+      onclick="openMobTransform()">↔</div>
+  `;
+
+  // Rotate handle drag
+  const rotHandle = document.getElementById('mobRotHandle');
+  let startAngle = 0, startRot = 0;
+  rotHandle?.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    startAngle = Math.atan2(t.clientY - rect.top - cy, t.clientX - rect.left - cx);
+    startRot   = l.rot || l.rotation || 0;
+  });
+  rotHandle?.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const angle = Math.atan2(t.clientY - rect.top - cy, t.clientX - rect.left - cx);
+    l.rot = l.rotation = startRot + (angle - startAngle);
+    drawAll(); updateMobHandles(); mobSyncCtx();
+    const deg = Math.round(l.rot * 180/Math.PI);
+    const vRo = document.getElementById('vRo'); if(vRo) vRo.textContent = deg+'°';
+  });
+}
+
+// ── UPDATE MOBILE UI STATE ────────────────────────────────────────────────
+function updateMobUI() {
+  if (!isMobile()) return;
+  const hasSelection = S.activeLayer !== null;
+  const l = S.layers.find(x => x.id === S.activeLayer);
+  const isText = l?.type === 'text';
+
+  // Switch toolbar state
+  const def = document.getElementById('mtbDefault');
+  const sel = document.getElementById('mtbSel');
+  if (def) def.style.display = hasSelection ? 'none' : 'flex';
+  if (sel) sel.style.display = hasSelection ? 'flex' : 'none';
+
+  // Show/hide text-specific buttons
+  const mtbEditText  = document.getElementById('mtbEditText');
+  const mtbTextColor = document.getElementById('mtbTextColor');
+  const mtbTextStyle = document.getElementById('mtbTextStyle');
+  if(mtbEditText)  mtbEditText.style.display  = isText ? 'flex' : 'none';
+  if(mtbTextColor) mtbTextColor.style.display = isText ? 'flex' : 'none';
+  if(mtbTextStyle) mtbTextStyle.style.display = isText ? 'flex' : 'none';
+
+  // Update handles
+  updateMobHandles();
+
+  // Hide FAB when selection active
+  const fab = document.getElementById('mobFab');
+  if(fab) fab.style.display = hasSelection ? 'none' : (isMobile() ? 'flex' : 'none');
+}
+
+// Hook into syncT to also update mobile UI
+const _origSyncT = syncT;
+function syncT() { _origSyncT(); updateMobUI(); }
+
+// Also hook drawAll to update handles after redraw
+const _origDrawAll = drawAll;
+function drawAll() { _origDrawAll(); if(isMobile()) updateMobHandles(); }
+
+// Deselect on canvas background tap (mobile)
+canvas.addEventListener('touchend', e => {
+  if (!isMobile()) return;
+  const t = e.changedTouches[0];
+  const { x, y } = canvasCoords({ clientX: t.clientX, clientY: t.clientY });
+  const hit = [...S.layers].reverse().find(l => {
+    const hw = l.w/2, hh = l.h/2;
+    return x >= l.x && x <= l.x+l.w && y >= l.y && y <= l.y+l.h;
+  });
+  if (!hit && S.activeLayer !== null) {
+    S.activeLayer = null;
+    drawAll(); updateMobUI(); closeMobCtxSheet();
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
