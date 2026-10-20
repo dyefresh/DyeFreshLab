@@ -755,7 +755,12 @@ async function fetchColors(productKey, targetSlug, directImg) {
 
     buildSwatches();
     updateProductInfo();
-    loadGarmentImage(directImg && idx === 0 ? directImg : null);
+
+    // Preload the selected color's images first (priority), then the rest in background
+    preloadColorImages(S.colors[S.colorIdx]);
+    S.colors.forEach((c, i) => { if (i !== S.colorIdx) preloadColorImages(c); });
+
+    loadGarmentImage(directImg && idx === 0 ? proxyImg(directImg) : null);
 
   } catch(err) {
     console.error('fetchColors failed:', err);
@@ -810,33 +815,68 @@ function updateViewTabs() {
   });
 }
 
+// Cache of preloaded HTMLImageElement objects keyed by URL
+const imgCache = {};
+
+function preloadImage(url) {
+  if (!url || imgCache[url]) return;
+  imgCache[url] = 'loading';
+  const img = new Image();
+  img.onload  = () => { imgCache[url] = img; };
+  img.onerror = () => { imgCache[url] = null; };
+  img.src = url;
+}
+
+// Preload all view images for a color so view switches are instant
+function preloadColorImages(color) {
+  ['front','back','side','threeQ'].forEach(v => {
+    if (color[v]) preloadImage(color[v]);
+  });
+}
+
 function loadGarmentImage(overrideUrl) {
-  showLoading(true);
   const url = overrideUrl || getImgForView();
   if (!url) {
     showLoading(false);
     showError('No image available for this color/view.');
     return;
   }
+
+  // If already cached and loaded, use instantly
+  if (imgCache[url] && imgCache[url] !== 'loading') {
+    S.garmentImg = imgCache[url];
+    showLoading(false);
+    drawAll();
+    return;
+  }
+
+  showLoading(true);
   const img = new Image();
   img.onload = () => {
+    imgCache[url] = img;
     S.garmentImg = img;
     showLoading(false);
     drawAll();
   };
   img.onerror = () => {
     showLoading(false);
-    // Try front if side/back failed
+    // Try front view as fallback
     const fallback = S.colors[S.colorIdx]?.front;
     if (fallback && fallback !== url) {
+      if (imgCache[fallback] && imgCache[fallback] !== 'loading') {
+        S.garmentImg = imgCache[fallback];
+        drawAll();
+        return;
+      }
       const img2 = new Image();
-      img2.onload = () => { S.garmentImg = img2; drawAll(); };
+      img2.onload = () => { imgCache[fallback] = img2; S.garmentImg = img2; drawAll(); };
       img2.onerror = () => showError('Image could not be loaded.');
       img2.src = fallback;
     } else {
       showError('Image could not be loaded.');
     }
   };
+  imgCache[url] = 'loading';
   img.src = url;
 }
 
@@ -973,12 +1013,13 @@ function guessColorFromName(name) {
 
 function selectColor(idx) {
   S.colorIdx = idx;
-  // Update active swatch
   document.querySelectorAll('.swatch-btn').forEach((b, i) => {
     b.classList.toggle('active', i === idx);
   });
   updateProductInfo();
   updateViewTabs();
+  // Preload this color's images so view switches are instant
+  preloadColorImages(S.colors[idx]);
   loadGarmentImage(null);
 }
 
@@ -1134,12 +1175,41 @@ function updatePropsPanel() {
         </div>
       </div>
     `;
+  } else if (layer.type === 'img') {
+    const origW = layer.image ? layer.image.naturalWidth  : layer.w;
+    const origH = layer.image ? layer.image.naturalHeight : layer.h;
+    const pct   = Math.round((layer.w / origW) * 100);
+    extraProps = `
+      <div class="prop-group">
+        <div class="input-label">Scale</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="range" id="propScale" min="5" max="300" value="${pct}" style="flex:1;">
+          <span id="propScaleVal" style="font-size:.78rem;color:var(--txt2);min-width:36px;">${pct}%</span>
+        </div>
+      </div>
+      <div class="transform-row" style="margin-top:4px;">
+        <div class="num-field">
+          <label>Width</label>
+          <input id="propImgW" type="number" value="${Math.round(layer.w)}" min="10">
+        </div>
+        <div class="num-field">
+          <label>Height</label>
+          <input id="propImgH" type="number" value="${Math.round(layer.h)}" min="10">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--txt3);cursor:pointer;margin-top:4px;">
+        <input type="checkbox" id="propLockAspect" checked style="accent-color:var(--red);">
+        Lock aspect ratio
+      </label>
+      <input type="hidden" id="propOrigW" value="${origW}">
+      <input type="hidden" id="propOrigH" value="${origH}">
+    `;
   }
 
   area.innerHTML = `
     <div class="props-wrap">
       ${extraProps}
-      <div class="transform-row">
+      <div class="transform-row" style="margin-top:${layer.type==='img'?'4':'0'}px;">
         <div class="num-field">
           <label>X</label>
           <input id="propX" type="number" value="${Math.round(layer.x)}">
@@ -1148,10 +1218,11 @@ function updatePropsPanel() {
           <label>Y</label>
           <input id="propY" type="number" value="${Math.round(layer.y)}">
         </div>
+        ${layer.type !== 'img' ? `
         <div class="num-field">
           <label>Width</label>
           <input id="propW" type="number" value="${Math.round(layer.w)}" min="10">
-        </div>
+        </div>` : ''}
         <div class="num-field">
           <label>Rotate°</label>
           <input id="propRot" type="number" value="${Math.round(layer.rot || 0)}">
@@ -1171,6 +1242,25 @@ function updatePropsPanel() {
       if (s) layer.size  = Math.max(8, parseInt(s.value,10) || 48);
       if (c) layer.color = c.value;
     }
+    if (layer.type === 'img') {
+      const pw2 = document.getElementById('propImgW');
+      const ph2 = document.getElementById('propImgH');
+      if (pw2) {
+        const newW = Math.max(10, parseInt(pw2.value,10) || 10);
+        const lock = document.getElementById('propLockAspect');
+        if (lock && lock.checked && layer.w > 0) {
+          const ratio = layer.h / layer.w;
+          layer.h = Math.round(newW * ratio);
+          if (ph2) ph2.value = Math.round(layer.h);
+        }
+        layer.w = newW;
+        // sync scale display
+        const origW = parseInt(document.getElementById('propOrigW')?.value || layer.w, 10);
+        const slider = document.getElementById('propScale');
+        const valEl  = document.getElementById('propScaleVal');
+        if (slider && origW > 0) { const p = Math.round((layer.w/origW)*100); slider.value = p; if (valEl) valEl.textContent = p+'%'; }
+      }
+    }
     const px  = document.getElementById('propX');
     const py  = document.getElementById('propY');
     const pw  = document.getElementById('propW');
@@ -1183,9 +1273,70 @@ function updatePropsPanel() {
   };
 
   area.querySelectorAll('input').forEach(inp => {
+    // Skip image-specific inputs — handled separately below
+    if (['propScale','propImgW','propImgH','propLockAspect','propOrigW','propOrigH'].includes(inp.id)) return;
     inp.addEventListener('input', applyProp);
     inp.addEventListener('change', applyProp);
   });
+
+  // Image scale slider + W/H inputs
+  if (layer.type === 'img') {
+    const slider   = document.getElementById('propScale');
+    const valEl    = document.getElementById('propScaleVal');
+    const wInp     = document.getElementById('propImgW');
+    const hInp     = document.getElementById('propImgH');
+    const lockChk  = document.getElementById('propLockAspect');
+    const origWInp = document.getElementById('propOrigW');
+    const origHInp = document.getElementById('propOrigH');
+
+    if (slider) {
+      slider.addEventListener('input', () => {
+        const pct  = parseInt(slider.value, 10) || 100;
+        const origW = parseInt(origWInp?.value || layer.w, 10);
+        const origH = parseInt(origHInp?.value || layer.h, 10);
+        layer.w = Math.round(origW * pct / 100);
+        layer.h = Math.round(origH * pct / 100);
+        if (wInp) wInp.value = layer.w;
+        if (hInp) hInp.value = layer.h;
+        if (valEl) valEl.textContent = pct + '%';
+        drawAll();
+      });
+    }
+
+    if (wInp) {
+      wInp.addEventListener('input', () => {
+        const newW = Math.max(10, parseInt(wInp.value, 10) || 10);
+        if (lockChk && lockChk.checked && layer.w > 0) {
+          const ratio = layer.h / layer.w;
+          layer.h = Math.round(newW * ratio);
+          if (hInp) hInp.value = layer.h;
+        }
+        layer.w = newW;
+        const origW = parseInt(origWInp?.value || newW, 10);
+        const pct   = Math.round((newW / origW) * 100);
+        if (slider) slider.value = pct;
+        if (valEl)  valEl.textContent = pct + '%';
+        drawAll();
+      });
+    }
+
+    if (hInp) {
+      hInp.addEventListener('input', () => {
+        const newH = Math.max(10, parseInt(hInp.value, 10) || 10);
+        if (lockChk && lockChk.checked && layer.h > 0) {
+          const ratio = layer.w / layer.h;
+          layer.w = Math.round(newH * ratio);
+          if (wInp) wInp.value = layer.w;
+        }
+        layer.h = newH;
+        const origW = parseInt(origWInp?.value || layer.w, 10);
+        const pct   = Math.round((layer.w / origW) * 100);
+        if (slider) slider.value = pct;
+        if (valEl)  valEl.textContent = pct + '%';
+        drawAll();
+      });
+    }
+  }
 
   // Color hex sync in props
   const propColor    = document.getElementById('propColor');
