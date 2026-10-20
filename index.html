@@ -578,6 +578,14 @@ select.field { cursor:pointer; }
         <div class="loading-txt">Loading garment…</div>
       </div>
     </div>
+    <!-- Print area guide toggle -->
+    <div style="text-align:center;margin-top:8px;">
+      <button type="button" id="btnPrintZone" onclick="togglePrintZone()"
+        style="font-size:.7rem;font-family:var(--font-body);padding:4px 12px;border-radius:20px;border:1.5px solid rgba(59,130,246,0.5);background:rgba(59,130,246,0.08);color:rgba(59,130,246,0.9);cursor:pointer;font-weight:600;letter-spacing:.04em;transition:all .2s;"
+        title="Toggle the 12&quot; print area guide">
+        📐 Print Area Guide: ON
+      </button>
+    </div>
   </main>
 
   <!-- RIGHT PANEL -->
@@ -775,17 +783,20 @@ select.field { cursor:pointer; }
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const PROXY = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 
-// Warm up Railway immediately so it's awake when image requests arrive
-fetch(`${PROXY}/health`, { mode: 'cors', cache: 'no-store' }).catch(() => {});
+// wsrv.nl — free, reliable CDN-backed CORS image proxy (images.weserv.nl)
+// Used to avoid canvas CORS taint when drawing SanMar CDN images.
+const IMG_PROXY = 'https://wsrv.nl/?url=';
 
-// Route SanMar CDN images through our proxy to avoid canvas CORS taint
+// Route SanMar CDN images through wsrv.nl to avoid canvas CORS taint
 function proxyImg(url) {
   if (!url) return null;
   // Already a data URL or same-origin — use as-is
   if (url.startsWith('data:') || url.startsWith('/')) return url;
-  // Already proxied through our own server — don't double-wrap
-  if (url.includes(PROXY) || url.includes('img-proxy')) return url;
-  return `${PROXY}/api/img-proxy?url=${encodeURIComponent(url)}`;
+  // Already proxied — don't double-wrap
+  if (url.includes('wsrv.nl') || url.includes('img-proxy')) return url;
+  // Strip the https:// prefix — wsrv.nl wants just the bare URL
+  const bare = url.replace(/^https?:\/\//, '');
+  return `${IMG_PROXY}${encodeURIComponent(bare)}`;
 }
 const PRODUCTS_URL = 'https://dyefresh.com/products';
 
@@ -1102,7 +1113,7 @@ const imgCache = {};
 
 // ── FETCH COLORS ──────────────────────────────────────────────────────────
 // Uses embedded static catalog — no SOAP API required.
-// Images still route through Railway img-proxy for canvas CORS.
+// Images route through wsrv.nl for canvas CORS compatibility.
 async function fetchColors(productKey, targetSlug, directImg) {
   const catalog = STATIC_COLORS[productKey];
 
@@ -1269,12 +1280,16 @@ function loadGarmentImage(overrideUrl) {
   }, 25000);
 
   // ── Track 1: direct CDN (fast path) ──────────────────────────────────────
-  // Extract the raw CDN URL from the proxy wrapper if needed
+  // Extract the raw CDN URL from the wsrv.nl proxy wrapper if needed
   let rawCDN = url;
   try {
-    const proxyPrefix = `${PROXY}/api/img-proxy?url=`;
-    if (url.startsWith(proxyPrefix)) {
-      rawCDN = decodeURIComponent(url.slice(proxyPrefix.length));
+    if (url.startsWith(IMG_PROXY)) {
+      rawCDN = 'https://' + decodeURIComponent(url.slice(IMG_PROXY.length));
+    } else {
+      const proxyPrefix = `${PROXY}/api/img-proxy?url=`;
+      if (url.startsWith(proxyPrefix)) {
+        rawCDN = decodeURIComponent(url.slice(proxyPrefix.length));
+      }
     }
   } catch(e) {}
 
@@ -1340,6 +1355,37 @@ function drawAll() {
     const dx = (CANVAS_W - dw) / 2;
     const dy = (CANVAS_H - dh) / 2;
     ctx.drawImage(S.garmentImg, dx, dy, dw, dh);
+  }
+
+  // ── Print zone guide (dashed rectangle) ─────────────────────────────────
+  if (S.showPrintZone !== false) {
+    ctx.save();
+    // Light blue tinted fill to show printable area
+    ctx.fillStyle = 'rgba(59,130,246,0.04)';
+    ctx.fillRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
+    // Dashed border
+    ctx.strokeStyle = 'rgba(59,130,246,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6,4]);
+    ctx.strokeRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
+    ctx.setLineDash([]);
+    // Width label: "12"" at the top edge
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(59,130,246,0.9)';
+    ctx.textAlign = 'center';
+    ctx.fillText('← 12" print width →', CANVAS_W/2, PRINT_ZONE_Y - 5);
+    // Ruler tick marks along top edge every inch
+    ctx.strokeStyle = 'rgba(59,130,246,0.45)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 12; i++) {
+      const rx = PRINT_ZONE_X + i * PX_PER_INCH;
+      const tickH = (i === 0 || i === 12) ? 8 : (i % 4 === 0 ? 6 : 3);
+      ctx.beginPath();
+      ctx.moveTo(rx, PRINT_ZONE_Y);
+      ctx.lineTo(rx, PRINT_ZONE_Y + tickH);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // Draw layers bottom to top
@@ -1507,7 +1553,18 @@ function _roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-const PX_PER_INCH = 40; // canvas is 600px wide ≈ 15" print area
+// PX_PER_INCH: calibrated so that the print zone (12" wide) visually
+// matches the shirt's armpit-to-armpit printable chest area in the photo.
+// SanMar model photos show the shirt chest at roughly 60% of image width.
+// 600px canvas × 60% = 360px for 12" ⟹ PX_PER_INCH = 30.
+const PX_PER_INCH = 30;
+
+// Print zone: the shaded/dashed overlay showing the 12"×16" printable area
+// Centered horizontally; top at ~28% down (below collar), bottom near hem.
+const PRINT_ZONE_W  = 12 * PX_PER_INCH;  // 360px = 12"
+const PRINT_ZONE_H  = 16 * PX_PER_INCH;  // 480px = 16"
+const PRINT_ZONE_X  = (CANVAS_W - PRINT_ZONE_W) / 2;   // 120px from left
+const PRINT_ZONE_Y  = Math.round(CANVAS_H * 0.20);      // 144px from top
 
 // ── SWATCHES ──────────────────────────────────────────────────────────────
 function buildSwatches() {
@@ -1635,6 +1692,13 @@ function toggleLayerStyle(style) {
   const cap = style.charAt(0).toUpperCase() + style.slice(1);
   document.getElementById('prop' + cap)?.classList.toggle('active', l[style]);
   drawAll(); syncT();
+}
+
+function togglePrintZone() {
+  S.showPrintZone = S.showPrintZone === false ? true : false;
+  const btn = document.getElementById('btnPrintZone');
+  if (btn) btn.textContent = `📐 Print Area Guide: ${S.showPrintZone === false ? 'OFF' : 'ON'}`;
+  drawAll();
 }
 
 document.getElementById('btnAddText').addEventListener('click', () => {
