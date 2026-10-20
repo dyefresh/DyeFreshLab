@@ -519,11 +519,72 @@ select.field { cursor:pointer; }
   <!-- RIGHT PANEL -->
   <aside class="panel-right">
 
-    <!-- Selection properties -->
+    <!-- Selection / Transform properties -->
     <div class="panel-section">
-      <div class="panel-label">Selection</div>
-      <div id="propsArea">
-        <div class="no-selection">Click a layer to edit</div>
+      <div class="panel-label">Transform</div>
+      <div id="noSel" style="font-size:.75rem;color:var(--txt3);padding:4px 0;">Select an object on the canvas.</div>
+      <div id="tCtrl" style="display:none;">
+        <!-- Scale (proportional) -->
+        <div style="margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Scale</span>
+            <span id="vSc" style="font-size:.75rem;font-weight:700;color:var(--txt);background:var(--surface);padding:2px 7px;border-radius:5px;">100%</span>
+          </div>
+          <input type="range" id="slSc" min="10" max="300" value="100" style="width:100%;" oninput="apSc(this.value)">
+        </div>
+        <!-- Unlock individual W/H -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0;">
+          <span style="font-size:.72rem;color:var(--txt2);font-weight:500;">Individual W / H</span>
+          <button id="lockBtn" onclick="toggleLock()" style="font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--red);background:transparent;color:var(--red);">
+            <span id="lockLbl">Unlock</span>
+          </button>
+        </div>
+        <div id="whSliders" style="display:none;">
+          <div style="margin-bottom:5px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Width</span>
+              <span id="vW" style="font-size:.75rem;font-weight:700;color:var(--txt);background:var(--surface);padding:2px 7px;border-radius:5px;">-</span>
+            </div>
+            <input type="range" id="slW" min="10" max="500" value="100" style="width:100%;" oninput="apW(this.value)">
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+              <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Height</span>
+              <span id="vH" style="font-size:.75rem;font-weight:700;color:var(--txt);background:var(--surface);padding:2px 7px;border-radius:5px;">-</span>
+            </div>
+            <input type="range" id="slH" min="10" max="500" value="100" style="width:100%;" oninput="apH(this.value)">
+          </div>
+        </div>
+        <!-- Rotate -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;min-width:48px;">Rotate</span>
+          <input type="range" id="slRo" min="-180" max="180" value="0" style="flex:1;" oninput="apRo(this.value)">
+          <span id="vRo" style="font-size:.75rem;font-weight:700;color:var(--txt);min-width:40px;text-align:right;">0°</span>
+        </div>
+        <!-- Opacity -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;min-width:48px;">Opacity</span>
+          <input type="range" id="slOp" min="10" max="100" value="100" style="flex:1;" oninput="apOp(this.value)">
+          <span id="vOp" style="font-size:.75rem;font-weight:700;color:var(--txt);min-width:40px;text-align:right;">100%</span>
+        </div>
+        <!-- Text-specific fields -->
+        <div id="txtEdit" style="display:none;">
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Text</div>
+            <input class="field" id="propText" type="text" style="width:100%;">
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Color</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="color" id="propColor" style="width:36px;height:28px;border:none;cursor:pointer;background:none;">
+              <input class="field" id="propColorHex" type="text" maxlength="7" style="flex:1;">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="btn-secondary" id="btnDupeSel" style="flex:1;font-size:.72rem;">Duplicate</button>
+          <button class="btn-primary"   id="btnDelSel"  style="flex:1;font-size:.72rem;">Delete</button>
+        </div>
       </div>
     </div>
 
@@ -914,10 +975,13 @@ function drawAll() {
 
 function drawLayer(layer) {
   ctx.save();
+  ctx.globalAlpha = layer.opacity ?? 1;
   const cx = layer.x + layer.w/2;
   const cy = layer.y + layer.h/2;
   ctx.translate(cx, cy);
-  if (layer.rot) ctx.rotate(layer.rot * Math.PI/180);
+  const rot = layer.rotation || layer.rot || 0;
+  if (rot) ctx.rotate(rot * Math.PI/180);
+  if (layer.flipH) { ctx.scale(-1, 1); }
   ctx.translate(-layer.w/2, -layer.h/2);
 
   if (layer.type === 'text') {
@@ -935,23 +999,122 @@ function drawLayer(layer) {
   ctx.restore();
 }
 
-const HANDLE = 8;
 function drawHandles(layer) {
-  const x = layer.x, y = layer.y, w = layer.w, h = layer.h;
   ctx.save();
-  ctx.strokeStyle = '#e8290b';
+  // Translate to layer center so rotation pivot matches drawLayer
+  const cx = layer.x + layer.w / 2;
+  const cy = layer.y + layer.h / 2;
+  ctx.translate(cx, cy);
+  const rot = layer.rotation || layer.rot || 0;
+  ctx.rotate(rot * Math.PI / 180);
+  const hw = layer.w / 2, hh = layer.h / 2;
+
+  // Dashed selection box
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = 'rgba(0,120,255,0.85)';
   ctx.lineWidth = 1.5;
-  ctx.setLineDash([4,3]);
-  ctx.strokeRect(x, y, w, h);
+  ctx.strokeRect(-hw, -hh, layer.w, layer.h);
   ctx.setLineDash([]);
-  // Corner handles
-  [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([hx,hy]) => {
-    ctx.fillStyle='#fff'; ctx.strokeStyle='#e8290b'; ctx.lineWidth=1.5;
-    ctx.fillRect(hx-HANDLE/2,hy-HANDLE/2,HANDLE,HANDLE);
-    ctx.strokeRect(hx-HANDLE/2,hy-HANDLE/2,HANDLE,HANDLE);
+
+  // Size label below box
+  const wIn = (layer.w / PX_PER_INCH).toFixed(1);
+  const hIn = (layer.h / PX_PER_INCH).toFixed(1);
+  const dimLabel = wIn + '" × ' + hIn + '"';
+  ctx.font = 'bold 9px Inter,sans-serif';
+  const lw2 = ctx.measureText(dimLabel).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  _roundRect(ctx, -lw2/2-4, hh+6, lw2+8, 14, 3);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(dimLabel, 0, hh + 13);
+
+  // Icon handle helper
+  function iconH(ox, oy, drawFn) {
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.shadowColor = 'rgba(0,0,0,0.22)'; ctx.shadowBlur = 3;
+    ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = '#333'; ctx.fillStyle = '#333';
+    ctx.lineWidth = 1.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    drawFn();
+    ctx.restore();
+  }
+
+  // Top-left: delete
+  iconH(-hw-13, -hh-13, () => {
+    ctx.beginPath();
+    ctx.moveTo(-3,-4); ctx.lineTo(3,-4);
+    ctx.moveTo(-4,-4); ctx.lineTo(-4,4); ctx.lineTo(4,4); ctx.lineTo(4,-4);
+    ctx.moveTo(-1,-4); ctx.lineTo(-1,-5.5); ctx.lineTo(1,-5.5); ctx.lineTo(1,-4);
+    ctx.moveTo(-1,-1); ctx.lineTo(-1,2);
+    ctx.moveTo(1,-1);  ctx.lineTo(1,2);
+    ctx.stroke();
   });
+  // Top-center: scale height
+  iconH(0, -hh-13, () => {
+    ctx.beginPath();
+    ctx.moveTo(0,-4); ctx.lineTo(0,4);
+    ctx.moveTo(-3,-2); ctx.lineTo(0,-5); ctx.lineTo(3,-2);
+    ctx.moveTo(-3,2);  ctx.lineTo(0,5);  ctx.lineTo(3,2);
+    ctx.stroke();
+  });
+  // Top-right: rotate
+  iconH(hw+13, -hh-13, () => {
+    ctx.beginPath();
+    ctx.arc(0,0,4,-Math.PI*0.75,Math.PI*0.75); ctx.stroke();
+    const ex=Math.cos(Math.PI*0.75)*4, ey=Math.sin(Math.PI*0.75)*4;
+    ctx.beginPath();
+    ctx.moveTo(ex-2,ey-1); ctx.lineTo(ex,ey); ctx.lineTo(ex-1,ey+2);
+    ctx.stroke();
+  });
+  // Center-right: flip H
+  iconH(hw+13, 0, () => {
+    ctx.beginPath();
+    ctx.moveTo(-1,-3); ctx.lineTo(-1,3);
+    ctx.moveTo(1,-3);  ctx.lineTo(1,3);
+    ctx.moveTo(-1,0); ctx.lineTo(-3.5,-3); ctx.lineTo(-3.5,3); ctx.closePath();
+    ctx.moveTo(1,0);  ctx.lineTo(3.5,-3);  ctx.lineTo(3.5,3);  ctx.closePath();
+    ctx.stroke();
+  });
+  // Bottom-left: layer order
+  iconH(-hw-13, hh+13, () => {
+    [-3,0,3].forEach((dy,i) => {
+      ctx.globalAlpha = 0.4 + i*0.3;
+      ctx.beginPath(); ctx.moveTo(-4,dy); ctx.lineTo(4,dy); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  });
+  // Bottom-right: resize
+  iconH(hw+13, hh+13, () => {
+    ctx.beginPath();
+    ctx.moveTo(-4,-4); ctx.lineTo(4,4);
+    ctx.moveTo(1,4);   ctx.lineTo(4,4);  ctx.lineTo(4,1);
+    ctx.moveTo(-4,-1); ctx.lineTo(-4,-4); ctx.lineTo(-1,-4);
+    ctx.stroke();
+  });
+
   ctx.restore();
 }
+
+function _roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+
+const PX_PER_INCH = 40; // canvas is 600px wide ≈ 15" print area
 
 // ── SWATCHES ──────────────────────────────────────────────────────────────
 function buildSwatches() {
@@ -1066,13 +1229,16 @@ document.getElementById('btnAddText').addEventListener('click', () => {
     y:     CANVAS_H/2 - size/2,
     w:     size * text.length * 0.6,
     h:     size * 1.25,
-    rot:   0,
+    rot:      0,
+    rotation: 0,
+    opacity:  1,
+    flipH:    false,
   };
   S.layers.push(layer);
   S.activeLayer = layer.id;
   renderLayerList();
   drawAll();
-  updatePropsPanel();
+  syncT();
   document.getElementById('textInput').value = '';
 });
 
@@ -1097,13 +1263,16 @@ document.getElementById('uploadInput').addEventListener('change', e => {
         x:     CANVAS_W/2 - w/2,
         y:     CANVAS_H/2 - h/2,
         w, h,
-        rot:   0,
+        rot:      0,
+        rotation: 0,
+        opacity:  1,
+        flipH:    false,
       };
       S.layers.push(layer);
       S.activeLayer = layer.id;
       renderLayerList();
       drawAll();
-      updatePropsPanel();
+      syncT();
     };
     img.src = ev.target.result;
   };
@@ -1146,233 +1315,185 @@ function renderLayerList() {
   });
 }
 
-// ── PROPS PANEL ───────────────────────────────────────────────────────────
-function updatePropsPanel() {
-  const area = document.getElementById('propsArea');
-  if (S.activeLayer === null) {
-    area.innerHTML = '<div class="no-selection">Click a layer to edit</div>';
+// ── TRANSFORM PANEL (replaces updatePropsPanel) ───────────────────────────
+// aspectLocked = true → Scale slider changes W+H proportionally
+let aspectLocked = true;
+
+function updatePropsPanel() { syncT(); } // alias — keeps all existing call sites working
+
+function syncT() {
+  const l = S.layers.find(x => x.id === S.activeLayer);
+  const noSel  = document.getElementById('noSel');
+  const tCtrl  = document.getElementById('tCtrl');
+  const txtEdit = document.getElementById('txtEdit');
+  if (!l) {
+    if (noSel)  noSel.style.display  = '';
+    if (tCtrl)  tCtrl.style.display  = 'none';
     return;
   }
-  const layer = S.layers.find(l => l.id === S.activeLayer);
-  if (!layer) { area.innerHTML = '<div class="no-selection">Click a layer to edit</div>'; return; }
+  if (noSel)  noSel.style.display  = 'none';
+  if (tCtrl)  tCtrl.style.display  = 'block';
 
-  let extraProps = '';
-  if (layer.type === 'text') {
-    extraProps = `
-      <div class="prop-group">
-        <div class="input-label">Text</div>
-        <input class="field" id="propText" type="text" value="${layer.text.replace(/"/g,'&quot;')}" style="width:100%">
-      </div>
-      <div class="prop-group">
-        <div class="input-label">Font Size</div>
-        <input class="field" id="propSize" type="number" value="${layer.size}" min="8" max="300" style="width:100%">
-      </div>
-      <div class="prop-group">
-        <div class="input-label">Color</div>
-        <div class="color-row">
-          <input class="field" type="color" id="propColor" value="${layer.color}">
-          <input class="field" id="propColorHex" type="text" value="${layer.color}" maxlength="7">
-        </div>
-      </div>
-    `;
-  } else if (layer.type === 'img') {
-    const origW = layer.image ? layer.image.naturalWidth  : layer.w;
-    const origH = layer.image ? layer.image.naturalHeight : layer.h;
-    const pct   = Math.round((layer.w / origW) * 100);
-    extraProps = `
-      <div class="prop-group">
-        <div class="input-label">Scale</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="range" id="propScale" min="5" max="300" value="${pct}" style="flex:1;">
-          <span id="propScaleVal" style="font-size:.78rem;color:var(--txt2);min-width:36px;">${pct}%</span>
-        </div>
-      </div>
-      <div class="transform-row" style="margin-top:4px;">
-        <div class="num-field">
-          <label>Width</label>
-          <input id="propImgW" type="number" value="${Math.round(layer.w)}" min="10">
-        </div>
-        <div class="num-field">
-          <label>Height</label>
-          <input id="propImgH" type="number" value="${Math.round(layer.h)}" min="10">
-        </div>
-      </div>
-      <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--txt3);cursor:pointer;margin-top:4px;">
-        <input type="checkbox" id="propLockAspect" checked style="accent-color:var(--red);">
-        Lock aspect ratio
-      </label>
-      <input type="hidden" id="propOrigW" value="${origW}">
-      <input type="hidden" id="propOrigH" value="${origH}">
-    `;
+  const isImg = l.type === 'img';
+  if (txtEdit) txtEdit.style.display = isImg ? 'none' : 'block';
+
+  // Populate text fields
+  if (!isImg) {
+    const pt = document.getElementById('propText');
+    const pc = document.getElementById('propColor');
+    const ph = document.getElementById('propColorHex');
+    if (pt) pt.value = l.text || '';
+    if (pc) pc.value = l.color || '#000000';
+    if (ph) ph.value = l.color || '#000000';
   }
 
-  area.innerHTML = `
-    <div class="props-wrap">
-      ${extraProps}
-      <div class="transform-row" style="margin-top:${layer.type==='img'?'4':'0'}px;">
-        <div class="num-field">
-          <label>X</label>
-          <input id="propX" type="number" value="${Math.round(layer.x)}">
-        </div>
-        <div class="num-field">
-          <label>Y</label>
-          <input id="propY" type="number" value="${Math.round(layer.y)}">
-        </div>
-        ${layer.type !== 'img' ? `
-        <div class="num-field">
-          <label>Width</label>
-          <input id="propW" type="number" value="${Math.round(layer.w)}" min="10">
-        </div>` : ''}
-        <div class="num-field">
-          <label>Rotate°</label>
-          <input id="propRot" type="number" value="${Math.round(layer.rot || 0)}">
-        </div>
-      </div>
-      <button class="btn-secondary" id="btnDupeLayer" style="margin-top:4px;">Duplicate Layer</button>
-    </div>
-  `;
+  // Scale slider
+  if (!l._origW) { l._origW = l.w; l._origH = l.h; }
+  const wIn = (l.w / PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  const pct = l._origW ? Math.round((l.w / l._origW) * 100) : 100;
+  const slSc = document.getElementById('slSc');
+  const vSc  = document.getElementById('vSc');
+  if (slSc) slSc.value = pct;
+  if (vSc)  vSc.textContent = pct + '% (' + wIn + '" × ' + hIn + '")';
 
-  // Wire up props
-  const applyProp = () => {
-    if (layer.type === 'text') {
-      const t = document.getElementById('propText');
-      const s = document.getElementById('propSize');
-      const c = document.getElementById('propColor');
-      if (t) layer.text  = t.value;
-      if (s) layer.size  = Math.max(8, parseInt(s.value,10) || 48);
-      if (c) layer.color = c.value;
-    }
-    if (layer.type === 'img') {
-      const pw2 = document.getElementById('propImgW');
-      const ph2 = document.getElementById('propImgH');
-      if (pw2) {
-        const newW = Math.max(10, parseInt(pw2.value,10) || 10);
-        const lock = document.getElementById('propLockAspect');
-        if (lock && lock.checked && layer.w > 0) {
-          const ratio = layer.h / layer.w;
-          layer.h = Math.round(newW * ratio);
-          if (ph2) ph2.value = Math.round(layer.h);
-        }
-        layer.w = newW;
-        // sync scale display
-        const origW = parseInt(document.getElementById('propOrigW')?.value || layer.w, 10);
-        const slider = document.getElementById('propScale');
-        const valEl  = document.getElementById('propScaleVal');
-        if (slider && origW > 0) { const p = Math.round((layer.w/origW)*100); slider.value = p; if (valEl) valEl.textContent = p+'%'; }
-      }
-    }
-    const px  = document.getElementById('propX');
-    const py  = document.getElementById('propY');
-    const pw  = document.getElementById('propW');
-    const pr  = document.getElementById('propRot');
-    if (px) layer.x   = parseInt(px.value,10) || 0;
-    if (py) layer.y   = parseInt(py.value,10) || 0;
-    if (pw) layer.w   = Math.max(10, parseInt(pw.value,10) || 100);
-    if (pr) layer.rot = parseFloat(pr.value) || 0;
-    drawAll();
-  };
+  // W/H sliders
+  const slW = document.getElementById('slW'), vW = document.getElementById('vW');
+  const slH = document.getElementById('slH'), vH = document.getElementById('vH');
+  if (slW) slW.value = Math.min(Math.round(l.w), 500);
+  if (vW)  vW.textContent = wIn + '"';
+  if (slH) slH.value = Math.min(Math.round(l.h), 500);
+  if (vH)  vH.textContent = hIn + '"';
 
-  area.querySelectorAll('input').forEach(inp => {
-    // Skip image-specific inputs — handled separately below
-    if (['propScale','propImgW','propImgH','propLockAspect','propOrigW','propOrigH'].includes(inp.id)) return;
-    inp.addEventListener('input', applyProp);
-    inp.addEventListener('change', applyProp);
+  // Rotate
+  const slRo = document.getElementById('slRo'), vRo = document.getElementById('vRo');
+  if (slRo) slRo.value = l.rotation || 0;
+  if (vRo)  vRo.textContent = (l.rotation || 0) + '°';
+
+  // Opacity
+  const op = Math.round((l.opacity ?? 1) * 100);
+  const slOp = document.getElementById('slOp'), vOp = document.getElementById('vOp');
+  if (slOp) slOp.value = op;
+  if (vOp)  vOp.textContent = op + '%';
+
+  // Lock button label
+  const lockLbl = document.getElementById('lockLbl');
+  const lockBtn = document.getElementById('lockBtn');
+  if (lockLbl) lockLbl.textContent = aspectLocked ? 'Unlock' : 'Lock';
+  if (lockBtn) {
+    lockBtn.style.borderColor = aspectLocked ? 'var(--red)' : '#22c55e';
+    lockBtn.style.color       = aspectLocked ? 'var(--red)' : '#22c55e';
+  }
+  const wh = document.getElementById('whSliders');
+  if (wh) wh.style.display = aspectLocked ? 'none' : 'block';
+}
+
+function toggleLock() {
+  aspectLocked = !aspectLocked;
+  const btn = document.getElementById('lockBtn');
+  const lbl = document.getElementById('lockLbl');
+  const wh  = document.getElementById('whSliders');
+  if (aspectLocked) {
+    if (lbl) lbl.textContent = 'Unlock';
+    if (btn) { btn.style.borderColor='var(--red)'; btn.style.color='var(--red)'; }
+    if (wh)  wh.style.display = 'none';
+  } else {
+    if (lbl) lbl.textContent = 'Lock';
+    if (btn) { btn.style.borderColor='#22c55e'; btn.style.color='#22c55e'; }
+    if (wh)  wh.style.display = 'block';
+    const l = S.layers.find(x => x.id === S.activeLayer);
+    if (l) {
+      const slW=document.getElementById('slW'), vW=document.getElementById('vW');
+      const slH=document.getElementById('slH'), vH=document.getElementById('vH');
+      if (slW) slW.value = Math.min(Math.round(l.w), 500);
+      if (vW)  vW.textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
+      if (slH) slH.value = Math.min(Math.round(l.h), 500);
+      if (vH)  vH.textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
+    }
+  }
+}
+
+function apSc(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  if (!l._origW) { l._origW = l.w; l._origH = l.h; }
+  const pct = +v / 100;
+  l.w = Math.max(5, Math.round(l._origW * pct));
+  l.h = Math.max(5, Math.round(l._origH * pct));
+  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=Math.round(v)+'% ('+wIn+'" × '+hIn+'")';
+  const slW=document.getElementById('slW'), vW=document.getElementById('vW');
+  const slH=document.getElementById('slH'), vH=document.getElementById('vH');
+  if(slW) slW.value=Math.round(l.w); if(vW) vW.textContent=wIn+'"';
+  if(slH) slH.value=Math.round(l.h); if(vH) vH.textContent=hIn+'"';
+  drawAll();
+}
+function apW(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  l.w = Math.max(5, +v);
+  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const vW=document.getElementById('vW'); if(vW) vW.textContent=wIn+'"';
+  const pct = l._origW ? Math.round((l.w/l._origW)*100) : 100;
+  const slSc=document.getElementById('slSc'), vSc=document.getElementById('vSc');
+  if(slSc) slSc.value=pct; if(vSc) vSc.textContent=pct+'% ('+wIn+'" × '+hIn+'")';
+  drawAll();
+}
+function apH(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  l.h = Math.max(5, +v);
+  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const vH=document.getElementById('vH'); if(vH) vH.textContent=hIn+'"';
+  const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=wIn+'" × '+hIn+'"';
+  drawAll();
+}
+function apRo(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  l.rotation = parseInt(v, 10);
+  const vRo=document.getElementById('vRo'); if(vRo) vRo.textContent=l.rotation+'°';
+  drawAll();
+}
+function apOp(v) {
+  const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+  l.opacity = v/100;
+  const vOp=document.getElementById('vOp'); if(vOp) vOp.textContent=Math.round(v)+'%';
+  drawAll();
+}
+function delSel() {
+  S.layers = S.layers.filter(x => x.id !== S.activeLayer);
+  S.activeLayer = null;
+  renderLayerList(); syncT(); drawAll();
+}
+
+// Wire up static transform panel buttons (once, on load)
+(function wireTransformPanel() {
+  document.getElementById('btnDupeSel')?.addEventListener('click', () => {
+    const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+    const copy = { ...l, id: Date.now(), x: l.x+20, y: l.y+20 };
+    if (l.image) copy.image = l.image;
+    S.layers.push(copy);
+    S.activeLayer = copy.id;
+    renderLayerList(); syncT(); drawAll();
   });
+  document.getElementById('btnDelSel')?.addEventListener('click', delSel);
 
-  // Image scale slider + W/H inputs
-  if (layer.type === 'img') {
-    const slider   = document.getElementById('propScale');
-    const valEl    = document.getElementById('propScaleVal');
-    const wInp     = document.getElementById('propImgW');
-    const hInp     = document.getElementById('propImgH');
-    const lockChk  = document.getElementById('propLockAspect');
-    const origWInp = document.getElementById('propOrigW');
-    const origHInp = document.getElementById('propOrigH');
-
-    if (slider) {
-      slider.addEventListener('input', () => {
-        const pct  = parseInt(slider.value, 10) || 100;
-        const origW = parseInt(origWInp?.value || layer.w, 10);
-        const origH = parseInt(origHInp?.value || layer.h, 10);
-        layer.w = Math.round(origW * pct / 100);
-        layer.h = Math.round(origH * pct / 100);
-        if (wInp) wInp.value = layer.w;
-        if (hInp) hInp.value = layer.h;
-        if (valEl) valEl.textContent = pct + '%';
-        drawAll();
-      });
-    }
-
-    if (wInp) {
-      wInp.addEventListener('input', () => {
-        const newW = Math.max(10, parseInt(wInp.value, 10) || 10);
-        if (lockChk && lockChk.checked && layer.w > 0) {
-          const ratio = layer.h / layer.w;
-          layer.h = Math.round(newW * ratio);
-          if (hInp) hInp.value = layer.h;
-        }
-        layer.w = newW;
-        const origW = parseInt(origWInp?.value || newW, 10);
-        const pct   = Math.round((newW / origW) * 100);
-        if (slider) slider.value = pct;
-        if (valEl)  valEl.textContent = pct + '%';
-        drawAll();
-      });
-    }
-
-    if (hInp) {
-      hInp.addEventListener('input', () => {
-        const newH = Math.max(10, parseInt(hInp.value, 10) || 10);
-        if (lockChk && lockChk.checked && layer.h > 0) {
-          const ratio = layer.w / layer.h;
-          layer.w = Math.round(newH * ratio);
-          if (wInp) wInp.value = layer.w;
-        }
-        layer.h = newH;
-        const origW = parseInt(origWInp?.value || layer.w, 10);
-        const pct   = Math.round((layer.w / origW) * 100);
-        if (slider) slider.value = pct;
-        if (valEl)  valEl.textContent = pct + '%';
-        drawAll();
-      });
-    }
-  }
-
-  // Color hex sync in props
-  const propColor    = document.getElementById('propColor');
-  const propColorHex = document.getElementById('propColorHex');
-  if (propColor && propColorHex) {
-    propColor.addEventListener('input', () => { propColorHex.value = propColor.value; applyProp(); });
-    propColorHex.addEventListener('change', () => {
-      const v = propColorHex.value;
-      if (/^#[0-9a-f]{6}$/i.test(v)) { propColor.value = v; applyProp(); }
+  // Text prop inputs
+  document.getElementById('propText')?.addEventListener('input', () => {
+    const l = S.layers.find(x => x.id === S.activeLayer); if (!l || l.type!=='text') return;
+    l.text = document.getElementById('propText').value; drawAll();
+  });
+  const pc = document.getElementById('propColor');
+  const ph = document.getElementById('propColorHex');
+  if (pc && ph) {
+    pc.addEventListener('input', () => {
+      ph.value = pc.value;
+      const l=S.layers.find(x=>x.id===S.activeLayer); if(l&&l.type==='text'){l.color=pc.value;drawAll();}
+    });
+    ph.addEventListener('change', () => {
+      const v=ph.value; if(!/^#[0-9a-f]{6}$/i.test(v)) return;
+      pc.value=v;
+      const l=S.layers.find(x=>x.id===S.activeLayer); if(l&&l.type==='text'){l.color=v;drawAll();}
     });
   }
-
-  // Duplicate
-  const dupeBtn = document.getElementById('btnDupeLayer');
-  if (dupeBtn) {
-    dupeBtn.addEventListener('click', () => {
-      const copy = { ...layer, id: Date.now(), x: layer.x+20, y: layer.y+20 };
-      if (layer.image) copy.image = layer.image; // shared reference is fine
-      S.layers.push(copy);
-      S.activeLayer = copy.id;
-      renderLayerList();
-      drawAll();
-      updatePropsPanel();
-    });
-  }
-}
-
-// ── CANVAS MOUSE / TOUCH ──────────────────────────────────────────────────
-function hitTest(mx, my) {
-  // Test in reverse (top layer first)
-  for (let i = S.layers.length-1; i >= 0; i--) {
-    const l = S.layers[i];
-    if (mx >= l.x && mx <= l.x+l.w && my >= l.y && my <= l.y+l.h) return l;
-  }
-  return null;
-}
+})();
 
 function canvasCoords(e) {
   const rect = canvas.getBoundingClientRect();
@@ -1385,69 +1506,134 @@ function canvasCoords(e) {
   };
 }
 
-canvas.addEventListener('mousedown', startDrag);
-canvas.addEventListener('touchstart', startDrag, { passive:false });
+// ── CANVAS INTERACTION ────────────────────────────────────────────────────
+// Replaces simple resize-only drag with full rotate/scale/flip/delete handles
 
-function startDrag(e) {
+function layerHandleHit(mx, my, l) {
+  const hw = l.w/2, hh = l.h/2;
+  // Center of layer (l.x/y is top-left)
+  const lcx = l.x + hw, lcy = l.y + hh;
+  const a = (l.rotation || 0) * Math.PI / 180;
+  const handles = [
+    [-hw-13, -hh-13, 'delete'],
+    [0,      -hh-13, 'scaleH'],
+    [ hw+13, -hh-13, 'rotate'],
+    [ hw+13,  0,     'flipH' ],
+    [-hw-13,  hh+13, 'layer' ],
+    [ hw+13,  hh+13, 'resize'],
+    [-hw, -hh, 'tl'], [ hw, -hh, 'tr'],
+    [ hw,  hh, 'br'], [-hw,  hh, 'bl'],
+  ];
+  for (const [ox, oy, nm] of handles) {
+    const rx = lcx + ox*Math.cos(a) - oy*Math.sin(a);
+    const ry = lcy + ox*Math.sin(a) + oy*Math.cos(a);
+    if (Math.abs(mx-rx) < 16 && Math.abs(my-ry) < 16) return nm;
+  }
+  return null;
+}
+
+function layerBodyHit(mx, my, l) {
+  // Center of layer
+  const lcx = l.x + l.w/2, lcy = l.y + l.h/2;
+  const dx = mx - lcx, dy = my - lcy;
+  const a = -(l.rotation || 0) * Math.PI / 180;
+  const lx = dx*Math.cos(a) - dy*Math.sin(a);
+  const ly = dx*Math.sin(a) + dy*Math.cos(a);
+  return Math.abs(lx) < l.w/2+4 && Math.abs(ly) < l.h/2+4;
+}
+
+canvas.addEventListener('mousedown', mdown);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); mdown(e); }, { passive:false });
+canvas.addEventListener('mouseup',   () => { S.drag = null; });
+canvas.addEventListener('mouseleave',() => { S.drag = null; });
+canvas.addEventListener('touchend',  () => { S.drag = null; });
+
+function mdown(e) {
   e.preventDefault();
-  const { x, y } = canvasCoords(e);
+  const { x: mx, y: my } = canvasCoords(e);
 
-  // Check resize handle on active layer
+  // Check handle on selected layer first
   if (S.activeLayer !== null) {
-    const layer = S.layers.find(l => l.id === S.activeLayer);
-    if (layer) {
-      const rx = layer.x + layer.w, ry = layer.y + layer.h;
-      if (Math.abs(x - rx) < HANDLE+2 && Math.abs(y - ry) < HANDLE+2) {
-        S.resizing = true;
-        S.resizeLayer = layer;
-        S.resizeStartX = x; S.resizeStartY = y;
-        S.resizeOrigW  = layer.w; S.resizeOrigH = layer.h;
+    const sel = S.layers.find(l => l.id === S.activeLayer);
+    if (sel) {
+      const h = layerHandleHit(mx, my, sel);
+      if (h) {
+        if (h === 'delete') { delSel(); return; }
+        if (h === 'rotate') {
+          S.drag = { type:'lrotate', ox:mx, oy:my, startRot:sel.rotation||0, cx:sel.x+sel.w/2, cy:sel.y+sel.h/2 };
+          return;
+        }
+        if (h === 'flipH') { sel.flipH = !sel.flipH; drawAll(); return; }
+        if (h === 'layer') {
+          const idx = S.layers.findIndex(x => x.id === sel.id);
+          if (idx > 0) { [S.layers[idx], S.layers[idx-1]] = [S.layers[idx-1], S.layers[idx]]; renderLayerList(); drawAll(); }
+          return;
+        }
+        if (h === 'scaleH') {
+          S.drag = { type:'lresize', h:'scaleH', sx:mx, sy:my, sw:sel.w, sh:sel.h };
+          return;
+        }
+        S.drag = { type:'lresize', h, sx:mx, sy:my, sw:sel.w, sh:sel.h };
         return;
       }
     }
   }
 
-  const hit = hitTest(x, y);
-  if (hit) {
-    S.dragging = true;
-    S.dragLayer = hit;
-    S.dragOffX  = x - hit.x;
-    S.dragOffY  = y - hit.y;
-    S.activeLayer = hit.id;
-    renderLayerList();
-    drawAll();
-    updatePropsPanel();
-  } else {
-    S.activeLayer = null;
-    renderLayerList();
-    drawAll();
-    updatePropsPanel();
+  // Hit test layers (reverse = top first)
+  for (let i = S.layers.length-1; i >= 0; i--) {
+    if (layerBodyHit(mx, my, S.layers[i])) {
+      const hit = S.layers[i];
+      S.activeLayer = hit.id;
+      S.drag = { type:'lmove', ox:mx-hit.x, oy:my-hit.y };
+      renderLayerList(); syncT(); drawAll();
+      return;
+    }
+  }
+
+  S.activeLayer = null; S.drag = null;
+  renderLayerList(); syncT(); drawAll();
+}
+
+document.addEventListener('mousemove', mmove);
+document.addEventListener('touchmove', e => { if (S.drag) { e.preventDefault(); mmove(e); } }, { passive:false });
+
+function mmove(e) {
+  if (!S.drag) return;
+  const { x: mx, y: my } = canvasCoords(e);
+  const t = S.drag.type;
+  const l = S.layers.find(x => x.id === S.activeLayer);
+  if (!l) return;
+
+  if (t === 'lrotate') {
+    const dx = mx - S.drag.cx, dy = my - S.drag.cy;
+    const odx = S.drag.ox - S.drag.cx, ody = S.drag.oy - S.drag.cy;
+    const angle = Math.atan2(dy, dx) - Math.atan2(ody, odx);
+    l.rotation = Math.round((S.drag.startRot + angle * 180/Math.PI) % 360);
+    syncT(); drawAll();
+  } else if (t === 'lmove') {
+    l.x = mx - S.drag.ox; l.y = my - S.drag.oy;
+    syncT(); drawAll();
+  } else if (t === 'lresize') {
+    const h = S.drag.h;
+    const dx = mx - S.drag.sx, dy = my - S.drag.sy;
+    let newW = S.drag.sw, newH = S.drag.sh;
+    if (h==='tl'||h==='bl') newW = Math.max(20, S.drag.sw - dx*2);
+    if (h==='tr'||h==='br'||h==='resize') newW = Math.max(20, S.drag.sw + dx*2);
+    if (h==='tr'||h==='tl'||h==='scaleH') newH = Math.max(20, S.drag.sh - dy*2);
+    if (h==='br'||h==='bl') newH = Math.max(20, S.drag.sh + dy*2);
+    if (h==='resize') {
+      const diag = Math.sqrt(dx*dx + dy*dy) * (dx+dy > 0 ? 1 : -1);
+      const ratio = S.drag.sh / S.drag.sw;
+      newW = Math.max(20, S.drag.sw + diag);
+      newH = Math.round(newW * ratio);
+    }
+    l.w = newW; l.h = newH;
+    syncT(); drawAll();
   }
 }
 
-document.addEventListener('mousemove', onDrag);
-document.addEventListener('touchmove', onDrag, { passive:false });
-function onDrag(e) {
-  if (!S.dragging && !S.resizing) return;
-  e.preventDefault();
-  const { x, y } = canvasCoords(e);
-  if (S.dragging && S.dragLayer) {
-    S.dragLayer.x = x - S.dragOffX;
-    S.dragLayer.y = y - S.dragOffY;
-    drawAll();
-    updatePropsPanel();
-  }
-  if (S.resizing && S.resizeLayer) {
-    S.resizeLayer.w = Math.max(20, S.resizeOrigW + (x - S.resizeStartX));
-    S.resizeLayer.h = Math.max(20, S.resizeOrigH + (y - S.resizeStartY));
-    drawAll();
-    updatePropsPanel();
-  }
-}
-
-document.addEventListener('mouseup',  endDrag);
-document.addEventListener('touchend', endDrag);
-function endDrag() { S.dragging = false; S.resizing = false; }
+document.addEventListener('mouseup',  () => { S.drag = null; });
+document.addEventListener('touchend', () => { S.drag = null; })
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
 document.getElementById('btnDownload').addEventListener('click', () => {
