@@ -100,6 +100,32 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
   margin-top:2px;
 }
 
+/* Inventory panel */
+.inv-loading { color:var(--txt3); font-family:var(--font-label); font-size:.75rem; }
+.inv-error   { color:#e55; font-family:var(--font-label); font-size:.75rem; }
+.inv-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  gap:5px;
+}
+.inv-size {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:6px; padding:5px 3px;
+  font-family:var(--font-label); font-size:.68rem;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.inv-size .sz-label { font-weight:600; color:var(--txt); font-size:.72rem; }
+.inv-size .sz-qty   { color:var(--txt3); font-size:.65rem; }
+.inv-size.in-stock  { border-color:rgba(80,200,120,.45); }
+.inv-size.low-stock { border-color:rgba(240,160,40,.55); }
+.inv-size.out-stock { opacity:.45; }
+.inv-dot {
+  width:7px; height:7px; border-radius:50%;
+}
+.in-stock  .inv-dot { background:#4caf7d; }
+.low-stock .inv-dot { background:#f0a028; }
+.out-stock .inv-dot { background:#888; }
+
 /* Color swatches */
 .swatch-grid {
   display:grid; grid-template-columns:repeat(auto-fill, minmax(30px, 1fr));
@@ -477,6 +503,12 @@ select.field { cursor:pointer; }
         <button class="view-tab" data-view="side">Side</button>
         <button class="view-tab" data-view="threeQ">3/4</button>
       </div>
+    </div>
+
+    <!-- Inventory / Size Availability -->
+    <div class="panel-section" id="inventorySection">
+      <div class="panel-label">Availability</div>
+      <div id="inventoryPanel" style="min-height:2.5rem;"></div>
     </div>
 
     <!-- Add Text -->
@@ -1944,6 +1976,53 @@ function selectColor(idx) {
 function updateProductInfo() {
   const color = S.colors[S.colorIdx];
   document.getElementById('prodColorName').textContent = color ? color.name : '';
+  loadInventory(color);
+}
+
+// ── INVENTORY ─────────────────────────────────────────────────────────────
+const _invCache = {};
+async function loadInventory(color) {
+  const panel = document.getElementById('inventoryPanel');
+  if (!panel) return;
+  if (!color) { panel.innerHTML = ''; return; }
+
+  // Use color name as the SanMar API param
+  const colorParam = encodeURIComponent(color.name);
+  const style = (S.styleKey || 'PC54').toUpperCase();
+  const cacheKey = `${style}:${color.name}`;
+
+  if (_invCache[cacheKey]) { renderInventory(panel, _invCache[cacheKey]); return; }
+
+  panel.innerHTML = '<span class="inv-loading">Loading availability…</span>';
+  try {
+    const res = await fetch(`${PROXY}/api/inventory?style=${style}&color=${colorParam}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    _invCache[cacheKey] = data;
+    renderInventory(panel, data);
+  } catch (e) {
+    panel.innerHTML = `<span class="inv-error">Availability unavailable</span>`;
+  }
+}
+
+function renderInventory(panel, data) {
+  const sizes = data?.sizes || {};
+  const order = ['XS','S','M','L','XL','2XL','3XL','4XL','5XL','6XL'];
+  const keys = order.filter(k => sizes[k] !== undefined);
+  if (!keys.length) {
+    panel.innerHTML = '<span class="inv-error">No size data</span>';
+    return;
+  }
+  panel.innerHTML = `<div class="inv-grid">${keys.map(sz => {
+    const s = sizes[sz];
+    const cls = s.status === 'in_stock' ? 'in-stock' : s.status === 'low_stock' ? 'low-stock' : 'out-stock';
+    const qtyLabel = s.qty > 999 ? '999+' : s.qty === 0 ? 'Out' : s.qty < 12 ? `Low` : 'In';
+    return `<div class="inv-size ${cls}">
+      <div class="inv-dot"></div>
+      <span class="sz-label">${sz}</span>
+      <span class="sz-qty">${qtyLabel}</span>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ── VIEW TABS ─────────────────────────────────────────────────────────────
