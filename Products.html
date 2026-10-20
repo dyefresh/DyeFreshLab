@@ -866,9 +866,10 @@ function selectColorOnCard(productId, colorIdx) {
   if (cardImgEl && color.img) {
     cardImgEl.style.opacity = '0.5';
     const placeholder = cardImgEl.nextElementSibling;
+    const proxied = proxyImg(color.img);
     const newImg = new Image();
     newImg.onload = () => {
-      cardImgEl.src = color.img;
+      cardImgEl.src = proxied;
       cardImgEl.style.display = 'block';
       cardImgEl.style.opacity = '1';
       if (placeholder && placeholder.classList.contains('card-photo-placeholder'))
@@ -880,7 +881,7 @@ function selectColorOnCard(productId, colorIdx) {
       if (placeholder && placeholder.classList.contains('card-photo-placeholder'))
         placeholder.style.display = 'flex';
     };
-    newImg.src = color.img;
+    newImg.src = proxied;
   }
 
   // Update color label
@@ -913,7 +914,7 @@ function switchPickerView(view, btn) {
   const prod = PRODUCTS[pickerProductId];
   const color = prod.colors[selectedIdx[pickerProductId]];
   const prevImg = document.getElementById('pickerPreviewImg');
-  const url = getPickerImgForView(color, view);
+  const url = proxyImg(getPickerImgForView(color, view));
   if (url) { prevImg.src = url; prevImg.style.opacity = '1'; }
   else { prevImg.style.opacity = '.1'; }
 }
@@ -921,7 +922,8 @@ function switchPickerView(view, btn) {
 function setPickerImage(color) {
   const prevImg = document.getElementById('pickerPreviewImg');
   const placeholder = document.getElementById('pickerImgPlaceholder');
-  const url = getPickerImgForView(color, pickerView);
+  const rawUrl = getPickerImgForView(color, pickerView);
+  const url = proxyImg(rawUrl);
   if (url) {
     prevImg.style.opacity = '0.4';
     prevImg.style.display = 'block';
@@ -1013,7 +1015,7 @@ function buildDesignLabURL() {
   const color = prod.colors[selectedIdx[pickerProductId]];
   let url = `${DESIGN_LAB_URL}?product=${encodeURIComponent(prod.designLabKey)}&color=${encodeURIComponent(color.slug)}`;
   if (color.img) {
-    url += `&img=${encodeURIComponent(color.img)}`;
+    url += `&img=${encodeURIComponent(proxyImg(color.img))}`;
   }
   return url;
 }
@@ -1066,6 +1068,15 @@ document.getElementById('colorPickerModal').addEventListener('click', function(e
 // Deployed on Railway — credentials pending from SanMar
 // Once credentials are set, this proxy auto-populates all product colors/images/inventory
 const SANMAR_PROXY_URL = 'https://sanmar-proxy-production-8b0b.up.railway.app';
+
+// Route SanMar CDN images through the Railway proxy to avoid CORS blocks
+function proxyImg(url) {
+  if (!url) return url;
+  if (url.includes('cdnp.sanmar.com') || url.includes('cdn.sanmar.com')) {
+    return `${SANMAR_PROXY_URL}/api/img-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
 
 // Maps SanMar color names to hex values for swatches
 // (API returns color names but not hex — we map them here)
