@@ -343,6 +343,114 @@ select.field { cursor:pointer; }
   display:flex; justify-content:space-between; margin-bottom:4px;
 }
 
+/* ── SHAPE OPEN BUTTON ───────────────────────────────────────────────────── */
+.shape-open-btn {
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; padding:9px 12px;
+  border:1.5px solid var(--border); border-radius:var(--radius);
+  background:#fff; cursor:pointer; font-family:var(--font-body);
+  font-size:.85rem; color:var(--txt); transition:border-color .15s;
+}
+.shape-open-btn:hover { border-color:var(--red); }
+
+/* ── SHAPE MODAL ─────────────────────────────────────────────────────────── */
+.shape-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  z-index:9000; display:flex; align-items:flex-start; justify-content:flex-start;
+}
+.shape-modal {
+  width:380px; max-width:100vw; background:#fff;
+  height:100vh; overflow-y:auto;
+  box-shadow:4px 0 24px rgba(0,0,0,.18);
+  display:flex; flex-direction:column;
+}
+.shape-modal-header {
+  display:flex; align-items:center; padding:14px 16px;
+  border-bottom:1px solid var(--border); gap:8px;
+}
+.shape-modal-back {
+  font-size:1.1rem; background:none; border:none; cursor:pointer;
+  color:var(--txt); padding:4px 8px; border-radius:6px;
+}
+.shape-modal-back:hover { background:var(--surface); }
+.shape-modal-title {
+  flex:1; text-align:center;
+  font-family:var(--font-label); font-size:1rem; font-weight:600;
+  letter-spacing:.02em; color:var(--txt);
+}
+.shape-modal-close {
+  font-size:1rem; background:none; border:none; cursor:pointer;
+  color:var(--txt3); padding:4px 8px; border-radius:6px;
+}
+.shape-modal-close:hover { background:var(--surface); color:var(--txt); }
+.shape-modal-body { padding:16px; flex:1; }
+.shape-modal-section-label {
+  font-family:var(--font-body); font-size:.95rem; font-weight:500;
+  color:var(--txt); margin-bottom:12px;
+}
+.shape-modal-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden;
+}
+.sm-opt {
+  display:flex; align-items:center; justify-content:center;
+  padding:14px 6px; background:#fff; border:none; cursor:pointer;
+  border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+  transition:background .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.sm-opt:nth-child(3n) { border-right:none; }
+.sm-opt:nth-last-child(-n+3) { border-bottom:none; }
+.sm-opt:hover { background:#f5f5f5; }
+.sm-opt.active { background:#e8e8e8; }
+.sm-preview {
+  font-family:'Oswald', sans-serif; font-size:.72rem; font-weight:700;
+  letter-spacing:.04em; color:var(--txt); text-align:center; line-height:1;
+  display:block; height:28px; display:flex; align-items:center; justify-content:center;
+}
+/* Shape preview transforms */
+.sm-normal { /* straight */ }
+.sm-curve  { transform:perspective(60px) rotateX(8deg); }
+.sm-arch   { border-radius: 50% / 100% 100% 0 0; /* visual suggestion only */ position:relative; top:-2px; }
+.sm-bridge { transform:scaleY(0.75) translateY(4px); border-radius:0 0 50% 50% / 0 0 20px 20px; }
+.sm-valley { transform:scaleY(0.75) translateY(-2px); }
+.sm-pinch  { transform:scaleX(0.7) perspective(60px) rotateX(-6deg); }
+.sm-bulge  { transform:perspective(60px) rotateX(-4deg) scaleY(1.15); }
+.sm-perspective { transform:perspective(80px) rotateY(12deg); }
+.sm-pointed { letter-spacing:-.03em; transform:scaleY(1.2); }
+.sm-downward { transform:translateY(3px) rotateZ(0deg); }
+.sm-upward   { transform:translateY(-3px); }
+.sm-cone     { transform:perspective(60px) rotateX(10deg) scaleX(0.8); }
+
+.shape-modal-slider-wrap {
+  margin-top:8px;
+}
+.shape-modal-slider-wrap input[type=range] {
+  width:100%; height:6px; margin-bottom:6px;
+  accent-color:var(--txt);
+}
+.shape-modal-slider-labels {
+  display:flex; justify-content:space-between;
+  font-family:var(--font-body); font-size:.78rem; color:var(--txt3);
+}
+.shape-modal-footer {
+  display:flex; gap:12px; margin-top:24px;
+}
+.sm-btn-remove {
+  flex:1; padding:13px; border:2px solid var(--border);
+  border-radius:30px; background:#fff; font-family:var(--font-label);
+  font-size:.85rem; font-weight:600; cursor:pointer; color:var(--txt);
+  transition:border-color .15s;
+}
+.sm-btn-remove:hover { border-color:var(--txt); }
+.sm-btn-done {
+  flex:1; padding:13px; border:none; border-radius:30px;
+  background:#1a1a1a; color:#fff; font-family:var(--font-label);
+  font-size:.85rem; font-weight:600; cursor:pointer;
+  transition:background .15s;
+}
+.sm-btn-done:hover { background:#333; }
+
 /* ── OUTLINE PICKER ───────────────────────────────────────────────────────── */
 .outline-trigger {
   display:flex; align-items:center; justify-content:space-between;
@@ -1055,29 +1163,13 @@ select.field { cursor:pointer; }
           </div>
           <input type="range" id="slSc" min="10" max="300" value="100" style="width:100%;" oninput="apSc(this.value)">
         </div>
-        <!-- Unlock individual W/H -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0;">
-          <span style="font-size:.72rem;color:var(--txt2);font-weight:500;">Individual W / H</span>
-          <button id="lockBtn" onclick="toggleLock()" style="font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:10px;cursor:pointer;border:1.5px solid var(--red);background:transparent;color:var(--red);">
-            <span id="lockLbl">Unlock</span>
-          </button>
-        </div>
+        <!-- Hidden W/H sliders kept for JS compat but not shown -->
         <div id="whSliders" style="display:none;">
-          <div style="margin-bottom:5px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-              <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Width</span>
-              <span id="vW" style="font-size:.75rem;font-weight:700;color:var(--txt);background:var(--surface);padding:2px 7px;border-radius:5px;">-</span>
-            </div>
-            <input type="range" id="slW" min="10" max="500" value="100" style="width:100%;" oninput="apW(this.value)">
-          </div>
-          <div style="margin-bottom:5px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-              <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Height</span>
-              <span id="vH" style="font-size:.75rem;font-weight:700;color:var(--txt);background:var(--surface);padding:2px 7px;border-radius:5px;">-</span>
-            </div>
-            <input type="range" id="slH" min="10" max="500" value="100" style="width:100%;" oninput="apH(this.value)">
-          </div>
+          <input type="range" id="slW" min="10" max="500" value="100" oninput="apW(this.value)">
+          <input type="range" id="slH" min="10" max="500" value="100" oninput="apH(this.value)">
+          <span id="vW"></span><span id="vH"></span>
         </div>
+        <button id="lockBtn" onclick="toggleLock()" style="display:none;"><span id="lockLbl">Unlock</span></button>
         <!-- Rotate -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
           <span style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;min-width:48px;">Rotate</span>
@@ -1155,42 +1247,12 @@ select.field { cursor:pointer; }
             </div>
           </div>
           <div style="margin-bottom:5px;">
-            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Shape</div>
-            <!-- Shape flyout for the properties panel -->
-            <div class="shape-trigger" id="shapePropTrigger" onclick="toggleShapeFlyout('shapePropFlyout','shapePropTrigger')">
-              <span class="shape-trigger-label" id="shapePropLabel">Normal</span>
-              <span class="shape-trigger-chevron">▼</span>
-            </div>
-            <div class="shape-flyout" id="shapePropFlyout">
-              <div class="shape-grid">
-                <div class="shape-opt active" data-shape="normal" onclick="pickShape('prop','normal',this)">
-                  <div class="shape-opt-preview">ABC</div>
-                  <div class="shape-opt-label">Normal</div>
-                </div>
-                <div class="shape-opt" data-shape="arch_up" onclick="pickShape('prop','arch_up',this)">
-                  <div class="shape-opt-preview" style="transform:translateY(2px)">⌒</div>
-                  <div class="shape-opt-label">Arch Up</div>
-                </div>
-                <div class="shape-opt" data-shape="arch_down" onclick="pickShape('prop','arch_down',this)">
-                  <div class="shape-opt-preview" style="transform:translateY(-2px)">⌣</div>
-                  <div class="shape-opt-label">Arch Down</div>
-                </div>
-                <div class="shape-opt" data-shape="circle" onclick="pickShape('prop','circle',this)">
-                  <div class="shape-opt-preview">◯</div>
-                  <div class="shape-opt-label">Circle</div>
-                </div>
-              </div>
-              <div class="shape-arch-settings" id="shapePropArchSettings">
-                <label>Arc angle <span id="shapePropAngleVal">120°</span></label>
-                <input type="range" min="30" max="340" value="120" id="propArchAngle"
-                  oninput="document.getElementById('shapePropAngleVal').textContent=this.value+'°';applyTextArchAngle(this.value)">
-              </div>
-              <div class="shape-flyout-footer">
-                <button class="shape-remove" onclick="pickShape('prop','normal',document.querySelector('#shapePropFlyout .shape-opt[data-shape=normal]'));toggleShapeFlyout('shapePropFlyout','shapePropTrigger')">Remove shape</button>
-                <button class="shape-done" onclick="toggleShapeFlyout('shapePropFlyout','shapePropTrigger')">Done</button>
-              </div>
-            </div>
-            <!-- Hidden select for JS compat -->
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">Text Shape</div>
+            <button class="shape-open-btn" id="shapeOpenBtn" onclick="openShapeModal()">
+              <span id="shapePropLabel">Normal</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity:.5"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <!-- Hidden compat elements -->
             <select id="propShape" style="display:none;" onchange="applyTextShape(this.value)">
               <option value="normal">Normal</option>
               <option value="arch_up">Arch Up</option>
@@ -1199,6 +1261,9 @@ select.field { cursor:pointer; }
             </select>
             <div id="propArchRow" style="display:none;"></div>
             <span id="propArchAngleVal" style="display:none;">120°</span>
+            <span id="shapePropAngleVal" style="display:none;">120°</span>
+            <input type="range" id="propArchAngle" min="30" max="340" value="120" style="display:none;"
+              oninput="document.getElementById('shapePropAngleVal').textContent=this.value+'°';applyTextArchAngle(this.value)">
           </div>
           <div style="margin-bottom:5px;">
             <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Outline</div>
@@ -1267,6 +1332,43 @@ select.field { cursor:pointer; }
     </div>
 
   </aside>
+</div>
+
+<!-- ── SHAPE MODAL ───────────────────────────────────────────────────────── -->
+<div id="shapeModal" class="shape-modal-overlay" style="display:none;" onclick="if(event.target===this)closeShapeModal()">
+  <div class="shape-modal">
+    <div class="shape-modal-header">
+      <button class="shape-modal-back" onclick="closeShapeModal()">←</button>
+      <span class="shape-modal-title">Text Shape</span>
+      <button class="shape-modal-close" onclick="closeShapeModal()">✕</button>
+    </div>
+    <div class="shape-modal-body">
+      <div class="shape-modal-section-label">Choose Text Shape</div>
+      <div class="shape-modal-grid">
+        <button class="sm-opt active" data-shape="normal" onclick="selectShapeModal('normal',this)"><span class="sm-preview sm-normal">NORMAL</span></button>
+        <button class="sm-opt" data-shape="arch_up" onclick="selectShapeModal('arch_up',this)"><span class="sm-preview sm-curve">CURVE</span></button>
+        <button class="sm-opt" data-shape="arch_down" onclick="selectShapeModal('arch_down',this)"><span class="sm-preview sm-arch">ARCH</span></button>
+        <button class="sm-opt" data-shape="bridge" onclick="selectShapeModal('bridge',this)"><span class="sm-preview sm-bridge">BRIDGE</span></button>
+        <button class="sm-opt" data-shape="valley" onclick="selectShapeModal('valley',this)"><span class="sm-preview sm-valley">VALLEY</span></button>
+        <button class="sm-opt" data-shape="circle" onclick="selectShapeModal('circle',this)"><span class="sm-preview sm-pinch">PINCH</span></button>
+        <button class="sm-opt" data-shape="bulge" onclick="selectShapeModal('bulge',this)"><span class="sm-preview sm-bulge">BULGE</span></button>
+        <button class="sm-opt" data-shape="perspective" onclick="selectShapeModal('perspective',this)"><span class="sm-preview sm-perspective">PERSPECTIVE</span></button>
+        <button class="sm-opt" data-shape="pointed" onclick="selectShapeModal('pointed',this)"><span class="sm-preview sm-pointed">POINTED</span></button>
+        <button class="sm-opt" data-shape="downward" onclick="selectShapeModal('downward',this)"><span class="sm-preview sm-downward">DOWNWARD</span></button>
+        <button class="sm-opt" data-shape="upward" onclick="selectShapeModal('upward',this)"><span class="sm-preview sm-upward">UPWARD</span></button>
+        <button class="sm-opt" data-shape="cone" onclick="selectShapeModal('cone',this)"><span class="sm-preview sm-cone">CONE</span></button>
+      </div>
+      <div class="shape-modal-section-label" id="shapeSettingsLabel" style="margin-top:18px;">Choose shape settings</div>
+      <div class="shape-modal-slider-wrap" id="shapeModalSlider">
+        <input type="range" id="shapeModalAngle" min="-100" max="100" value="50" oninput="onShapeModalAngle(this.value)">
+        <div class="shape-modal-slider-labels"><span>Down</span><span>Up</span></div>
+      </div>
+      <div class="shape-modal-footer">
+        <button class="sm-btn-remove" onclick="selectShapeModal('normal',document.querySelector('.sm-opt[data-shape=normal]'));closeShapeModal()">Remove Shape</button>
+        <button class="sm-btn-done" onclick="closeShapeModal()">Done</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── MOBILE UI ─────────────────────────────────────────────────────────── -->
@@ -2473,104 +2575,92 @@ function drawLayer(layer) {
         ctx.stroke();
       }
     } else {
-      // ── Arch / Circle curved text ──────────────────────────────────────────
-      // We work entirely in "arc space" then translate to canvas.
+      // ── Curved / Arch / Circle text ────────────────────────────────────────
+      // Strategy: place the arc pivot at the correct position, then walk each
+      // character around the arc. All math in pivot-centred coordinates.
       //
-      // Coordinate system:
-      //   - arc pivot = origin
-      //   - circle of radius R, characters sit ON the circle
-      //   - textBaseline 'alphabetic', characters drawn so baseline is on circle
+      //  arch_up  (curve / arch_down in UI = "smiling" arc): characters ride
+      //           ABOVE the arc, baseline on the circle, top of letters inward.
+      //           Pivot is BELOW the text band.
       //
-      // arch_up  : pivot BELOW bounding box.
-      //            Start angle: -π/2 - sweep/2  (left side of top arc)
-      //            Sweep direction: clockwise (+1)
-      //            Characters point UP (normal orientation)
+      //  arch_down (arch in UI = "frowning" arc): characters ride BELOW the arc,
+      //           baseline on the circle, top of letters outward (rotated 180°).
+      //           Pivot is ABOVE the text band.
       //
-      // arch_down: pivot ABOVE bounding box.
-      //            Start angle: π/2 - sweep/2  (left side of bottom arc)
-      //            Sweep direction: clockwise (+1)
-      //            Characters point DOWN (rotated π so baseline faces outward)
-      //
-      // circle   : arch_up with sweep = 2π × 0.9
-      //
-      // Bounding box derivation (arch_up):
-      //   text band lives between y = -(R) [top of chars] and y = -(R - fontSize)
-      //   horizontally: ±R·sin(sweep/2)  plus half-char padding
-      //   boxW = 2·R·sin(sweep/2) + fontSize
-      //   boxH = R·(1-cos(sweep/2)) + fontSize·1.4   (sagitta + char height)
-      //   Pivot offset from box CENTRE:
-      //     arch_up:   pivotY = +R - sagitta/2 - fontSize*0.7   (below centre)
-      //     arch_down: pivotY = -(R - sagitta/2 - fontSize*0.7) (above centre)
-
-      ctx.font = fontStyle;
-      ctx.textBaseline = 'alphabetic';
+      //  circle:  arch_up with a nearly-full sweep.
 
       const chars = displayText.split('');
-      const sweepDeg  = archAngle || 120;
-      const isDown    = shape === 'arch_down';
-      const isCircle  = shape === 'circle';
-      const sweep     = isCircle ? Math.PI * 2 * 0.9 : (sweepDeg * Math.PI / 180);
+      ctx.textBaseline = 'alphabetic';
 
-      // Measure characters
+      const sweepDeg = archAngle || 120;
+      const isDown   = shape === 'arch_down';
+      const isCircle = shape === 'circle';
+      const sweep    = isCircle ? (Math.PI * 1.8) : (sweepDeg * Math.PI / 180);
+
+      // Measure all characters
       let totalW = 0;
-      const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
+      const cws = chars.map(ch => {
+        const w = ctx.measureText(ch).width; totalW += w; return w;
+      });
 
-      // Radius: arc must fit all characters, minimum 1.5× font size
-      const radius = Math.max(totalW / sweep, effectiveSize * 1.5);
+      // Radius large enough that totalW fits on the arc with a little padding
+      const radius = Math.max(totalW / sweep + effectiveSize * 0.2, effectiveSize * 1.6);
 
-      // Geometry
+      // Bounding geometry
       const halfSweep = sweep / 2;
-      const sagitta   = radius * (1 - Math.cos(halfSweep));
-      const halfChord = radius * Math.sin(halfSweep);
+      const sagitta   = radius * (1 - Math.cos(halfSweep));   // height of arc band
+      const halfChord = radius * Math.sin(halfSweep);          // half-width of arc
 
-      // Bounding box (generous)
-      const boxW = Math.max(halfChord * 2 + effectiveSize, effectiveSize * 3);
-      const boxH = Math.max(sagitta + effectiveSize * 1.6, effectiveSize * 2.5);
-      layer.w = boxW;
-      layer.h = boxH;
+      // Box that comfortably contains the text arc
+      const boxW = halfChord * 2 + effectiveSize;
+      const boxH = sagitta + effectiveSize * 1.5;
+      layer.w = Math.max(boxW, effectiveSize * 2);
+      layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      // Canvas origin → layer centre, then apply layer rotation/flip
-      ctx.translate(layer.x + boxW / 2, layer.y + boxH / 2);
+      // Move canvas origin to the bounding-box centre
+      const bx = layer.x + layer.w / 2;
+      const by = layer.y + layer.h / 2;
+      ctx.translate(bx, by);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
 
-      // Shift origin to arc pivot
-      //   arch_up:   pivot is BELOW centre by (radius - sagitta/2 - fontSize*0.3)
-      //   arch_down: pivot is ABOVE centre by the same amount
-      const pivotOffset = radius - sagitta / 2 - effectiveSize * 0.3;
+      // Pivot position relative to box centre:
+      //   arch_up:   pivot is BELOW centre.  Text arc is at the TOP of the box.
+      //              pivotY = +( radius - sagitta/2 - effectiveSize*0.5 )
+      //   arch_down: pivot is ABOVE centre.  Text arc is at the BOTTOM of the box.
+      //              pivotY = -( radius - sagitta/2 - effectiveSize*0.5 )
+      const pivotY = (radius - sagitta / 2 - effectiveSize * 0.5) * (isDown ? -1 : 1);
       ctx.save();
-      ctx.translate(0, isDown ? -pivotOffset : pivotOffset);
+      ctx.translate(0, pivotY);
 
-      // Start angle and sweep direction
-      //   arch_up / circle: start at top-left, sweep clockwise
-      //   arch_down:        start at bottom-left, sweep clockwise, chars flipped
-      const startAngle = isDown
-        ? (Math.PI / 2) - halfSweep
-        : (-Math.PI / 2) - halfSweep;
-
-      let angle = startAngle;
+      // Walk characters around the arc.
+      // arch_up:   characters start at angle = -π/2 - halfSweep (top-left)
+      //            and advance clockwise.  translate(0, -radius) puts each glyph
+      //            above the pivot; the natural upward orientation is correct.
+      // arch_down: start at -π/2 - halfSweep as well; translate(0, +radius) puts
+      //            glyph BELOW pivot; rotate(π) flips so baseline faces outward.
+      let angle = -Math.PI / 2 - halfSweep;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
         const cw = cws[i];
-        const delta = cw / radius;
-        angle += delta / 2;
+        const delta = cw / radius;   // angular width of this char
+
+        angle += delta / 2;          // advance to char centre
 
         ctx.save();
         ctx.rotate(angle);
 
         if (isDown) {
-          // Character hangs below arc: pivot to circle rim, flip, draw baseline outward
           ctx.translate(0, radius);
-          ctx.rotate(Math.PI);
+          ctx.rotate(Math.PI);       // flip so text reads correctly hanging down
         } else {
-          // Character sits above arc: pivot to circle rim, draw baseline on rim
-          ctx.translate(0, -radius);
+          ctx.translate(0, -radius); // sit above pivot
         }
 
         const drawX = -cw / 2;
-        const drawY = 0; // baseline on rim
+        const drawY = 0; // baseline on arc rim
 
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
@@ -2581,7 +2671,16 @@ function drawLayer(layer) {
         ctx.fillStyle = layer.color;
         ctx.fillText(ch, drawX, drawY);
 
-        angle += delta / 2;
+        if (layer.underline) {
+          ctx.strokeStyle = layer.color;
+          ctx.lineWidth = Math.max(1, effectiveSize * 0.06);
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY + effectiveSize * 0.12);
+          ctx.lineTo(drawX + cw, drawY + effectiveSize * 0.12);
+          ctx.stroke();
+        }
+
+        angle += delta / 2;          // advance past char
         ctx.restore();
       }
       ctx.restore();
@@ -2945,6 +3044,65 @@ function pickShape(context, shape, el) {
     if (sel) { sel.value = shape; sel.dispatchEvent(new Event('change')); }
     applyTextShape(shape);
   }
+}
+
+// ── SHAPE MODAL ────────────────────────────────────────────────────────────
+const SHAPE_LABELS = {
+  normal:'Normal', arch_up:'Curve', arch_down:'Arch',
+  bridge:'Bridge', valley:'Valley', circle:'Pinch',
+  bulge:'Bulge', perspective:'Perspective', pointed:'Pointed',
+  downward:'Downward', upward:'Upward', cone:'Cone'
+};
+
+function openShapeModal() {
+  const modal = document.getElementById('shapeModal');
+  if (!modal) return;
+  // sync active state from current layer
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  const currentShape = l ? (l.shape || 'normal') : 'normal';
+  modal.querySelectorAll('.sm-opt').forEach(o => {
+    o.classList.toggle('active', o.dataset.shape === currentShape);
+  });
+  // sync slider from archAngle (map 30-340 -> -100 to 100)
+  const angle = l ? (l.archAngle || 120) : 120;
+  const sliderVal = Math.round(((angle - 30) / 310) * 200 - 100);
+  const sl = document.getElementById('shapeModalAngle');
+  if (sl) sl.value = sliderVal;
+  // show/hide slider
+  const isArched = currentShape !== 'normal';
+  const slWrap = document.getElementById('shapeModalSlider');
+  const slLabel = document.getElementById('shapeSettingsLabel');
+  if (slWrap) slWrap.style.display = isArched ? 'block' : 'none';
+  if (slLabel) slLabel.style.display = isArched ? 'block' : 'none';
+  modal.style.display = 'flex';
+}
+
+function closeShapeModal() {
+  const modal = document.getElementById('shapeModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectShapeModal(shape, el) {
+  // update active
+  document.querySelectorAll('.sm-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  // update label button
+  const lblEl = document.getElementById('shapePropLabel');
+  if (lblEl) lblEl.textContent = SHAPE_LABELS[shape] || shape;
+  // show/hide slider
+  const isArched = shape !== 'normal';
+  const slWrap = document.getElementById('shapeModalSlider');
+  const slLabel = document.getElementById('shapeSettingsLabel');
+  if (slWrap) slWrap.style.display = isArched ? 'block' : 'none';
+  if (slLabel) slLabel.style.display = isArched ? 'block' : 'none';
+  // apply to layer
+  applyTextShape(shape);
+}
+
+function onShapeModalAngle(val) {
+  // map -100..100 -> 30..340
+  const angle = Math.round(((parseInt(val) + 100) / 200) * 310 + 30);
+  applyTextArchAngle(angle);
 }
 
 // ── OUTLINE FLYOUT ─────────────────────────────────────────────────────────
