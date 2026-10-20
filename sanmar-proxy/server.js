@@ -332,6 +332,75 @@ app.get('/api/colors-with-inventory', async (req, res) => {
   res.json(withInventory);
 });
 
+/**
+ * GET /api/img-proxy?url=https://cdnp.sanmar.com/...
+ * Fetches a SanMar CDN image server-side and streams it back with CORS headers.
+ * This lets the Design Lab draw images onto a canvas without tainted-canvas errors.
+ * Only proxies URLs from trusted SanMar CDN domains.
+ */
+const ALLOWED_IMG_HOSTS = ['cdnp.sanmar.com', 'cdn.sanmar.com', 'www.sanmar.com', 'sanmar.com'];
+const imgCache = new NodeCache({ stdTTL: 6 * 60 * 60, useClones: false });
+
+app.get('/api/img-proxy', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url is required' });
+
+  // Security: only proxy images from SanMar domains
+  let parsed;
+  try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
+  if (!ALLOWED_IMG_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith('.' + h))) {
+    return res.status(403).json({ error: 'domain not allowed' });
+  }
+
+  // Check cache (store as Buffer)
+  const cached = imgCache.get(url);
+  if (cached) {
+    res.set('Content-Type', cached.contentType);
+    res.set('Cache-Control', 'public, max-age=21600');
+    res.set('Access-Control-Allow-Origin', '*');
+    return res.send(cached.data);
+  }
+
+  try {
+    const chunks = [];
+    const fetchUrl = (targetUrl, redirectCount = 0) => new Promise((resolve, reject) => {
+      if (redirectCount > 5) return reject(new Error('Too many redirects'));
+      const u = new URL(targetUrl);
+      const mod = u.protocol === 'https:' ? https : http;
+      const opts = { hostname: u.hostname, port: u.port || (u.protocol === 'https:' ? 443 : 80), path: u.pathname + u.search, method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0' } };
+      const r = mod.request(opts, imgRes => {
+        if (imgRes.statusCode >= 300 && imgRes.statusCode < 400 && imgRes.headers.location) {
+          return resolve(fetchUrl(imgRes.headers.location, redirectCount + 1));
+        }
+        resolve(imgRes);
+      });
+      r.on('error', reject);
+      r.end();
+    });
+
+    const imgRes = await fetchUrl(url);
+    const contentType = imgRes.headers['content-type'] || 'image/jpeg';
+    if (!contentType.startsWith('image/')) return res.status(400).json({ error: 'not an image' });
+
+    await new Promise((resolve, reject) => {
+      imgRes.on('data', chunk => chunks.push(chunk));
+      imgRes.on('end', resolve);
+      imgRes.on('error', reject);
+    });
+
+    const data = Buffer.concat(chunks);
+    imgCache.set(url, { data, contentType });
+
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=21600');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
+  } catch (err) {
+    console.error('img-proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to fetch image', detail: err.message });
+  }
+});
+
 // ─── START ────────────────────────────────────────────────────────────────────
 app.listen(CONFIG.port, () => {
   console.log(`\n🎨 DyeFresh × SanMar Proxy running on port ${CONFIG.port}`);

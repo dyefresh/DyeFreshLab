@@ -580,6 +580,14 @@ select.field { cursor:pointer; }
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const PROXY = 'https://sanmar-proxy-production-8b0b.up.railway.app';
+
+// Route SanMar CDN images through our proxy to avoid canvas CORS taint
+function proxyImg(url) {
+  if (!url) return null;
+  // Already a data URL or same-origin — use as-is
+  if (url.startsWith('data:') || url.startsWith('/')) return url;
+  return `${PROXY}/api/img-proxy?url=${encodeURIComponent(url)}`;
+}
 const PRODUCTS_URL = 'https://dyefresh.com/products';
 
 // Maps internal product key → SanMar style number
@@ -657,15 +665,15 @@ async function fetchColors(productKey, targetSlug, directImg) {
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('No colors returned');
 
-    // Map to internal format
+    // Map to internal format — route all images through proxy to avoid CORS canvas taint
     S.colors = data.map(c => ({
       name:   c.name || c.catalogColor || 'Unknown',
       slug:   slugify(c.name || c.catalogColor || ''),
-      front:  c.front   || c.frontFlat || null,
-      back:   c.back    || c.backFlat  || null,
-      side:   c.side    || null,
-      swatch: c.colorSwatch || null,
-      hex:    null,  // SanMar doesn't provide hex — we'll use swatch bg or #888
+      front:  proxyImg(c.front   || c.frontFlat || null),
+      back:   proxyImg(c.back    || c.backFlat  || null),
+      side:   proxyImg(c.side    || null),
+      swatch: c.colorSwatch || null,  // swatch used only as CSS bg-image, no canvas — no proxy needed
+      hex:    null,
     }));
 
     // Find target color by slug or name
@@ -687,11 +695,12 @@ async function fetchColors(productKey, targetSlug, directImg) {
     console.error('fetchColors failed:', err);
     // Fallback: if we have a direct img from URL params, use it
     if (directImg) {
-      S.colors = [{ name: targetSlug || 'Selected Color', slug: targetSlug, front: directImg, back: null, side: null, swatch: null, hex: null }];
+      const proxied = proxyImg(directImg);
+      S.colors = [{ name: targetSlug || 'Selected Color', slug: targetSlug, front: proxied, back: null, side: null, swatch: null, hex: null }];
       S.colorIdx = 0;
       buildSwatches();
       updateProductInfo();
-      loadGarmentImage(directImg);
+      loadGarmentImage(proxied);
     } else {
       showError('Could not load colors from SanMar. Please try again.');
     }
@@ -720,7 +729,6 @@ function loadGarmentImage(overrideUrl) {
     return;
   }
   const img = new Image();
-  img.crossOrigin = 'anonymous';
   img.onload = () => {
     S.garmentImg = img;
     showLoading(false);
@@ -732,7 +740,6 @@ function loadGarmentImage(overrideUrl) {
     const fallback = S.colors[S.colorIdx]?.front;
     if (fallback && fallback !== url) {
       const img2 = new Image();
-      img2.crossOrigin = 'anonymous';
       img2.onload = () => { S.garmentImg = img2; drawAll(); };
       img2.onerror = () => showError('Image could not be loaded.');
       img2.src = fallback;
