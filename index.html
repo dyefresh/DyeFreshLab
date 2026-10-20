@@ -304,6 +304,48 @@ select.field { cursor:pointer; }
   display:grid; grid-template-columns:1fr 1fr; gap:8px;
 }
 
+/* Size quantity table */
+.size-table {
+  width:100%; border-collapse:collapse;
+  font-family:var(--font-body); font-size:.82rem;
+}
+.size-table th {
+  font-family:var(--font-label); font-size:.62rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--txt3);
+  text-align:left; padding:0 4px 6px;
+}
+.size-table td { padding:3px 4px; }
+.size-table td:last-child { text-align:right; }
+.size-input {
+  width:100%; min-width:38px; padding:5px 4px; border:1.5px solid var(--border);
+  border-radius:var(--radius); font-family:var(--font-body);
+  font-size:.82rem; color:var(--txt); background:#fff;
+  outline:none; text-align:center; transition:border-color .15s;
+}
+.size-input:focus { border-color:var(--red); }
+#sidebarSizeTable .size-input { width:64px; }
+#modalSizeTable { table-layout:fixed; }
+#modalSizeTable th, #modalSizeTable td { text-align:center; padding:3px 2px; }
+#modalSizeTable th { font-size:.6rem; }
+.size-label {
+  font-family:var(--font-label); font-size:.75rem; font-weight:600;
+  letter-spacing:.06em; color:var(--txt2);
+}
+.size-total-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 4px 0; border-top:1.5px solid var(--border); margin-top:4px;
+}
+.size-total-label {
+  font-family:var(--font-label); font-size:.72rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--txt3);
+}
+.size-total-val {
+  font-family:var(--font-display); font-size:1.1rem; letter-spacing:.04em; color:var(--txt);
+}
+.size-min-note {
+  font-size:.72rem; color:var(--txt3); line-height:1.5; margin-top:4px;
+}
+
 /* ── MODAL ────────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,.5);
@@ -495,29 +537,30 @@ select.field { cursor:pointer; }
       </div>
     </div>
 
-    <!-- Quote (quantity hints) -->
+    <!-- Size breakdown -->
     <div class="panel-section">
-      <div class="panel-label">Quantity Estimate</div>
-      <div class="quote-form" id="qtyForm">
-        <div class="quantity-row">
-          <div class="input-row">
-            <label class="input-label">Min Qty</label>
-            <div class="field" style="font-size:.8rem;color:var(--txt2);">12 pcs</div>
-          </div>
-          <div class="input-row">
-            <label class="input-label">Typical Lead</label>
-            <div class="field" style="font-size:.8rem;color:var(--txt2);">10–14 days</div>
-          </div>
-        </div>
-        <div class="input-row">
-          <label class="input-label">Your Quantity</label>
-          <input class="field" id="qtyInput" type="number" min="12" step="1" placeholder="e.g. 50">
-        </div>
-        <div class="input-row" style="font-size:.78rem;color:var(--txt3);line-height:1.5;">
-          Pricing is per-piece and depends on garment, colors, and quantity.
-          Click <strong>Request Quote</strong> above to get a custom price.
-        </div>
+      <div class="panel-label">Size Breakdown</div>
+      <table class="size-table" id="sidebarSizeTable">
+        <thead>
+          <tr><th>Size</th><th>Qty</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="size-label">XS</span></td><td><input class="size-input sidebar-size" data-size="XS" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">S</span></td><td><input class="size-input sidebar-size" data-size="S" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">M</span></td><td><input class="size-input sidebar-size" data-size="M" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">L</span></td><td><input class="size-input sidebar-size" data-size="L" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">XL</span></td><td><input class="size-input sidebar-size" data-size="XL" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">2XL</span></td><td><input class="size-input sidebar-size" data-size="2XL" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">3XL</span></td><td><input class="size-input sidebar-size" data-size="3XL" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">4XL</span></td><td><input class="size-input sidebar-size" data-size="4XL" type="number" min="0" value="0"></td></tr>
+          <tr><td><span class="size-label">5XL</span></td><td><input class="size-input sidebar-size" data-size="5XL" type="number" min="0" value="0"></td></tr>
+        </tbody>
+      </table>
+      <div class="size-total-row">
+        <span class="size-total-label">Total Pieces</span>
+        <span class="size-total-val" id="sidebarSizeTotal">0</span>
       </div>
+      <div class="size-min-note">Min. order is 12 pcs · 10–14 day lead time</div>
     </div>
 
   </aside>
@@ -547,15 +590,36 @@ select.field { cursor:pointer; }
           <label class="input-label">Phone (optional)</label>
           <input class="field" id="qPhone" type="tel" placeholder="(555) 555-5555">
         </div>
-        <div class="modal-row">
-          <div class="input-row">
-            <label class="input-label">Quantity</label>
-            <input class="field" id="qQty" type="number" min="12" placeholder="50">
+        <div class="input-row">
+          <label class="input-label">Sizes &amp; Quantities</label>
+          <table class="size-table" id="modalSizeTable" style="margin-top:2px;">
+            <thead>
+              <tr>
+                <th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th><th>2XL</th><th>3XL</th><th>4XL</th><th>5XL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input class="size-input modal-size" data-size="XS"  type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="S"   type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="M"   type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="L"   type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="XL"  type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="2XL" type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="3XL" type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="4XL" type="number" min="0" value="0"></td>
+                <td><input class="size-input modal-size" data-size="5XL" type="number" min="0" value="0"></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="size-total-row" style="margin-top:8px;">
+            <span class="size-total-label">Total Pieces</span>
+            <span class="size-total-val" id="modalSizeTotal">0</span>
           </div>
-          <div class="input-row">
-            <label class="input-label">Need By</label>
-            <input class="field" id="qDate" type="date">
-          </div>
+        </div>
+        <div class="input-row">
+          <label class="input-label">Need By</label>
+          <input class="field" id="qDate" type="date">
         </div>
         <div class="input-row">
           <label class="input-label">Notes</label>
@@ -1259,11 +1323,47 @@ document.getElementById('btnClear').addEventListener('click', () => {
   }
 });
 
+// ── SIZE TABLE HELPERS ────────────────────────────────────────────────────
+function getSizes(selector) {
+  const sizes = {};
+  document.querySelectorAll(selector).forEach(inp => {
+    sizes[inp.dataset.size] = parseInt(inp.value, 10) || 0;
+  });
+  return sizes;
+}
+function sizesTotal(sizes) {
+  return Object.values(sizes).reduce((a, b) => a + b, 0);
+}
+function updateSidebarTotal() {
+  const total = sizesTotal(getSizes('.sidebar-size'));
+  document.getElementById('sidebarSizeTotal').textContent = total;
+}
+function syncSidebarToModal() {
+  // Copy sidebar values into modal inputs
+  document.querySelectorAll('.sidebar-size').forEach(inp => {
+    const match = document.querySelector(`.modal-size[data-size="${inp.dataset.size}"]`);
+    if (match) match.value = inp.value;
+  });
+  updateModalTotal();
+}
+function updateModalTotal() {
+  const total = sizesTotal(getSizes('.modal-size'));
+  document.getElementById('modalSizeTotal').textContent = total;
+}
+
+// Wire up sidebar size inputs
+document.querySelectorAll('.sidebar-size').forEach(inp => {
+  inp.addEventListener('input', updateSidebarTotal);
+});
+// Wire up modal size inputs
+document.querySelectorAll('.modal-size').forEach(inp => {
+  inp.addEventListener('input', updateModalTotal);
+});
+
 // ── QUOTE MODAL ───────────────────────────────────────────────────────────
 document.getElementById('btnQuote').addEventListener('click', () => {
-  // Pre-fill quantity from sidebar
-  const qty = document.getElementById('qtyInput').value;
-  if (qty) document.getElementById('qQty').value = qty;
+  // Sync sidebar size breakdown into modal
+  syncSidebarToModal();
   document.getElementById('quoteFormArea').style.display = '';
   document.getElementById('quoteSuccessArea').style.display = 'none';
   document.getElementById('quoteModal').classList.add('open');
@@ -1287,6 +1387,19 @@ document.getElementById('btnSubmitQuote').addEventListener('click', async () => 
     return;
   }
 
+  const modalSizes = getSizes('.modal-size');
+  const totalPieces = sizesTotal(modalSizes);
+  if (totalPieces < 1) {
+    alert('Please enter a quantity for at least one size.');
+    return;
+  }
+
+  // Format size breakdown as readable string: S:12, M:24, L:10 …
+  const sizeBreakdown = Object.entries(modalSizes)
+    .filter(([, qty]) => qty > 0)
+    .map(([size, qty]) => `${size}: ${qty}`)
+    .join(', ');
+
   const color = S.colors[S.colorIdx];
   const productName = document.getElementById('prodName').textContent;
 
@@ -1296,17 +1409,18 @@ document.getElementById('btnSubmitQuote').addEventListener('click', async () => 
   S.activeLayer = prev; drawAll();
 
   const payload = {
-    firstName: first,
-    lastName:  last,
+    firstName:     first,
+    lastName:      last,
     email,
-    phone:     document.getElementById('qPhone').value.trim(),
-    quantity:  document.getElementById('qQty').value,
-    neededBy:  document.getElementById('qDate').value,
-    notes:     document.getElementById('qNotes').value.trim(),
-    product:   productName,
-    style:     document.getElementById('prodStyle').textContent,
-    color:     color ? color.name : '',
-    preview:   previewDataUrl,
+    phone:         document.getElementById('qPhone').value.trim(),
+    totalQuantity: totalPieces,
+    sizes:         sizeBreakdown,
+    neededBy:      document.getElementById('qDate').value,
+    notes:         document.getElementById('qNotes').value.trim(),
+    product:       productName,
+    style:         document.getElementById('prodStyle').textContent,
+    color:         color ? color.name : '',
+    preview:       previewDataUrl,
   };
 
   const btn = document.getElementById('btnSubmitQuote');
