@@ -2166,11 +2166,11 @@ function drawLayer(layer) {
       const isCircle = shape === 'circle';
       const actualSweep = isCircle ? Math.PI * 2 * 0.9 : sweepRad;
 
-      // Bounding box
+      // Bounding box — width is chord of the arc, height includes the arc depth + text
       const arcW = 2 * radius * Math.sin(actualSweep / 2);
-      const arcH = radius - radius * Math.cos(actualSweep / 2) + effectiveSize * 1.5;
+      const arcDepth = radius - radius * Math.cos(actualSweep / 2);
       layer.w = Math.max(arcW + effectiveSize, effectiveSize * 3);
-      layer.h = Math.max(arcH, effectiveSize * 2);
+      layer.h = Math.max(arcDepth + effectiveSize * 2, effectiveSize * 2.5);
 
       // Centre transform
       const cx = layer.x + layer.w / 2;
@@ -2180,37 +2180,54 @@ function drawLayer(layer) {
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
 
-      // Arc pivot point
-      const pivotY = isDown ? -(layer.h / 2 - effectiveSize * 0.5) : (layer.h / 2 - effectiveSize * 0.5);
-      ctx.save();
-      ctx.translate(0, pivotY);
+      // Place each character along the arc
+      // Arch Up:   arc opens upward  — characters sit on top of a circle, reading L→R
+      // Arch Down: arc opens downward — characters hang below a circle, reading L→R
+      // Circle:    full circle, arch up style
+      //
+      // Strategy: translate to an arc centre-point, then for each char
+      //   rotate by its angle, translate by radius, draw upright.
+      //   For arch_up  the arc centre is BELOW the text → translate(0, +radius) → chars on top
+      //   For arch_down the arc centre is ABOVE the text → translate(0, -radius) → chars on bottom
 
+      ctx.textBaseline = 'alphabetic';
+
+      // Arc centre offset from layer centre
+      const arcCY = isDown ? -(radius - effectiveSize * 0.6) : (radius - effectiveSize * 0.6);
+      ctx.save();
+      ctx.translate(0, arcCY);
+
+      // startAngle: first char starts here; sweep left-to-right
+      // arch_up:   sweep starts at -π/2 - half-sweep (top of circle, going clockwise)
+      // arch_down: sweep starts at  π/2 - half-sweep (bottom of circle, going clockwise)
       const startAngle = isDown
         ? (Math.PI / 2) - actualSweep / 2
         : -(Math.PI / 2) - actualSweep / 2;
 
       let angle = startAngle;
-      ctx.textBaseline = 'top';
       for (let i = 0; i < chars.length; i++) {
         const charW = ctx.measureText(chars[i]).width;
         const charAngle = charW / radius;
         angle += charAngle / 2;
         ctx.save();
+        ctx.rotate(angle);
         if (isDown) {
-          ctx.rotate(angle);
-          ctx.translate(0, -radius);
+          // arc centre above → translate downward to reach char baseline
+          ctx.translate(0, radius);
+          // rotate char 180° so it reads normally (not upside-down)
+          ctx.rotate(Math.PI);
         } else {
-          ctx.rotate(angle);
+          // arc centre below → translate upward to reach char baseline
           ctx.translate(0, -radius);
         }
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
           ctx.lineWidth = (layer.outlineWidth || 2) * 2;
           ctx.lineJoin = 'round';
-          ctx.strokeText(chars[i], -charW / 2, isDown ? -effectiveSize : 0);
+          ctx.strokeText(chars[i], -charW / 2, 0);
         }
         ctx.fillStyle = layer.color;
-        ctx.fillText(chars[i], -charW / 2, isDown ? -effectiveSize : 0);
+        ctx.fillText(chars[i], -charW / 2, 0);
         angle += charAngle / 2;
         ctx.restore();
       }
