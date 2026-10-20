@@ -6,7 +6,7 @@
 <title>DyeFresh Design Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;700&family=Roboto:wght@400;700&family=Raleway:wght@400;700&family=Playfair+Display:wght@400;700&family=Anton&family=Bangers&family=Permanent+Marker&family=Pacifico&family=Righteous&family=Alfa+Slab+One&family=Black+Han+Sans&family=Russo+One&family=Orbitron:wght@400;700&family=Teko:wght@400;600&family=Barlow+Condensed:wght@400;700&family=Source+Sans+3:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ── TOKENS (match Products.html dark palette, but lab is white-bg) ─────── */
 :root {
@@ -305,6 +305,15 @@ select.field { cursor:pointer; }
 }
 
 /* Size quantity table */
+/* Horizontal size grid */
+.size-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px;
+}
+.size-grid-item {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+}
+.size-grid-item .size-label { font-size:.68rem; }
+.size-grid-item .size-input { width:100%; padding:4px 2px; }
 .size-table {
   width:100%; border-collapse:collapse;
   font-family:var(--font-body); font-size:.82rem;
@@ -323,7 +332,6 @@ select.field { cursor:pointer; }
   outline:none; text-align:center; transition:border-color .15s;
 }
 .size-input:focus { border-color:var(--red); }
-#sidebarSizeTable .size-input { width:64px; }
 #modalSizeTable { table-layout:fixed; }
 #modalSizeTable th, #modalSizeTable td { text-align:center; padding:3px 2px; }
 #modalSizeTable th { font-size:.6rem; }
@@ -331,6 +339,17 @@ select.field { cursor:pointer; }
   font-family:var(--font-label); font-size:.75rem; font-weight:600;
   letter-spacing:.06em; color:var(--txt2);
 }
+/* Text style toggle buttons */
+.text-style-btns {
+  display:flex; gap:5px;
+}
+.style-btn {
+  flex:1; padding:5px 2px; border:1.5px solid var(--border); border-radius:6px;
+  background:#fff; cursor:pointer; font-size:.82rem; color:var(--txt2);
+  transition:all .15s; line-height:1;
+}
+.style-btn:hover { border-color:var(--red); color:var(--red); }
+.style-btn.active { background:var(--red); border-color:var(--red); color:#fff; }
 .size-total-row {
   display:flex; align-items:center; justify-content:space-between;
   padding:8px 4px 0; border-top:1.5px solid var(--border); margin-top:4px;
@@ -471,17 +490,53 @@ select.field { cursor:pointer; }
         <div class="input-row">
           <label class="input-label">Font</label>
           <select class="field" id="fontSelect">
-            <option value="Bebas Neue">Bebas Neue (Display)</option>
-            <option value="Oswald" selected>Oswald (Label)</option>
-            <option value="Inter">Inter (Body)</option>
-            <option value="Arial">Arial</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">Courier New</option>
+            <optgroup label="Bold &amp; Display">
+              <option value="Bebas Neue">Bebas Neue</option>
+              <option value="Anton">Anton</option>
+              <option value="Bangers">Bangers</option>
+              <option value="Alfa Slab One">Alfa Slab One</option>
+              <option value="Russo One">Russo One</option>
+              <option value="Righteous">Righteous</option>
+              <option value="Black Han Sans">Black Han Sans</option>
+              <option value="Orbitron">Orbitron</option>
+            </optgroup>
+            <optgroup label="Labels &amp; Headers">
+              <option value="Oswald" selected>Oswald</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Teko">Teko</option>
+              <option value="Barlow Condensed">Barlow Condensed</option>
+              <option value="Raleway">Raleway</option>
+            </optgroup>
+            <optgroup label="Script &amp; Fun">
+              <option value="Permanent Marker">Permanent Marker</option>
+              <option value="Pacifico">Pacifico</option>
+            </optgroup>
+            <optgroup label="Classic &amp; Clean">
+              <option value="Roboto">Roboto</option>
+              <option value="Inter">Inter</option>
+              <option value="Source Sans 3">Source Sans 3</option>
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Courier New">Courier New</option>
+            </optgroup>
           </select>
         </div>
         <div class="input-row">
+          <label class="input-label">Style</label>
+          <div class="text-style-btns" id="textStyleBtns">
+            <button type="button" class="style-btn" id="styleBold" title="Bold" onclick="toggleTextStyle('bold')"><b>B</b></button>
+            <button type="button" class="style-btn" id="styleItalic" title="Italic" onclick="toggleTextStyle('italic')"><i>I</i></button>
+            <button type="button" class="style-btn" id="styleUnderline" title="Underline" onclick="toggleTextStyle('underline')"><u>U</u></button>
+            <button type="button" class="style-btn" id="styleUppercase" title="ALL CAPS" onclick="toggleTextStyle('uppercase')">AA</button>
+          </div>
+        </div>
+        <div class="input-row">
           <label class="input-label">Size</label>
-          <input class="field" id="textSizeInput" type="range" min="12" max="200" value="48">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input class="field" id="textSizeInput" type="range" min="12" max="200" value="48" style="flex:1;" oninput="document.getElementById('textSizeVal').textContent=this.value+'px'">
+            <span id="textSizeVal" style="font-size:.75rem;font-weight:700;min-width:36px;text-align:right;">48px</span>
+          </div>
         </div>
         <div class="input-row">
           <label class="input-label">Color</label>
@@ -583,6 +638,15 @@ select.field { cursor:pointer; }
             <input class="field" id="propText" type="text" style="width:100%;">
           </div>
           <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Style</div>
+            <div class="text-style-btns">
+              <button type="button" class="style-btn" id="propBold" title="Bold" onclick="toggleLayerStyle('bold')"><b>B</b></button>
+              <button type="button" class="style-btn" id="propItalic" title="Italic" onclick="toggleLayerStyle('italic')"><i>I</i></button>
+              <button type="button" class="style-btn" id="propUnderline" title="Underline" onclick="toggleLayerStyle('underline')"><u>U</u></button>
+              <button type="button" class="style-btn" id="propUppercase" title="ALL CAPS" onclick="toggleLayerStyle('uppercase')">AA</button>
+            </div>
+          </div>
+          <div style="margin-bottom:5px;">
             <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Color</div>
             <div style="display:flex;gap:6px;align-items:center;">
               <input type="color" id="propColor" style="width:36px;height:28px;border:none;cursor:pointer;background:none;">
@@ -597,6 +661,27 @@ select.field { cursor:pointer; }
       </div>
     </div>
 
+    <!-- Size breakdown -->
+    <div class="panel-section">
+      <div class="panel-label">Size Breakdown</div>
+      <div class="size-grid">
+        <div class="size-grid-item"><span class="size-label">XS</span><input class="size-input sidebar-size" data-size="XS" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">S</span><input class="size-input sidebar-size" data-size="S" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">M</span><input class="size-input sidebar-size" data-size="M" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">L</span><input class="size-input sidebar-size" data-size="L" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">XL</span><input class="size-input sidebar-size" data-size="XL" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">2XL</span><input class="size-input sidebar-size" data-size="2XL" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">3XL</span><input class="size-input sidebar-size" data-size="3XL" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">4XL</span><input class="size-input sidebar-size" data-size="4XL" type="number" min="0" value="0"></div>
+        <div class="size-grid-item"><span class="size-label">5XL</span><input class="size-input sidebar-size" data-size="5XL" type="number" min="0" value="0"></div>
+      </div>
+      <div class="size-total-row">
+        <span class="size-total-label">Total Pieces</span>
+        <span class="size-total-val" id="sidebarSizeTotal">0</span>
+      </div>
+      <div class="size-min-note">Min. order is 12 pcs · 10–14 day lead time</div>
+    </div>
+
     <!-- Actions -->
     <div class="panel-section export-order-section">
       <div class="panel-label">Export &amp; Order</div>
@@ -605,32 +690,6 @@ select.field { cursor:pointer; }
         <button class="btn-secondary" id="btnQuote">Submit Order</button>
         <button class="btn-secondary" id="btnClear">Clear All Layers</button>
       </div>
-    </div>
-
-    <!-- Size breakdown -->
-    <div class="panel-section">
-      <div class="panel-label">Size Breakdown</div>
-      <table class="size-table" id="sidebarSizeTable">
-        <thead>
-          <tr><th>Size</th><th>Qty</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><span class="size-label">XS</span></td><td><input class="size-input sidebar-size" data-size="XS" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">S</span></td><td><input class="size-input sidebar-size" data-size="S" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">M</span></td><td><input class="size-input sidebar-size" data-size="M" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">L</span></td><td><input class="size-input sidebar-size" data-size="L" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">XL</span></td><td><input class="size-input sidebar-size" data-size="XL" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">2XL</span></td><td><input class="size-input sidebar-size" data-size="2XL" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">3XL</span></td><td><input class="size-input sidebar-size" data-size="3XL" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">4XL</span></td><td><input class="size-input sidebar-size" data-size="4XL" type="number" min="0" value="0"></td></tr>
-          <tr><td><span class="size-label">5XL</span></td><td><input class="size-input sidebar-size" data-size="5XL" type="number" min="0" value="0"></td></tr>
-        </tbody>
-      </table>
-      <div class="size-total-row">
-        <span class="size-total-label">Total Pieces</span>
-        <span class="size-total-val" id="sidebarSizeTotal">0</span>
-      </div>
-      <div class="size-min-note">Min. order is 12 pcs · 10–14 day lead time</div>
     </div>
 
   </aside>
@@ -737,85 +796,159 @@ const CDN = 'https://cdnp.sanmar.com/medias/sys_master/images';
 const STATIC_COLORS = {
   pc54: [
     { name:'Aquatic Blue',       slug:'aquaticblue',          hex:'#4bacc6',
-      img:`${CDN}/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg` },
+      img:`${CDN}/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg`,
+      imgBack:`${CDN}/hed/h97/30592424706078/1200W_3985_AquaticBl-2-PC54AquaticBlModelBack3/1200W-3985-AquaticBl-2-PC54AquaticBlModelBack3.jpg`,
+      imgSide:`${CDN}/hed/h97/30592424706078/1200W_3985_AquaticBl-4-PC54AquaticBlModelSide3/1200W-3985-AquaticBl-4-PC54AquaticBlModelSide3.jpg` },
     { name:'White',              slug:'white',                 hex:'#f0f0f0', light:true,
-      img:`${CDN}/h3c/h7e/30606109016094/1200W_3985_White-0-PC54WhiteModelFront3/1200W-3985-White-0-PC54WhiteModelFront3.jpg` },
+      img:`${CDN}/h3c/h7e/30606109016094/1200W_3985_White-0-PC54WhiteModelFront3/1200W-3985-White-0-PC54WhiteModelFront3.jpg`,
+      imgBack:`${CDN}/h3c/h7e/30606109016094/1200W_3985_White-2-PC54WhiteModelBack3/1200W-3985-White-2-PC54WhiteModelBack3.jpg`,
+      imgSide:`${CDN}/h3c/h7e/30606109016094/1200W_3985_White-4-PC54WhiteModelSide3/1200W-3985-White-4-PC54WhiteModelSide3.jpg` },
     { name:'Navy',               slug:'navy',                  hex:'#1a2952',
-      img:`${CDN}/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg` },
+      img:`${CDN}/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg`,
+      imgBack:`${CDN}/h14/h6b/30603745722398/1200W_3985_Navy-2-PC54NavyModelBack3/1200W-3985-Navy-2-PC54NavyModelBack3.jpg`,
+      imgSide:`${CDN}/h14/h6b/30603745722398/1200W_3985_Navy-4-PC54NavyModelSide3/1200W-3985-Navy-4-PC54NavyModelSide3.jpg` },
     { name:'Red',                slug:'red',                   hex:'#c0392b',
-      img:`${CDN}/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg` },
+      img:`${CDN}/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg`,
+      imgBack:`${CDN}/h55/hbf/30603762303006/1200W_3985_Red-2-PC54RedModelBack3/1200W-3985-Red-2-PC54RedModelBack3.jpg`,
+      imgSide:`${CDN}/h55/hbf/30603762303006/1200W_3985_Red-4-PC54RedModelSide3/1200W-3985-Red-4-PC54RedModelSide3.jpg` },
     { name:'Royal',              slug:'royal',                 hex:'#2471a3',
-      img:`${CDN}/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg` },
+      img:`${CDN}/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg`,
+      imgBack:`${CDN}/h93/hd2/30603763482654/1200W_3985_Royal-2-PC54RoyalModelBack2/1200W-3985-Royal-2-PC54RoyalModelBack2.jpg`,
+      imgSide:`${CDN}/h93/hd2/30603763482654/1200W_3985_Royal-4-PC54RoyalModelSide2/1200W-3985-Royal-4-PC54RoyalModelSide2.jpg` },
     { name:'Gold',               slug:'gold',                  hex:'#d4a017',
-      img:`${CDN}/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg` },
+      img:`${CDN}/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg`,
+      imgBack:`${CDN}/h97/h45/30603032821790/1200W_3985_Gold-2-PC54GoldModelBack3/1200W-3985-Gold-2-PC54GoldModelBack3.jpg`,
+      imgSide:`${CDN}/h97/h45/30603032821790/1200W_3985_Gold-4-PC54GoldModelSide3/1200W-3985-Gold-4-PC54GoldModelSide3.jpg` },
     { name:'Purple',             slug:'purple',                hex:'#7d3c98',
-      img:`${CDN}/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg` },
+      img:`${CDN}/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg`,
+      imgBack:`${CDN}/hed/h4e/30603761123358/1200W_3985_Purple-2-PC54PurpleModelBack3/1200W-3985-Purple-2-PC54PurpleModelBack3.jpg`,
+      imgSide:`${CDN}/hed/h4e/30603761123358/1200W_3985_Purple-4-PC54PurpleModelSide3/1200W-3985-Purple-4-PC54PurpleModelSide3.jpg` },
     { name:'Ash',                slug:'heather',               hex:'#c8c8c8', light:true,
-      img:`${CDN}/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg` },
+      img:`${CDN}/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg`,
+      imgBack:`${CDN}/hc5/h26/30592425951262/1200W_3985_Ash-2-PC54AshModelBack3/1200W-3985-Ash-2-PC54AshModelBack3.jpg`,
+      imgSide:`${CDN}/hc5/h26/30592425951262/1200W_3985_Ash-4-PC54AshModelSide3/1200W-3985-Ash-4-PC54AshModelSide3.jpg` },
     { name:'Maroon',             slug:'maroon',                hex:'#6b1a1a',
-      img:`${CDN}/h50/h31/30603757027358/1200W_3985_Maroon-0-PC54MaroonModelFront3/1200W-3985-Maroon-0-PC54MaroonModelFront3.jpg` },
+      img:`${CDN}/h50/h31/30603757027358/1200W_3985_Maroon-0-PC54MaroonModelFront3/1200W-3985-Maroon-0-PC54MaroonModelFront3.jpg`,
+      imgBack:`${CDN}/h50/h31/30603757027358/1200W_3985_Maroon-2-PC54MaroonModelBack3/1200W-3985-Maroon-2-PC54MaroonModelBack3.jpg`,
+      imgSide:`${CDN}/h50/h31/30603757027358/1200W_3985_Maroon-4-PC54MaroonModelSide3/1200W-3985-Maroon-4-PC54MaroonModelSide3.jpg` },
     { name:'Dark Heather',       slug:'grey',                  hex:'#4a4a4a',
-      img:`${CDN}/hfc/ha2/30592427606046/1200W_3985_DkHthr-0-PC54DkHthrModelFront3/1200W-3985-DkHthr-0-PC54DkHthrModelFront3.jpg` },
+      img:`${CDN}/hfc/ha2/30592427606046/1200W_3985_DkHthr-0-PC54DkHthrModelFront3/1200W-3985-DkHthr-0-PC54DkHthrModelFront3.jpg`,
+      imgBack:`${CDN}/hfc/ha2/30592427606046/1200W_3985_DkHthr-2-PC54DkHthrModelBack3/1200W-3985-DkHthr-2-PC54DkHthrModelBack3.jpg`,
+      imgSide:`${CDN}/hfc/ha2/30592427606046/1200W_3985_DkHthr-4-PC54DkHthrModelSide3/1200W-3985-DkHthr-4-PC54DkHthrModelSide3.jpg` },
     { name:'Black',              slug:'black',                 hex:'#111111',
-      img:`${CDN}/hbd/h0d/30603752800286/1200W_3985_Black-0-PC54BlackModelFront3/1200W-3985-Black-0-PC54BlackModelFront3.jpg` },
+      img:`${CDN}/hbd/h0d/30603752800286/1200W_3985_Black-0-PC54BlackModelFront3/1200W-3985-Black-0-PC54BlackModelFront3.jpg`,
+      imgBack:`${CDN}/hbd/h0d/30603752800286/1200W_3985_Black-2-PC54BlackModelBack3/1200W-3985-Black-2-PC54BlackModelBack3.jpg`,
+      imgSide:`${CDN}/hbd/h0d/30603752800286/1200W_3985_Black-4-PC54BlackModelSide3/1200W-3985-Black-4-PC54BlackModelSide3.jpg` },
     { name:'Kelly',              slug:'kelly',                 hex:'#2a7a3b',
-      img:`${CDN}/h7b/h0c/30603756175390/1200W_3985_Kelly-0-PC54KellyModelFront3/1200W-3985-Kelly-0-PC54KellyModelFront3.jpg` },
+      img:`${CDN}/h7b/h0c/30603756175390/1200W_3985_Kelly-0-PC54KellyModelFront3/1200W-3985-Kelly-0-PC54KellyModelFront3.jpg`,
+      imgBack:`${CDN}/h7b/h0c/30603756175390/1200W_3985_Kelly-2-PC54KellyModelBack3/1200W-3985-Kelly-2-PC54KellyModelBack3.jpg`,
+      imgSide:`${CDN}/h7b/h0c/30603756175390/1200W_3985_Kelly-4-PC54KellyModelSide3/1200W-3985-Kelly-4-PC54KellyModelSide3.jpg` },
     { name:'Orange',             slug:'orange',                hex:'#e86a20',
-      img:`${CDN}/h6a/h5b/30603757748254/1200W_3985_Orange-0-PC54OrangeModelFront3/1200W-3985-Orange-0-PC54OrangeModelFront3.jpg` },
+      img:`${CDN}/h6a/h5b/30603757748254/1200W_3985_Orange-0-PC54OrangeModelFront3/1200W-3985-Orange-0-PC54OrangeModelFront3.jpg`,
+      imgBack:`${CDN}/h6a/h5b/30603757748254/1200W_3985_Orange-2-PC54OrangeModelBack3/1200W-3985-Orange-2-PC54OrangeModelBack3.jpg`,
+      imgSide:`${CDN}/h6a/h5b/30603757748254/1200W_3985_Orange-4-PC54OrangeModelSide3/1200W-3985-Orange-4-PC54OrangeModelSide3.jpg` },
     { name:'Carolina Blue',      slug:'carolina',              hex:'#7bafd4',
-      img:`${CDN}/h31/h1c/30592424312862/1200W_3985_CarolinaB-0-PC54CarolinaBModelFront3/1200W-3985-CarolinaB-0-PC54CarolinaBModelFront3.jpg` },
+      img:`${CDN}/h31/h1c/30592424312862/1200W_3985_CarolinaB-0-PC54CarolinaBModelFront3/1200W-3985-CarolinaB-0-PC54CarolinaBModelFront3.jpg`,
+      imgBack:`${CDN}/h31/h1c/30592424312862/1200W_3985_CarolinaB-2-PC54CarolinaBModelBack3/1200W-3985-CarolinaB-2-PC54CarolinaBModelBack3.jpg`,
+      imgSide:`${CDN}/h31/h1c/30592424312862/1200W_3985_CarolinaB-4-PC54CarolinaBModelSide3/1200W-3985-CarolinaB-4-PC54CarolinaBModelSide3.jpg` },
     { name:'Forest Green Heather',slug:'forest-green-heather', hex:'#2d5a27' },
     { name:'Charcoal',           slug:'charcoal',              hex:'#36454f' },
   ],
   pc61: [
     { name:'Lime',         slug:'green',    hex:'#5dbe4a',
-      img:`${CDN}/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg` },
+      img:    `${CDN}/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg`,
+      imgBack:`${CDN}/h68/hda/29138194792478/1200W_1634_Lime-2-PC61LimeModelBack4/1200W-1634-Lime-2-PC61LimeModelBack4.jpg`,
+      imgSide:`${CDN}/h68/hda/29138194792478/1200W_1634_Lime-4-PC61LimeModelSide4/1200W-1634-Lime-4-PC61LimeModelSide4.jpg` },
     { name:'White',        slug:'white',    hex:'#f0f0f0', light:true,
-      img:`${CDN}/he0/h65/29138358960158/1200W_1634_White-0-PC61WhiteModelFront4/1200W-1634-White-0-PC61WhiteModelFront4.jpg` },
+      img:    `${CDN}/he0/h65/29138358960158/1200W_1634_White-0-PC61WhiteModelFront4/1200W-1634-White-0-PC61WhiteModelFront4.jpg`,
+      imgBack:`${CDN}/he0/h65/29138358960158/1200W_1634_White-2-PC61WhiteModelBack4/1200W-1634-White-2-PC61WhiteModelBack4.jpg`,
+      imgSide:`${CDN}/he0/h65/29138358960158/1200W_1634_White-4-PC61WhiteModelSide4/1200W-1634-White-4-PC61WhiteModelSide4.jpg` },
     { name:'Navy',         slug:'navy',     hex:'#1a2952',
-      img:`${CDN}/he2/h02/29138197151774/1200W_1634_Navy-0-PC61NavyModelFront4/1200W-1634-Navy-0-PC61NavyModelFront4.jpg` },
+      img:    `${CDN}/he2/h02/29138197151774/1200W_1634_Navy-0-PC61NavyModelFront4/1200W-1634-Navy-0-PC61NavyModelFront4.jpg`,
+      imgBack:`${CDN}/he2/h02/29138197151774/1200W_1634_Navy-2-PC61NavyModelBack4/1200W-1634-Navy-2-PC61NavyModelBack4.jpg`,
+      imgSide:`${CDN}/he2/h02/29138197151774/1200W_1634_Navy-4-PC61NavyModelSide4/1200W-1634-Navy-4-PC61NavyModelSide4.jpg` },
     { name:'Red',          slug:'red',      hex:'#c0392b',
-      img:`${CDN}/h4b/hec/29138205409310/1200W_1634_Red-0-PC61RedModelFront4/1200W-1634-Red-0-PC61RedModelFront4.jpg` },
+      img:    `${CDN}/h4b/hec/29138205409310/1200W_1634_Red-0-PC61RedModelFront4/1200W-1634-Red-0-PC61RedModelFront4.jpg`,
+      imgBack:`${CDN}/h4b/hec/29138205409310/1200W_1634_Red-2-PC61RedModelBack4/1200W-1634-Red-2-PC61RedModelBack4.jpg`,
+      imgSide:`${CDN}/h4b/hec/29138205409310/1200W_1634_Red-4-PC61RedModelSide4/1200W-1634-Red-4-PC61RedModelSide4.jpg` },
     { name:'Royal',        slug:'royal',    hex:'#2471a3',
-      img:`${CDN}/hcd/h0d/29138207768606/1200W_1634_Royal-0-PC61RoyalModelFront4/1200W-1634-Royal-0-PC61RoyalModelFront4.jpg` },
+      img:    `${CDN}/hcd/h0d/29138207768606/1200W_1634_Royal-0-PC61RoyalModelFront4/1200W-1634-Royal-0-PC61RoyalModelFront4.jpg`,
+      imgBack:`${CDN}/hcd/h0d/29138207768606/1200W_1634_Royal-2-PC61RoyalModelBack4/1200W-1634-Royal-2-PC61RoyalModelBack4.jpg`,
+      imgSide:`${CDN}/hcd/h0d/29138207768606/1200W_1634_Royal-4-PC61RoyalModelSide4/1200W-1634-Royal-4-PC61RoyalModelSide4.jpg` },
     { name:'Gold',         slug:'gold',     hex:'#d4a017',
-      img:`${CDN}/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg` },
+      img:    `${CDN}/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg`,
+      imgBack:`${CDN}/h0d/hfc/29137988255774/1200W_1634_Gold-2-PC61GoldModelBack4/1200W-1634-Gold-2-PC61GoldModelBack4.jpg`,
+      imgSide:`${CDN}/h0d/hfc/29137988255774/1200W_1634_Gold-4-PC61GoldModelSide4/1200W-1634-Gold-4-PC61GoldModelSide4.jpg` },
     { name:'Orange',       slug:'orange',   hex:'#e67e22',
-      img:`${CDN}/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg` },
+      img:    `${CDN}/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg`,
+      imgBack:`${CDN}/hb1/he3/29138199511070/1200W_1634_Orange-2-PC61OrangeModelBack4/1200W-1634-Orange-2-PC61OrangeModelBack4.jpg`,
+      imgSide:`${CDN}/hb1/he3/29138199511070/1200W_1634_Orange-4-PC61OrangeModelSide4/1200W-1634-Orange-4-PC61OrangeModelSide4.jpg` },
     { name:'Black',        slug:'black',    hex:'#111111',
-      img:`${CDN}/ha6/h7e/29138189795358/1200W_1634_Black-0-PC61BlackModelFront4/1200W-1634-Black-0-PC61BlackModelFront4.jpg` },
+      img:    `${CDN}/ha6/h7e/29138189795358/1200W_1634_Black-0-PC61BlackModelFront4/1200W-1634-Black-0-PC61BlackModelFront4.jpg`,
+      imgBack:`${CDN}/ha6/h7e/29138189795358/1200W_1634_Black-2-PC61BlackModelBack4/1200W-1634-Black-2-PC61BlackModelBack4.jpg`,
+      imgSide:`${CDN}/ha6/h7e/29138189795358/1200W_1634_Black-4-PC61BlackModelSide4/1200W-1634-Black-4-PC61BlackModelSide4.jpg` },
     { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3',
-      img:`${CDN}/h48/ha7/29138187303966/1200W_1634_CarolinaB-0-PC61CarolinaBModelFront4/1200W-1634-CarolinaB-0-PC61CarolinaBModelFront4.jpg` },
+      img:    `${CDN}/h48/ha7/29138187303966/1200W_1634_CarolinaB-0-PC61CarolinaBModelFront4/1200W-1634-CarolinaB-0-PC61CarolinaBModelFront4.jpg`,
+      imgBack:`${CDN}/h48/ha7/29138187303966/1200W_1634_CarolinaB-2-PC61CarolinaBModelBack4/1200W-1634-CarolinaB-2-PC61CarolinaBModelBack4.jpg`,
+      imgSide:`${CDN}/h48/ha7/29138187303966/1200W_1634_CarolinaB-4-PC61CarolinaBModelSide4/1200W-1634-CarolinaB-4-PC61CarolinaBModelSide4.jpg` },
     { name:'Kelly',        slug:'kelly',    hex:'#2a7a3b',
-      img:`${CDN}/h1d/h1c/29138198332446/1200W_1634_Kelly-0-PC61KellyModelFront4/1200W-1634-Kelly-0-PC61KellyModelFront4.jpg` },
+      img:    `${CDN}/h1d/h1c/29138198332446/1200W_1634_Kelly-0-PC61KellyModelFront4/1200W-1634-Kelly-0-PC61KellyModelFront4.jpg`,
+      imgBack:`${CDN}/h1d/h1c/29138198332446/1200W_1634_Kelly-2-PC61KellyModelBack4/1200W-1634-Kelly-2-PC61KellyModelBack4.jpg`,
+      imgSide:`${CDN}/h1d/h1c/29138198332446/1200W_1634_Kelly-4-PC61KellyModelSide4/1200W-1634-Kelly-4-PC61KellyModelSide4.jpg` },
     { name:'Maroon',       slug:'maroon',   hex:'#6b1a1a',
-      img:`${CDN}/hb3/h57/29138201346078/1200W_1634_Maroon-0-PC61MaroonModelFront4/1200W-1634-Maroon-0-PC61MaroonModelFront4.jpg` },
+      img:    `${CDN}/hb3/h57/29138201346078/1200W_1634_Maroon-0-PC61MaroonModelFront4/1200W-1634-Maroon-0-PC61MaroonModelFront4.jpg`,
+      imgBack:`${CDN}/hb3/h57/29138201346078/1200W_1634_Maroon-2-PC61MaroonModelBack4/1200W-1634-Maroon-2-PC61MaroonModelBack4.jpg`,
+      imgSide:`${CDN}/hb3/h57/29138201346078/1200W_1634_Maroon-4-PC61MaroonModelSide4/1200W-1634-Maroon-4-PC61MaroonModelSide4.jpg` },
     { name:'Purple',       slug:'purple',   hex:'#7d3c98',
-      img:`${CDN}/hde/h04/29138206654494/1200W_1634_Purple-0-PC61PurpleModelFront4/1200W-1634-Purple-0-PC61PurpleModelFront4.jpg` },
+      img:    `${CDN}/hde/h04/29138206654494/1200W_1634_Purple-0-PC61PurpleModelFront4/1200W-1634-Purple-0-PC61PurpleModelFront4.jpg`,
+      imgBack:`${CDN}/hde/h04/29138206654494/1200W_1634_Purple-2-PC61PurpleModelBack4/1200W-1634-Purple-2-PC61PurpleModelBack4.jpg`,
+      imgSide:`${CDN}/hde/h04/29138206654494/1200W_1634_Purple-4-PC61PurpleModelSide4/1200W-1634-Purple-4-PC61PurpleModelSide4.jpg` },
     { name:'Ash',          slug:'ash',      hex:'#c8c8c8', light:true,
-      img:`${CDN}/h67/hfe/29138187042846/1200W_1634_Ash-0-PC61AshModelFront4/1200W-1634-Ash-0-PC61AshModelFront4.jpg` },
+      img:    `${CDN}/h67/hfe/29138187042846/1200W_1634_Ash-0-PC61AshModelFront4/1200W-1634-Ash-0-PC61AshModelFront4.jpg`,
+      imgBack:`${CDN}/h67/hfe/29138187042846/1200W_1634_Ash-2-PC61AshModelBack4/1200W-1634-Ash-2-PC61AshModelBack4.jpg`,
+      imgSide:`${CDN}/h67/hfe/29138187042846/1200W_1634_Ash-4-PC61AshModelSide4/1200W-1634-Ash-4-PC61AshModelSide4.jpg` },
   ],
   pc600: [
     { name:'Lemon Yellow', slug:'gold',    hex:'#f1c40f',
-      img:`${CDN}/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg` },
+      img:`${CDN}/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg`,
+      imgBack:`${CDN}/h75/h6a/29318220349470/1200W_10578_LemonYllw-2-PC600LemonYllwModelBack1/1200W-10578-LemonYllw-2-PC600LemonYllwModelBack1.jpg`,
+      imgSide:`${CDN}/h75/h6a/29318220349470/1200W_10578_LemonYllw-4-PC600LemonYllwModelSide1/1200W-10578-LemonYllw-4-PC600LemonYllwModelSide1.jpg` },
     { name:'White',        slug:'white',   hex:'#f0f0f0', light:true,
-      img:`${CDN}/h58/h1b/29318232735774/1200W_10578_White-0-PC600WhiteModelFront1/1200W-10578-White-0-PC600WhiteModelFront1.jpg` },
+      img:`${CDN}/h58/h1b/29318232735774/1200W_10578_White-0-PC600WhiteModelFront1/1200W-10578-White-0-PC600WhiteModelFront1.jpg`,
+      imgBack:`${CDN}/h58/h1b/29318232735774/1200W_10578_White-2-PC600WhiteModelBack1/1200W-10578-White-2-PC600WhiteModelBack1.jpg`,
+      imgSide:`${CDN}/h58/h1b/29318232735774/1200W_10578_White-4-PC600WhiteModelSide1/1200W-10578-White-4-PC600WhiteModelSide1.jpg` },
     { name:'Black',        slug:'black',   hex:'#111111',
-      img:`${CDN}/h57/h53/29318218973214/1200W_10578_Black-0-PC600BlackModelFront1/1200W-10578-Black-0-PC600BlackModelFront1.jpg` },
+      img:`${CDN}/h57/h53/29318218973214/1200W_10578_Black-0-PC600BlackModelFront1/1200W-10578-Black-0-PC600BlackModelFront1.jpg`,
+      imgBack:`${CDN}/h57/h53/29318218973214/1200W_10578_Black-2-PC600BlackModelBack1/1200W-10578-Black-2-PC600BlackModelBack1.jpg`,
+      imgSide:`${CDN}/h57/h53/29318218973214/1200W_10578_Black-4-PC600BlackModelSide1/1200W-10578-Black-4-PC600BlackModelSide1.jpg` },
     { name:'Navy',         slug:'navy',    hex:'#1a2952',
-      img:`${CDN}/hf5/h27/29318221791262/1200W_10578_Navy-0-PC600NavyModelFront1/1200W-10578-Navy-0-PC600NavyModelFront1.jpg` },
+      img:`${CDN}/hf5/h27/29318221791262/1200W_10578_Navy-0-PC600NavyModelFront1/1200W-10578-Navy-0-PC600NavyModelFront1.jpg`,
+      imgBack:`${CDN}/hf5/h27/29318221791262/1200W_10578_Navy-2-PC600NavyModelBack1/1200W-10578-Navy-2-PC600NavyModelBack1.jpg`,
+      imgSide:`${CDN}/hf5/h27/29318221791262/1200W_10578_Navy-4-PC600NavyModelSide1/1200W-10578-Navy-4-PC600NavyModelSide1.jpg` },
     { name:'Red',          slug:'red',     hex:'#c0392b',
-      img:`${CDN}/h9e/h8d/29318225657886/1200W_10578_Red-0-PC600RedModelFront1/1200W-10578-Red-0-PC600RedModelFront1.jpg` },
+      img:`${CDN}/h9e/h8d/29318225657886/1200W_10578_Red-0-PC600RedModelFront1/1200W-10578-Red-0-PC600RedModelFront1.jpg`,
+      imgBack:`${CDN}/h9e/h8d/29318225657886/1200W_10578_Red-2-PC600RedModelBack1/1200W-10578-Red-2-PC600RedModelBack1.jpg`,
+      imgSide:`${CDN}/h9e/h8d/29318225657886/1200W_10578_Red-4-PC600RedModelSide1/1200W-10578-Red-4-PC600RedModelSide1.jpg` },
     { name:'Royal',        slug:'royal',   hex:'#2471a3',
-      img:`${CDN}/h28/hd4/29318226313246/1200W_10578_Royal-0-PC600RoyalModelFront1/1200W-10578-Royal-0-PC600RoyalModelFront1.jpg` },
+      img:`${CDN}/h28/hd4/29318226313246/1200W_10578_Royal-0-PC600RoyalModelFront1/1200W-10578-Royal-0-PC600RoyalModelFront1.jpg`,
+      imgBack:`${CDN}/h28/hd4/29318226313246/1200W_10578_Royal-2-PC600RoyalModelBack1/1200W-10578-Royal-2-PC600RoyalModelBack1.jpg`,
+      imgSide:`${CDN}/h28/hd4/29318226313246/1200W_10578_Royal-4-PC600RoyalModelSide1/1200W-10578-Royal-4-PC600RoyalModelSide1.jpg` },
     { name:'Purple',       slug:'purple',  hex:'#7d3c98',
-      img:`${CDN}/hfe/hb1/29318224740382/1200W_10578_Purple-0-PC600PurpleModelFront1/1200W-10578-Purple-0-PC600PurpleModelFront1.jpg` },
+      img:`${CDN}/hfe/hb1/29318224740382/1200W_10578_Purple-0-PC600PurpleModelFront1/1200W-10578-Purple-0-PC600PurpleModelFront1.jpg`,
+      imgBack:`${CDN}/hfe/hb1/29318224740382/1200W_10578_Purple-2-PC600PurpleModelBack1/1200W-10578-Purple-2-PC600PurpleModelBack1.jpg`,
+      imgSide:`${CDN}/hfe/hb1/29318224740382/1200W_10578_Purple-4-PC600PurpleModelSide1/1200W-10578-Purple-4-PC600PurpleModelSide1.jpg` },
     { name:'Orange',       slug:'orange',  hex:'#e67e22',
-      img:`${CDN}/hca/hdb/29318222118942/1200W_10578_Orange-0-PC600OrangeModelFront1/1200W-10578-Orange-0-PC600OrangeModelFront1.jpg` },
+      img:`${CDN}/hca/hdb/29318222118942/1200W_10578_Orange-0-PC600OrangeModelFront1/1200W-10578-Orange-0-PC600OrangeModelFront1.jpg`,
+      imgBack:`${CDN}/hca/hdb/29318222118942/1200W_10578_Orange-2-PC600OrangeModelBack1/1200W-10578-Orange-2-PC600OrangeModelBack1.jpg`,
+      imgSide:`${CDN}/hca/hdb/29318222118942/1200W_10578_Orange-4-PC600OrangeModelSide1/1200W-10578-Orange-4-PC600OrangeModelSide1.jpg` },
     { name:'Kelly',        slug:'kelly',   hex:'#2a7a3b',
-      img:`${CDN}/h07/hdc/29318219825182/1200W_10578_Kelly-0-PC600KellyModelFront1/1200W-10578-Kelly-0-PC600KellyModelFront1.jpg` },
+      img:`${CDN}/h07/hdc/29318219825182/1200W_10578_Kelly-0-PC600KellyModelFront1/1200W-10578-Kelly-0-PC600KellyModelFront1.jpg`,
+      imgBack:`${CDN}/h07/hdc/29318219825182/1200W_10578_Kelly-2-PC600KellyModelBack1/1200W-10578-Kelly-2-PC600KellyModelBack1.jpg`,
+      imgSide:`${CDN}/h07/hdc/29318219825182/1200W_10578_Kelly-4-PC600KellyModelSide1/1200W-10578-Kelly-4-PC600KellyModelSide1.jpg` },
     { name:'Maroon',       slug:'maroon',  hex:'#6b1a1a',
-      img:`${CDN}/hf2/hdf/29318221594654/1200W_10578_Maroon-0-PC600MaroonModelFront1/1200W-10578-Maroon-0-PC600MaroonModelFront1.jpg` },
+      img:`${CDN}/hf2/hdf/29318221594654/1200W_10578_Maroon-0-PC600MaroonModelFront1/1200W-10578-Maroon-0-PC600MaroonModelFront1.jpg`,
+      imgBack:`${CDN}/hf2/hdf/29318221594654/1200W_10578_Maroon-2-PC600MaroonModelBack1/1200W-10578-Maroon-2-PC600MaroonModelBack1.jpg`,
+      imgSide:`${CDN}/hf2/hdf/29318221594654/1200W_10578_Maroon-4-PC600MaroonModelSide1/1200W-10578-Maroon-4-PC600MaroonModelSide1.jpg` },
   ],
   hoodie: [
     { name:'Athletic Heather', slug:'heather', hex:'#b0a89e', light:true,
@@ -1233,14 +1366,26 @@ function drawLayer(layer) {
   ctx.translate(-layer.w/2, -layer.h/2);
 
   if (layer.type === 'text') {
-    ctx.font = `${layer.bold?'bold ':''} ${layer.size}px "${layer.font}"`;
+    const displayText = layer.uppercase ? (layer.text || '').toUpperCase() : (layer.text || '');
+    const fontStyle = `${layer.italic?'italic ':''} ${layer.bold?'bold ':''} ${layer.size}px "${layer.font}"`;
+    ctx.font = fontStyle;
     ctx.fillStyle = layer.color;
     ctx.textBaseline = 'top';
     // update layer dimensions
-    const m = ctx.measureText(layer.text);
+    const m = ctx.measureText(displayText);
     layer.w = m.width + 4;
     layer.h = layer.size * 1.25;
-    ctx.fillText(layer.text, 2, 2);
+    ctx.fillText(displayText, 2, 2);
+    // underline
+    if (layer.underline) {
+      ctx.strokeStyle = layer.color;
+      ctx.lineWidth = Math.max(1, layer.size * 0.06);
+      const uy = layer.size * 1.05;
+      ctx.beginPath();
+      ctx.moveTo(2, uy);
+      ctx.lineTo(2 + m.width, uy);
+      ctx.stroke();
+    }
   } else if (layer.type === 'img' && layer.image) {
     ctx.drawImage(layer.image, 0, 0, layer.w, layer.h);
   }
@@ -1471,6 +1616,27 @@ textColorHex.addEventListener('change', () => {
   if (/^#[0-9a-f]{6}$/i.test(v)) textColorInput.value = v;
 });
 
+// ── TEXT STYLE STATE ──────────────────────────────────────────────────────
+const textStyleState = { bold:false, italic:false, underline:false, uppercase:false };
+function toggleTextStyle(style) {
+  textStyleState[style] = !textStyleState[style];
+  document.getElementById('style' + style.charAt(0).toUpperCase() + style.slice(1))
+    ?.classList.toggle('active', textStyleState[style]);
+  // Also apply to active text layer
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (l) { l[style] = textStyleState[style]; drawAll(); syncT(); }
+}
+
+// Toggle style on an EXISTING selected layer (from Transform panel buttons)
+function toggleLayerStyle(style) {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l[style] = !l[style];
+  const cap = style.charAt(0).toUpperCase() + style.slice(1);
+  document.getElementById('prop' + cap)?.classList.toggle('active', l[style]);
+  drawAll(); syncT();
+}
+
 document.getElementById('btnAddText').addEventListener('click', () => {
   const text = document.getElementById('textInput').value.trim();
   if (!text) { document.getElementById('textInput').focus(); return; }
@@ -1485,11 +1651,16 @@ document.getElementById('btnAddText').addEventListener('click', () => {
     font,
     size,
     color,
-    bold:  false,
+    bold:      textStyleState.bold,
+    italic:    textStyleState.italic,
+    underline: textStyleState.underline,
+    uppercase: textStyleState.uppercase,
     x:     CANVAS_W/2 - size*text.length*0.3,
     y:     CANVAS_H/2 - size/2,
     w:     size * text.length * 0.6,
     h:     size * 1.25,
+    _origW: size * text.length * 0.6,
+    _origH: size * 1.25,
     rot:      0,
     rotation: 0,
     opacity:  1,
@@ -1606,6 +1777,11 @@ function syncT() {
     if (pt) pt.value = l.text || '';
     if (pc) pc.value = l.color || '#000000';
     if (ph) ph.value = l.color || '#000000';
+    // Sync style toggle buttons in Transform panel
+    ['bold','italic','underline','uppercase'].forEach(s => {
+      const cap = s.charAt(0).toUpperCase() + s.slice(1);
+      document.getElementById('prop' + cap)?.classList.toggle('active', !!l[s]);
+    });
   }
 
   // Scale slider
@@ -1674,14 +1850,26 @@ function toggleLock() {
   }
 }
 
+const MAX_PRINT_W_PX = 12 * PX_PER_INCH; // 12" max print width
 function apSc(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   if (!l._origW) { l._origW = l.w; l._origH = l.h; }
   const pct = +v / 100;
-  l.w = Math.max(5, Math.round(l._origW * pct));
-  l.h = Math.max(5, Math.round(l._origH * pct));
+  const newW = Math.round(l._origW * pct);
+  const newH = Math.round(l._origH * pct);
+  // Cap at 12" max width
+  if (newW > MAX_PRINT_W_PX) {
+    const capPct = MAX_PRINT_W_PX / l._origW;
+    l.w = MAX_PRINT_W_PX;
+    l.h = Math.max(5, Math.round(l._origH * capPct));
+    const sl = document.getElementById('slSc');
+    if (sl) sl.value = Math.round(capPct * 100);
+  } else {
+    l.w = Math.max(5, newW);
+    l.h = Math.max(5, newH);
+  }
   const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
-  const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=Math.round(v)+'% ('+wIn+'" × '+hIn+'")';
+  const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=Math.round((l.w/l._origW)*100)+'% ('+wIn+'" × '+hIn+'")';
   const slW=document.getElementById('slW'), vW=document.getElementById('vW');
   const slH=document.getElementById('slH'), vH=document.getElementById('vH');
   if(slW) slW.value=Math.round(l.w); if(vW) vW.textContent=wIn+'"';
@@ -1690,7 +1878,7 @@ function apSc(v) {
 }
 function apW(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
-  l.w = Math.max(5, +v);
+  l.w = Math.max(5, Math.min(MAX_PRINT_W_PX, +v));
   const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
   const vW=document.getElementById('vW'); if(vW) vW.textContent=wIn+'"';
   const pct = l._origW ? Math.round((l.w/l._origW)*100) : 100;
