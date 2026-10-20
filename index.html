@@ -2580,113 +2580,125 @@ function drawLayer(layer) {
       }
     } else {
       // ── Arch / Circle curved text ─────────────────────────────────────────
-      // All coordinates relative to the arc PIVOT (centre of the circle).
-      // We compute everything in pivot space, then translate canvas once.
       //
-      // arch_up  ("Curve"): text arcs upward like a smile.
-      //   - pivot is BELOW the text band
-      //   - each char: rotate(angle), move to (0, -radius), draw baseline there
-      //   - start angle = -π/2 - sweep/2  (top-left of arc)
+      // COORDINATE MODEL (pivot = origin):
+      //   arch_up  : pivot is BELOW the text.
+      //              Characters at angle a sit at (0,-radius) then drawn normally.
+      //              Pivot canvas position: (boxCentreX, layer.y + boxH - radius + sagitta)
+      //              where sagitta = radius*(1-cos(halfSweep)) is how tall the arc band is.
+      //              Simplification: pivot.y = layer.y + boxH - radius
+      //                so the lowest point of the text (baseline) touches layer.y+boxH-radius+radius = layer.y+boxH  ✓
+      //              Actually we want text TOP at layer.y, text BASELINE at layer.y+fontSize.
+      //              pivot.y = layer.y + radius   (text at angle=-π/2 has baseline at pivot.y - radius = layer.y)
+      //              But the box must be tall enough: boxH = sagitta + fontSize*1.3
       //
-      // arch_down ("Arch"): text arcs downward like a frown / banner arch.
-      //   - pivot is ABOVE the text band
-      //   - each char: rotate(angle), move to (0, +radius), rotate π (flip), draw
-      //   - start angle = -π/2 - sweep/2  (same left-to-right traversal)
+      //   arch_down: pivot is ABOVE the text.
+      //              Characters at angle a sit at (0,+radius), flipped π.
+      //              pivot.y = layer.y + (boxH - sagitta - fontSize*1.3) = layer.y
+      //              Simplest: pivot.y = layer.y  → text bottom at layer.y + radius
+      //              boxH = sagitta + fontSize*1.3, pivot.y = layer.y + fontSize*1.3 - something...
       //
-      // Bounding box:
-      //   width  = 2 * radius * sin(sweep/2)
-      //   height = radius * (1 - cos(sweep/2))  +  fontSize * 1.3
+      // SIMPLEST CORRECT APPROACH:
+      //   1. Compute radius from totalTextWidth / sweep.
+      //   2. boxW = 2*R*sin(sweep/2),  boxH = R*(1-cos(sweep/2)) + fontSize
+      //   3. arch_up  pivot: canvas (layer.x+boxW/2,  layer.y + boxH - fontSize*0.1)
+      //      The highest point of the arc from the pivot is at -radius (straight up).
+      //      With pivot.y = layer.y + boxH - fontSize*0.1 :
+      //        top of arc  = pivot.y - radius = layer.y + boxH - fontSize - radius*(1-cos0)...
+      //   -------
+      //   FINAL CLEAN MODEL (no approximations):
       //
-      // Pivot position in canvas:
-      //   arch_up  : pivot.y = layer.y + boxH - fontSize * 0.15   (below text)
-      //   arch_down: pivot.y = layer.y + fontSize * 0.15           (above text)
-      //   pivot.x  = layer.x + boxW / 2                            (centred)
+      //   arch_up:
+      //     pivot.y  = layer.y + R            ← so text at top (angle=-π/2) has baseline at 0 above pivot = layer.y
+      //     boxH     = R*(1-cos(sweep/2)) + fontSize*1.2
+      //     (the arc descends by sagitta below the top, plus one line of text height)
+      //
+      //   arch_down:
+      //     pivot.y  = layer.y + boxH - R     ← text at bottom (angle=+π/2) has baseline at layer.y+boxH
+      //     boxH     = R*(1-cos(sweep/2)) + fontSize*1.2
 
       ctx.textBaseline = 'alphabetic';
       const chars = displayText.split('');
       const isDown   = shape === 'arch_down';
       const isCircle = shape === 'circle';
       const sweepDeg = archAngle || 120;
-      const sweep    = isCircle ? (Math.PI * 1.75) : (sweepDeg * Math.PI / 180);
+      const sweep     = isCircle ? Math.PI * 1.75 : sweepDeg * Math.PI / 180;
       const halfSweep = sweep / 2;
 
-      // Measure each character
+      // Measure characters
       let totalW = 0;
       const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
-      // Radius so total text width fits along the arc
-      const radius = Math.max(totalW / sweep, effectiveSize * 1.1);
+      // Radius: arc length must equal total text width
+      const R = Math.max(totalW / sweep, effectiveSize * 1.0);
 
       // Bounding box
-      const arcW = 2 * radius * Math.sin(halfSweep);
-      const arcH = radius * (1 - Math.cos(halfSweep));
-      const boxW = Math.max(arcW, effectiveSize);
-      const boxH = arcH + effectiveSize * 1.3;
-      layer.w = boxW;
-      layer.h = boxH;
+      const sagitta = R * (1 - Math.cos(halfSweep));
+      const boxW    = 2 * R * Math.sin(halfSweep);
+      const boxH    = sagitta + effectiveSize * 1.2;
+      layer.w = Math.max(boxW, effectiveSize * 1.5);
+      layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      // Pivot position on canvas
-      const pivotX = layer.x + boxW / 2;
-      const pivotY = isDown
-        ? layer.y + effectiveSize * 0.15          // pivot near top → text hangs below
-        : layer.y + boxH - effectiveSize * 0.15;  // pivot near bottom → text arcs above
+      // Pivot in canvas coordinates
+      //   arch_up:   pivot.y = layer.y + R   (text top == layer.y)
+      //   arch_down: pivot.y = layer.y + layer.h - R  (text bottom == layer.y + layer.h)
+      const pivotCanvasX = layer.x + layer.w / 2;
+      const pivotCanvasY = isDown
+        ? layer.y + layer.h - R
+        : layer.y + R;
 
-      // Apply layer rotation/flip around the layer centre
-      const lcx = layer.x + boxW / 2;
-      const lcy = layer.y + boxH / 2;
+      // All drawing happens relative to pivot; wrap in save/restore
+      ctx.save();
+
+      // Translate to layer centre, apply rotation/flip, then offset to pivot
+      const lcx = layer.x + layer.w / 2;
+      const lcy = layer.y + layer.h / 2;
       ctx.translate(lcx, lcy);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
-      // Move to pivot (offset from layer centre)
-      ctx.translate(pivotX - lcx, pivotY - lcy);
+      ctx.translate(0, pivotCanvasY - lcy);  // x is always 0 (centred)
 
-      // Walk characters left-to-right along the arc
-      let angle = -halfSweep;   // start angle from -π/2 adjusted below per char
-
-      // For arch_up: angle 0 = directly above pivot (−π/2 in standard math)
-      // We rotate the whole thing so 0 = top of arc
-      // Simpler: use angle relative to straight-up, sweep left to right
-      // startAngle puts leftmost char at -halfSweep from top
+      // Walk characters along arc from left to right
+      // Start angle: -π/2 puts us at top (straight up from pivot)
+      // Sweep left from -π/2 - halfSweep to -π/2 + halfSweep
       let a = -Math.PI / 2 - halfSweep;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
         const cw = cws[i];
-        a += cw / radius / 2;   // advance to char centre
+        a += (cw / R) / 2;       // step to char centre
 
         ctx.save();
         ctx.rotate(a);
-
         if (isDown) {
-          ctx.translate(0, radius);    // move to bottom of circle
-          ctx.rotate(Math.PI);         // flip upside-down so text reads correctly
+          ctx.translate(0, R);   // go to bottom of circle
+          ctx.rotate(Math.PI);   // flip so text is readable
         } else {
-          ctx.translate(0, -radius);   // move to top of circle
+          ctx.translate(0, -R);  // go to top of circle
         }
-
-        // Draw character with baseline on the arc rim
+        // baseline at y=0 (on the arc rim)
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
-          ctx.lineWidth = (layer.outlineWidth || 2) * 2;
-          ctx.lineJoin = 'round';
+          ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
+          ctx.lineJoin    = 'round';
           ctx.strokeText(ch, -cw / 2, 0);
         }
         ctx.fillStyle = layer.color;
         ctx.fillText(ch, -cw / 2, 0);
-
         if (layer.underline) {
           ctx.strokeStyle = layer.color;
-          ctx.lineWidth = Math.max(1, effectiveSize * 0.06);
+          ctx.lineWidth   = Math.max(1, effectiveSize * 0.06);
           ctx.beginPath();
           ctx.moveTo(-cw / 2, effectiveSize * 0.1);
-          ctx.lineTo(cw / 2, effectiveSize * 0.1);
+          ctx.lineTo( cw / 2, effectiveSize * 0.1);
           ctx.stroke();
         }
-
-        a += cw / radius / 2;   // advance past char centre
+        a += (cw / R) / 2;       // step past char
         ctx.restore();
       }
+
+      ctx.restore();  // ← matches the ctx.save() above, undoes translate-to-pivot
     }
     ctx.restore();
     return;
