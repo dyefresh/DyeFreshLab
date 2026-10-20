@@ -920,6 +920,9 @@ const ctx    = canvas.getContext('2d');
 const CANVAS_W = 600;
 const CANVAS_H = 720;
 
+// ── IMAGE CACHE (must be declared before init runs) ───────────────────────
+const imgCache = {};
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 (function init() {
   const params = new URLSearchParams(location.search);
@@ -1061,9 +1064,6 @@ function updateViewTabs() {
     }
   });
 }
-
-// Cache of preloaded HTMLImageElement objects keyed by URL
-const imgCache = {};
 
 function preloadImage(url) {
   if (!url || imgCache[url]) return;
