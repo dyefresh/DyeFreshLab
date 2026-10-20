@@ -1682,7 +1682,7 @@ function drawAll() {
   }
 
   // ── Print zone guide (dashed rectangle) ─────────────────────────────────
-  if (S.showPrintZone !== false) {
+  if (S.showPrintZone === true) {
     ctx.save();
     // Light blue tinted fill to show printable area
     ctx.fillStyle = 'rgba(59,130,246,0.04)';
@@ -1737,20 +1737,21 @@ function drawLayer(layer) {
 
   if (layer.type === 'text') {
     const displayText = layer.uppercase ? (layer.text || '').toUpperCase() : (layer.text || '');
-    const fontStyle = `${layer.italic?'italic ':''} ${layer.bold?'bold ':''} ${layer.size}px "${layer.font}"`;
+    const effectiveSize = Math.round((layer.size || 48) * (layer.scale || 1));
+    const fontStyle = `${layer.italic?'italic ':''} ${layer.bold?'bold ':''} ${effectiveSize}px "${layer.font}"`;
     ctx.font = fontStyle;
     ctx.fillStyle = layer.color;
     ctx.textBaseline = 'top';
-    // update layer dimensions
+    // update layer dimensions from measured text
     const m = ctx.measureText(displayText);
     layer.w = m.width + 4;
-    layer.h = layer.size * 1.25;
+    layer.h = effectiveSize * 1.25;
     ctx.fillText(displayText, 2, 2);
     // underline
     if (layer.underline) {
       ctx.strokeStyle = layer.color;
-      ctx.lineWidth = Math.max(1, layer.size * 0.06);
-      const uy = layer.size * 1.05;
+      ctx.lineWidth = Math.max(1, effectiveSize * 0.06);
+      const uy = effectiveSize * 1.05;
       ctx.beginPath();
       ctx.moveTo(2, uy);
       ctx.lineTo(2 + m.width, uy);
@@ -1877,11 +1878,11 @@ function _roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
-// PX_PER_INCH: calibrated so that the print zone (12" wide) visually
-// matches the shirt's armpit-to-armpit printable chest area in the photo.
-// SanMar model photos show the shirt chest at roughly 60% of image width.
-// 600px canvas × 60% = 360px for 12" ⟹ PX_PER_INCH = 30.
-const PX_PER_INCH = 30;
+// PX_PER_INCH: calibrated to the PC54 shirt model photo.
+// The shirt fills ~75% of the 600px canvas = ~450px across.
+// PC54 shoulder-to-shoulder width for a Large is ~19".
+// 450px / 19" ≈ 23.7, rounded to 24 for clean numbers.
+const PX_PER_INCH = 24;
 
 // Print zone: the shaded/dashed overlay showing the 12"×16" printable area
 // Centered horizontally; top at ~28% down (below collar), bottom near hem.
@@ -2100,6 +2101,7 @@ document.getElementById('btnAddText').addEventListener('click', () => {
     rotation: 0,
     opacity:  1,
     flipH:    false,
+    scale:    1,
   };
   S.layers.push(layer);
   S.activeLayer = layer.id;
@@ -2220,14 +2222,21 @@ function syncT() {
   }
 
   // Scale slider
-  if (!l._origW) { l._origW = l.w; l._origH = l.h; }
   const wIn = (l.w / PX_PER_INCH).toFixed(1);
   const hIn = (l.h / PX_PER_INCH).toFixed(1);
-  const pct = l._origW ? Math.round((l.w / l._origW) * 100) : 100;
   const slSc = document.getElementById('slSc');
   const vSc  = document.getElementById('vSc');
-  if (slSc) slSc.value = pct;
-  if (vSc)  vSc.textContent = pct + '% (' + wIn + '" × ' + hIn + '")';
+  if (l.type === 'text') {
+    // Text layers: scale is tracked via layer.scale multiplier
+    const pct = Math.round((l.scale || 1) * 100);
+    if (slSc) slSc.value = pct;
+    if (vSc)  vSc.textContent = pct + '% (' + wIn + '" × ' + hIn + '")';
+  } else {
+    if (!l._origW) { l._origW = l.w; l._origH = l.h; }
+    const pct = l._origW ? Math.round((l.w / l._origW) * 100) : 100;
+    if (slSc) slSc.value = pct;
+    if (vSc)  vSc.textContent = pct + '% (' + wIn + '" × ' + hIn + '")';
+  }
 
   // W/H sliders
   const slW = document.getElementById('slW'), vW = document.getElementById('vW');
@@ -2288,11 +2297,27 @@ function toggleLock() {
 const MAX_PRINT_W_PX = 12 * PX_PER_INCH; // 12" max print width
 function apSc(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
-  if (!l._origW) { l._origW = l.w; l._origH = l.h; }
   const pct = +v / 100;
+
+  if (l.type === 'text') {
+    // Text: scale the font size via layer.scale multiplier
+    l.scale = Math.max(0.1, pct);
+    const vSc = document.getElementById('vSc');
+    if (vSc) vSc.textContent = Math.round(pct * 100) + '%';
+    drawAll(); // drawLayer will recompute l.w/l.h from effectiveSize
+    // Update W/H readouts after draw has refreshed dimensions
+    requestAnimationFrame(() => {
+      const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+      const vW=document.getElementById('vW'), vH=document.getElementById('vH');
+      if(vW) vW.textContent=wIn+'"'; if(vH) vH.textContent=hIn+'"';
+    });
+    return;
+  }
+
+  // Image / non-text layers: scale w/h proportionally
+  if (!l._origW) { l._origW = l.w; l._origH = l.h; }
   const newW = Math.round(l._origW * pct);
   const newH = Math.round(l._origH * pct);
-  // Cap at 12" max width
   if (newW > MAX_PRINT_W_PX) {
     const capPct = MAX_PRINT_W_PX / l._origW;
     l.w = MAX_PRINT_W_PX;
