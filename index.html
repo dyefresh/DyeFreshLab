@@ -382,11 +382,20 @@ select.field { cursor:pointer; }
 @media (max-width: 900px) {
   .lab-wrap {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto auto;
+    display: flex;
+    flex-direction: column;
   }
-  .panel-left { border-right:none; border-bottom:1.5px solid var(--border); max-height:none; }
-  .panel-right { border-left:none; border-top:1.5px solid var(--border); }
-  .canvas-area { min-height:320px; }
+  .panel-left  { border-right:none; border-bottom:1.5px solid var(--border); order: 1; }
+  .canvas-area { order: 2; min-height:360px; }
+  .panel-right { border-left:none; border-top:1.5px solid var(--border); order: 3; }
+
+  /* On mobile: move Export & Order section to very bottom of right panel */
+  .panel-right { display:flex; flex-direction:column; }
+  .panel-right .export-order-section { order: 99; margin-top: auto; }
+
+  /* On mobile: hide view section border and let canvas follow directly */
+  #viewSection { border-bottom: none; }
 }
 
 /* no-product state */
@@ -589,11 +598,11 @@ select.field { cursor:pointer; }
     </div>
 
     <!-- Actions -->
-    <div class="panel-section">
+    <div class="panel-section export-order-section">
       <div class="panel-label">Export &amp; Order</div>
       <div class="btn-row">
         <button class="btn-primary" id="btnDownload">⬇ Download Preview</button>
-        <button class="btn-secondary" id="btnQuote">Request Quote</button>
+        <button class="btn-secondary" id="btnQuote">Submit Order</button>
         <button class="btn-secondary" id="btnClear">Clear All Layers</button>
       </div>
     </div>
@@ -1087,46 +1096,55 @@ function loadGarmentImage(overrideUrl) {
   }
 
   showLoading(true);
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-
-  // Safety timeout — if image hasn't loaded in 15s, stop the spinner
-  const timeoutId = setTimeout(() => {
-    img.src = '';   // cancel the pending load
-    showLoading(false);
-    showError('Garment image timed out. Please go back and try again.');
-  }, 15000);
-
-  img.onload = () => {
-    clearTimeout(timeoutId);
-    imgCache[url] = img;
-    S.garmentImg = img;
-    showLoading(false);
-    drawAll();
-  };
-  img.onerror = () => {
-    clearTimeout(timeoutId);
-    showLoading(false);
-    imgCache[url] = null;
-    // Try front view from API colors as fallback
-    const fallback = S.colors[S.colorIdx]?.front;
-    if (fallback && fallback !== url) {
-      if (imgCache[fallback] && imgCache[fallback] !== 'loading') {
-        S.garmentImg = imgCache[fallback];
-        drawAll();
-        return;
-      }
-      const img2 = new Image();
-      img2.crossOrigin = 'anonymous';
-      img2.onload = () => { imgCache[fallback] = img2; S.garmentImg = img2; drawAll(); };
-      img2.onerror = () => showError('Garment image could not be loaded. Please go back and try again.');
-      img2.src = fallback;
-    } else {
-      showError('Garment image could not be loaded. Please go back and try again.');
-    }
-  };
   imgCache[url] = 'loading';
-  img.src = url;
+
+  // Use fetch() → blob URL so canvas drawImage never gets CORS-tainted,
+  // regardless of response headers. Falls back to <img> if fetch fails.
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => {
+    controller.abort();
+    showLoading(false);
+    showError('Garment image timed out. Tap a color to retry.');
+  }, 20000);
+
+  fetch(url, { signal: controller.signal })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.blob();
+    })
+    .then(blob => {
+      clearTimeout(timeoutId);
+      const objURL = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        imgCache[url] = img;
+        S.garmentImg = img;
+        showLoading(false);
+        drawAll();
+        // revoke after a tick so drawImage has already consumed it
+        setTimeout(() => URL.revokeObjectURL(objURL), 5000);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objURL);
+        imgCache[url] = null;
+        showLoading(false);
+        showError('Garment image could not be displayed.');
+      };
+      img.src = objURL;
+    })
+    .catch(err => {
+      if (err.name === 'AbortError') return; // timeout already handled
+      clearTimeout(timeoutId);
+      imgCache[url] = null;
+      // Fallback: try front view of current color
+      const fallback = S.colors[S.colorIdx]?.front;
+      if (fallback && fallback !== url) {
+        loadGarmentImage(fallback);
+      } else {
+        showLoading(false);
+        showError('Garment image could not be loaded. Try a different color.');
+      }
+    });
 }
 
 // ── DRAW ──────────────────────────────────────────────────────────────────
