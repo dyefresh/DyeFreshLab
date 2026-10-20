@@ -718,6 +718,150 @@ function proxyImg(url) {
 }
 const PRODUCTS_URL = 'https://dyefresh.com/products';
 
+// ── STATIC COLOR CATALOG ──────────────────────────────────────────────────
+// Embedded directly — bypasses SanMar SOAP API entirely.
+// Images route through Railway img-proxy (which works fine on port 443).
+const CDN = 'https://cdnp.sanmar.com/medias/sys_master/images';
+const STATIC_COLORS = {
+  pc54: [
+    { name:'Aquatic Blue',       slug:'aquaticblue',          hex:'#4bacc6',
+      img:`${CDN}/hed/h97/30592424706078/1200W_3985_AquaticBl-0-PC54AquaticBlModelFront3/1200W-3985-AquaticBl-0-PC54AquaticBlModelFront3.jpg` },
+    { name:'White',              slug:'white',                 hex:'#f0f0f0', light:true,
+      img:`${CDN}/h3c/h7e/30606109016094/1200W_3985_White-0-PC54WhiteModelFront3/1200W-3985-White-0-PC54WhiteModelFront3.jpg` },
+    { name:'Navy',               slug:'navy',                  hex:'#1a2952',
+      img:`${CDN}/h14/h6b/30603745722398/1200W_3985_Navy-0-PC54NavyModelFront3/1200W-3985-Navy-0-PC54NavyModelFront3.jpg` },
+    { name:'Red',                slug:'red',                   hex:'#c0392b',
+      img:`${CDN}/h55/hbf/30603762303006/1200W_3985_Red-0-PC54RedModelFront3/1200W-3985-Red-0-PC54RedModelFront3.jpg` },
+    { name:'Royal',              slug:'royal',                 hex:'#2471a3',
+      img:`${CDN}/h93/hd2/30603763482654/1200W_3985_Royal-0-PC54RoyalModelFront2/1200W-3985-Royal-0-PC54RoyalModelFront2.jpg` },
+    { name:'Gold',               slug:'gold',                  hex:'#d4a017',
+      img:`${CDN}/h97/h45/30603032821790/1200W_3985_Gold-0-PC54GoldModelFront3/1200W-3985-Gold-0-PC54GoldModelFront3.jpg` },
+    { name:'Purple',             slug:'purple',                hex:'#7d3c98',
+      img:`${CDN}/hed/h4e/30603761123358/1200W_3985_Purple-0-PC54PurpleModelFront3/1200W-3985-Purple-0-PC54PurpleModelFront3.jpg` },
+    { name:'Ash',                slug:'heather',               hex:'#c8c8c8', light:true,
+      img:`${CDN}/hc5/h26/30592425951262/1200W_3985_Ash-0-PC54AshModelFront3/1200W-3985-Ash-0-PC54AshModelFront3.jpg` },
+    { name:'Maroon',             slug:'maroon',                hex:'#6b1a1a',
+      img:`${CDN}/h50/h31/30603757027358/1200W_3985_Maroon-0-PC54MaroonModelFront3/1200W-3985-Maroon-0-PC54MaroonModelFront3.jpg` },
+    { name:'Dark Heather',       slug:'grey',                  hex:'#4a4a4a',
+      img:`${CDN}/hfc/ha2/30592427606046/1200W_3985_DkHthr-0-PC54DkHthrModelFront3/1200W-3985-DkHthr-0-PC54DkHthrModelFront3.jpg` },
+    { name:'Black',              slug:'black',                 hex:'#111111',
+      img:`${CDN}/hbd/h0d/30603752800286/1200W_3985_Black-0-PC54BlackModelFront3/1200W-3985-Black-0-PC54BlackModelFront3.jpg` },
+    { name:'Kelly',              slug:'kelly',                 hex:'#2a7a3b',
+      img:`${CDN}/h7b/h0c/30603756175390/1200W_3985_Kelly-0-PC54KellyModelFront3/1200W-3985-Kelly-0-PC54KellyModelFront3.jpg` },
+    { name:'Orange',             slug:'orange',                hex:'#e86a20',
+      img:`${CDN}/h6a/h5b/30603757748254/1200W_3985_Orange-0-PC54OrangeModelFront3/1200W-3985-Orange-0-PC54OrangeModelFront3.jpg` },
+    { name:'Carolina Blue',      slug:'carolina',              hex:'#7bafd4',
+      img:`${CDN}/h31/h1c/30592424312862/1200W_3985_CarolinaB-0-PC54CarolinaBModelFront3/1200W-3985-CarolinaB-0-PC54CarolinaBModelFront3.jpg` },
+    { name:'Forest Green Heather',slug:'forest-green-heather', hex:'#2d5a27' },
+    { name:'Charcoal',           slug:'charcoal',              hex:'#36454f' },
+  ],
+  pc61: [
+    { name:'Lime',         slug:'green',    hex:'#5dbe4a',
+      img:`${CDN}/h68/hda/29138194792478/1200W_1634_Lime-0-PC61LimeModelFront4/1200W-1634-Lime-0-PC61LimeModelFront4.jpg` },
+    { name:'White',        slug:'white',    hex:'#f0f0f0', light:true,
+      img:`${CDN}/he0/h65/29138358960158/1200W_1634_White-0-PC61WhiteModelFront4/1200W-1634-White-0-PC61WhiteModelFront4.jpg` },
+    { name:'Navy',         slug:'navy',     hex:'#1a2952',
+      img:`${CDN}/he2/h02/29138197151774/1200W_1634_Navy-0-PC61NavyModelFront4/1200W-1634-Navy-0-PC61NavyModelFront4.jpg` },
+    { name:'Red',          slug:'red',      hex:'#c0392b',
+      img:`${CDN}/h4b/hec/29138205409310/1200W_1634_Red-0-PC61RedModelFront4/1200W-1634-Red-0-PC61RedModelFront4.jpg` },
+    { name:'Royal',        slug:'royal',    hex:'#2471a3',
+      img:`${CDN}/hcd/h0d/29138207768606/1200W_1634_Royal-0-PC61RoyalModelFront4/1200W-1634-Royal-0-PC61RoyalModelFront4.jpg` },
+    { name:'Gold',         slug:'gold',     hex:'#d4a017',
+      img:`${CDN}/h0d/hfc/29137988255774/1200W_1634_Gold-0-PC61GoldModelFront4/1200W-1634-Gold-0-PC61GoldModelFront4.jpg` },
+    { name:'Orange',       slug:'orange',   hex:'#e67e22',
+      img:`${CDN}/hb1/he3/29138199511070/1200W_1634_Orange-0-PC61OrangeModelFront4/1200W-1634-Orange-0-PC61OrangeModelFront4.jpg` },
+    { name:'Black',        slug:'black',    hex:'#111111',
+      img:`${CDN}/ha6/h7e/29138189795358/1200W_1634_Black-0-PC61BlackModelFront4/1200W-1634-Black-0-PC61BlackModelFront4.jpg` },
+    { name:'Carolina Blue',slug:'carolina', hex:'#7fb3d3',
+      img:`${CDN}/h48/ha7/29138187303966/1200W_1634_CarolinaB-0-PC61CarolinaBModelFront4/1200W-1634-CarolinaB-0-PC61CarolinaBModelFront4.jpg` },
+    { name:'Kelly',        slug:'kelly',    hex:'#2a7a3b',
+      img:`${CDN}/h1d/h1c/29138198332446/1200W_1634_Kelly-0-PC61KellyModelFront4/1200W-1634-Kelly-0-PC61KellyModelFront4.jpg` },
+    { name:'Maroon',       slug:'maroon',   hex:'#6b1a1a',
+      img:`${CDN}/hb3/h57/29138201346078/1200W_1634_Maroon-0-PC61MaroonModelFront4/1200W-1634-Maroon-0-PC61MaroonModelFront4.jpg` },
+    { name:'Purple',       slug:'purple',   hex:'#7d3c98',
+      img:`${CDN}/hde/h04/29138206654494/1200W_1634_Purple-0-PC61PurpleModelFront4/1200W-1634-Purple-0-PC61PurpleModelFront4.jpg` },
+    { name:'Ash',          slug:'ash',      hex:'#c8c8c8', light:true,
+      img:`${CDN}/h67/hfe/29138187042846/1200W_1634_Ash-0-PC61AshModelFront4/1200W-1634-Ash-0-PC61AshModelFront4.jpg` },
+  ],
+  pc600: [
+    { name:'Lemon Yellow', slug:'gold',    hex:'#f1c40f',
+      img:`${CDN}/h75/h6a/29318220349470/1200W_10578_LemonYllw-0-PC600LemonYllwModelFront1/1200W-10578-LemonYllw-0-PC600LemonYllwModelFront1.jpg` },
+    { name:'White',        slug:'white',   hex:'#f0f0f0', light:true,
+      img:`${CDN}/h58/h1b/29318232735774/1200W_10578_White-0-PC600WhiteModelFront1/1200W-10578-White-0-PC600WhiteModelFront1.jpg` },
+    { name:'Black',        slug:'black',   hex:'#111111',
+      img:`${CDN}/h57/h53/29318218973214/1200W_10578_Black-0-PC600BlackModelFront1/1200W-10578-Black-0-PC600BlackModelFront1.jpg` },
+    { name:'Navy',         slug:'navy',    hex:'#1a2952',
+      img:`${CDN}/hf5/h27/29318221791262/1200W_10578_Navy-0-PC600NavyModelFront1/1200W-10578-Navy-0-PC600NavyModelFront1.jpg` },
+    { name:'Red',          slug:'red',     hex:'#c0392b',
+      img:`${CDN}/h9e/h8d/29318225657886/1200W_10578_Red-0-PC600RedModelFront1/1200W-10578-Red-0-PC600RedModelFront1.jpg` },
+    { name:'Royal',        slug:'royal',   hex:'#2471a3',
+      img:`${CDN}/h28/hd4/29318226313246/1200W_10578_Royal-0-PC600RoyalModelFront1/1200W-10578-Royal-0-PC600RoyalModelFront1.jpg` },
+    { name:'Purple',       slug:'purple',  hex:'#7d3c98',
+      img:`${CDN}/hfe/hb1/29318224740382/1200W_10578_Purple-0-PC600PurpleModelFront1/1200W-10578-Purple-0-PC600PurpleModelFront1.jpg` },
+    { name:'Orange',       slug:'orange',  hex:'#e67e22',
+      img:`${CDN}/hca/hdb/29318222118942/1200W_10578_Orange-0-PC600OrangeModelFront1/1200W-10578-Orange-0-PC600OrangeModelFront1.jpg` },
+    { name:'Kelly',        slug:'kelly',   hex:'#2a7a3b',
+      img:`${CDN}/h07/hdc/29318219825182/1200W_10578_Kelly-0-PC600KellyModelFront1/1200W-10578-Kelly-0-PC600KellyModelFront1.jpg` },
+    { name:'Maroon',       slug:'maroon',  hex:'#6b1a1a',
+      img:`${CDN}/hf2/hdf/29318221594654/1200W_10578_Maroon-0-PC600MaroonModelFront1/1200W-10578-Maroon-0-PC600MaroonModelFront1.jpg` },
+  ],
+  hoodie: [
+    { name:'Athletic Heather', slug:'heather', hex:'#b0a89e', light:true,
+      img:`${CDN}/h3d/h91/30579920666654/1200W_4180_AthlHthr-0-PC78HAthlHthrModelFront3/1200W-4180-AthlHthr-0-PC78HAthlHthrModelFront3.jpg`,
+      imgBack:`${CDN}/h53/he8/30954398122014/624Wx724H_4180_AthlHthr-2-PC78HAthlHthrModelBack3/624Wx724H-4180-AthlHthr-2-PC78HAthlHthrModelBack3.jpg`,
+      imgSide:`${CDN}/h01/he9/30954398187550/624Wx724H_4180_AthlHthr-4-PC78HAthlHthrModelSide3/624Wx724H-4180-AthlHthr-4-PC78HAthlHthrModelSide3.jpg` },
+    { name:'White',            slug:'white',   hex:'#f0f0f0', light:true },
+    { name:'Navy',             slug:'navy',    hex:'#1a2952',
+      img:`${CDN}/h1a/hcd/30581361868830/1200W_4180_Navy-0-PC78HNavyModelFront3/1200W-4180-Navy-0-PC78HNavyModelFront3.jpg` },
+    { name:'Red',              slug:'red',     hex:'#c0392b',
+      img:`${CDN}/hc2/he3/30581586133022/1200W_4180_Red-0-PC78HRedModelFront3/1200W-4180-Red-0-PC78HRedModelFront3.jpg` },
+    { name:'Royal Blue',       slug:'royal',   hex:'#2471a3',
+      img:`${CDN}/hd3/h0f/30581588164638/1200W_4180_Royal-0-PC78HRoyalModelFront3/1200W-4180-Royal-0-PC78HRoyalModelFront3.jpg` },
+    { name:'Maroon',           slug:'maroon',  hex:'#6b1a1a',
+      img:`${CDN}/hd3/h0d/30581355970590/1200W_4180_Maroon-0-PC78HMaroonModelFront3/1200W-4180-Maroon-0-PC78HMaroonModelFront3.jpg` },
+    { name:'Gold',             slug:'gold',    hex:'#d4a017',
+      img:`${CDN}/hf5/hd7/30580638351390/1200W_4180_Gold-0-PC78HGoldModelFront3/1200W-4180-Gold-0-PC78HGoldModelFront3.jpg` },
+    { name:'Black',            slug:'black',   hex:'#111111',
+      img:`${CDN}/h5e/h16/30580656046110/1200W_4180_JetBlack-0-PC78HJetBlackModelFront3/1200W-4180-JetBlack-0-PC78HJetBlackModelFront3.jpg` },
+    { name:'Dark Heather',     slug:'grey',    hex:'#4a4a4a',
+      img:`${CDN}/h74/h9d/30579946225694/1200W_4180_DkHtGry-0-PC78HDkHtGryModelFront3/1200W-4180-DkHtGry-0-PC78HDkHtGryModelFront3.jpg` },
+  ],
+  hat: [
+    { name:'Black',         slug:'black',    hex:'#111111',
+      img:`${CDN}/hf4/ha7/8907779964958/C112_Black_Model_Front_2017/C112-Black-Model-Front-2017.jpg` },
+    { name:'Navy',          slug:'navy',     hex:'#1a2952',
+      img:`${CDN}/h4d/h6b/8907779833886/C112_Navy_Model_Front_2017/C112-Navy-Model-Front-2017.jpg` },
+    { name:'Red',           slug:'red',      hex:'#c0392b',
+      img:`${CDN}/h8c/hb5/8907779997726/C112_Red_Model_Front_2017/C112-Red-Model-Front-2017.jpg` },
+    { name:'White',         slug:'white',    hex:'#f0f0f0', light:true,
+      img:`${CDN}/h27/h28/8907780030494/C112_White_Model_Front_2017/C112-White-Model-Front-2017.jpg` },
+    { name:'Royal',         slug:'royal',    hex:'#2471a3',
+      img:`${CDN}/hb6/h04/8907780063262/C112_Royal_Model_Front_2017/C112-Royal-Model-Front-2017.jpg` },
+    { name:'Dark Heather',  slug:'grey',     hex:'#4a4a4a' },
+    { name:'Khaki',         slug:'khaki',    hex:'#c8a96e', light:true },
+    { name:'Gold',          slug:'gold',     hex:'#d4a017' },
+    { name:'Kelly',         slug:'kelly',    hex:'#2a7a3b' },
+    { name:'Maroon',        slug:'maroon',   hex:'#6b1a1a' },
+    { name:'Forest Green',  slug:'forest',   hex:'#1a3a2a' },
+    { name:'Carolina Blue', slug:'carolina', hex:'#7bafd4' },
+    { name:'Purple',        slug:'purple',   hex:'#4a1a7a' },
+  ],
+  pwu: [
+    { name:'Black',         slug:'black',         hex:'#111111' },
+    { name:'Faded Blue',    slug:'faded-blue',    hex:'#7090b8' },
+    { name:'Green',         slug:'green',         hex:'#2a6a3a' },
+    { name:'Khaki',         slug:'khaki',         hex:'#c8a96e', light:true },
+    { name:'Maroon',        slug:'maroon',         hex:'#6b1a1a' },
+    { name:'Stone',         slug:'stone',         hex:'#c8b89a', light:true },
+  ],
+  joggers: [
+    { name:'Black',        slug:'black',  hex:'#111111' },
+    { name:'Dark Heather', slug:'grey',   hex:'#4a4a4a' },
+    { name:'Navy',         slug:'navy',   hex:'#1a2952' },
+    { name:'Red',          slug:'red',    hex:'#c0392b' },
+  ],
+};
+
 // Maps internal product key → SanMar style number
 const STYLE_MAP = {
   pc54:   'PC54',
@@ -809,32 +953,32 @@ const CANVAS_H = 720;
 })();
 
 // ── FETCH COLORS ──────────────────────────────────────────────────────────
+// Uses embedded static catalog — no SOAP API required.
+// Images still route through Railway img-proxy for canvas CORS.
 async function fetchColors(productKey, targetSlug, directImg) {
-  const style = STYLE_MAP[productKey];
-  try {
-    const res = await fetch(`${PROXY}/api/colors?style=${encodeURIComponent(style)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) throw new Error('No colors returned');
+  const catalog = STATIC_COLORS[productKey];
 
-    // Map to internal format — route all images through proxy to avoid CORS canvas taint
-    S.colors = data.map(c => ({
-      name:   c.name || c.catalogColor || 'Unknown',
-      slug:   slugify(c.name || c.catalogColor || ''),
-      front:  proxyImg(c.front     || c.frontFlat || null),
-      back:   proxyImg(c.back      || c.backFlat  || null),
-      side:   proxyImg(c.side      || null),
-      threeQ: proxyImg(c.threeQ    || null),
-      swatch: c.colorSwatch || null,  // swatch used only as CSS bg-image, no canvas — no proxy needed
-      hex:    null,
+  if (catalog && catalog.length > 0) {
+    // Map static catalog to internal format
+    S.colors = catalog.map(c => ({
+      name:   c.name,
+      slug:   c.slug,
+      front:  proxyImg(c.img     || null),
+      back:   proxyImg(c.imgBack || null),
+      side:   proxyImg(c.imgSide || null),
+      threeQ: null,
+      swatch: null,
+      hex:    c.hex || null,
     }));
 
     // Find target color by slug or name
     let idx = 0;
     if (targetSlug) {
       const tSlug = targetSlug.toLowerCase();
-      const found = S.colors.findIndex(c =>
-        c.slug === tSlug || c.name.toLowerCase() === tSlug.replace(/-/g,' ')
+      const found = S.colors.findIndex((c, i) =>
+        c.slug === tSlug ||
+        c.name.toLowerCase() === tSlug.replace(/-/g,' ') ||
+        catalog[i].slug === tSlug
       );
       if (found >= 0) idx = found;
     }
@@ -843,19 +987,19 @@ async function fetchColors(productKey, targetSlug, directImg) {
     buildSwatches();
     updateProductInfo();
 
-    // Preload the selected color's images first (priority), then the rest in background
+    // Preload the selected color first, then the rest in background
     preloadColorImages(S.colors[S.colorIdx]);
     S.colors.forEach((c, i) => { if (i !== S.colorIdx) preloadColorImages(c); });
 
-    // Only trigger a garment image load if the early-load (from directImg) didn't already
-    // put an image on the canvas. directImg takes priority since it's the exact color chosen.
+    // Load garment — directImg takes priority (exact color from Products page)
     if (!S.garmentImg) {
-      loadGarmentImage(directImg ? proxyImg(directImg) : null);
+      const startImg = directImg ? proxyImg(directImg) : null;
+      loadGarmentImage(startImg);
     }
 
-  } catch(err) {
-    console.error('fetchColors failed:', err);
-    // Fallback: if we have a direct img from URL params, use it
+  } else {
+    // Fallback: use directImg if catalog missing for this product
+    console.warn('No static catalog for', productKey, '— falling back to directImg');
     if (directImg) {
       const proxied = proxyImg(directImg);
       S.colors = [{ name: targetSlug || 'Selected Color', slug: targetSlug, front: proxied, back: null, side: null, swatch: null, hex: null }];
@@ -864,7 +1008,7 @@ async function fetchColors(productKey, targetSlug, directImg) {
       updateProductInfo();
       loadGarmentImage(proxied);
     } else {
-      showError('Could not load colors from SanMar. Please try again.');
+      showError('Could not load colors. Please go back and try again.');
     }
   }
 }
@@ -1173,24 +1317,35 @@ function buildSwatches() {
     btn.className = 'swatch-btn' + (i === S.colorIdx ? ' active' : '');
     btn.title = color.name;
 
-    // Use swatch image if available, else use a neutral bg
-    if (color.swatch) {
+    // Use hex color directly (most accurate), or swatch image, or keyword guess
+    if (color.hex) {
+      btn.style.background = color.hex;
+    } else if (color.swatch) {
       btn.style.backgroundImage = `url(${color.swatch})`;
       btn.style.backgroundSize  = 'cover';
     } else {
-      // Generic placeholder colors based on name keywords
       btn.style.background = guessColorFromName(color.name);
     }
 
-    // Light border for light colors (white, yellow, etc.)
+    // Light border for light colors
     const name = color.name.toLowerCase();
-    if (/white|yellow|cream|ivory|natural|light|lemon|butter|chrome|sand|stone|khaki|dandelion/.test(name)) {
+    const isLight = (color.hex && isLightColor(color.hex)) ||
+      /white|yellow|cream|ivory|natural|light|lemon|butter|chrome|sand|stone|khaki|dandelion|ash/.test(name);
+    if (isLight) {
       btn.classList.add('light-color');
     }
 
     btn.addEventListener('click', () => selectColor(i));
     grid.appendChild(btn);
   });
+}
+
+function isLightColor(hex) {
+  // Returns true if hex color is light (luminance > 0.5)
+  const r = parseInt(hex.slice(1,3)||'88',16);
+  const g = parseInt(hex.slice(3,5)||'88',16);
+  const b = parseInt(hex.slice(5,7)||'88',16);
+  return (r*299 + g*587 + b*114) / 1000 > 160;
 }
 
 function guessColorFromName(name) {
@@ -1227,6 +1382,8 @@ function selectColor(idx) {
   updateViewTabs();
   // Preload this color's images so view switches are instant
   preloadColorImages(S.colors[idx]);
+  // Reset garment so loadGarmentImage always fetches the new color
+  S.garmentImg = null;
   loadGarmentImage(null);
 }
 
