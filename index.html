@@ -3013,10 +3013,10 @@ function mdown(e) {
           return;
         }
         if (h === 'scaleH') {
-          S.drag = { type:'lresize', h:'scaleH', sx:mx, sy:my, sw:sel.w, sh:sel.h };
+          S.drag = { type:'lresize', h:'scaleH', sx:mx, sy:my, sw:sel.w, sh:sel.h, origScale:sel.scale||1 };
           return;
         }
-        S.drag = { type:'lresize', h, sx:mx, sy:my, sw:sel.w, sh:sel.h };
+        S.drag = { type:'lresize', h, sx:mx, sy:my, sw:sel.w, sh:sel.h, origScale:sel.scale||1 };
         return;
       }
     }
@@ -3070,7 +3070,20 @@ function mmove(e) {
       newW = Math.max(20, S.drag.sw + diag);
       newH = Math.round(newW * ratio);
     }
-    l.w = newW; l.h = newH;
+    // Text layers: convert new width to a scale multiplier instead of setting w/h directly
+    // (drawLayer recomputes w/h from font size each frame)
+    if (l.type === 'text') {
+      const baseW = S.drag.origScale ? S.drag.sw / S.drag.origScale : S.drag.sw;
+      const newScale = Math.max(0.1, newW / (baseW || 1));
+      l.scale = newScale;
+      // update slider
+      const slSc = document.getElementById('slSc');
+      const vSc  = document.getElementById('vSc');
+      if (slSc) slSc.value = Math.round(newScale * 100);
+      if (vSc)  vSc.textContent = Math.round(newScale * 100) + '%';
+    } else {
+      l.w = newW; l.h = newH;
+    }
     syncT(); drawAll();
   }
 }
