@@ -716,6 +716,9 @@ select.field { cursor:pointer; }
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const PROXY = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 
+// Warm up Railway immediately so it's awake when image requests arrive
+fetch(`${PROXY}/health`, { mode: 'cors', cache: 'no-store' }).catch(() => {});
+
 // Route SanMar CDN images through our proxy to avoid canvas CORS taint
 function proxyImg(url) {
   if (!url) return null;
@@ -1098,52 +1101,91 @@ function loadGarmentImage(overrideUrl) {
   showLoading(true);
   imgCache[url] = 'loading';
 
-  // Use fetch() → blob URL so canvas drawImage never gets CORS-tainted,
-  // regardless of response headers. Falls back to <img> if fetch fails.
-  const controller = new AbortController();
-  const timeoutId  = setTimeout(() => {
-    controller.abort();
-    showLoading(false);
-    showError('Garment image timed out. Tap a color to retry.');
-  }, 20000);
+  // ── Dual-track image loading ──────────────────────────────────────────────
+  // Track 1: Load directly from CDN URL (instant if CORS headers allow it).
+  //           We test canvas-safety with a small drawImage; if it throws a
+  //           SecurityError the image is tainted and we discard it.
+  // Track 2: fetch() through the Railway proxy → blob URL (always canvas-safe,
+  //           but slower on cold start). Runs in parallel.
+  // Whichever resolves first wins; the other is silently ignored.
+  // ─────────────────────────────────────────────────────────────────────────
+  let settled = false;
 
+  function applyImg(img) {
+    if (settled) return;
+    settled = true;
+    clearTimeout(masterTimeout);
+    imgCache[url] = img;
+    S.garmentImg  = img;
+    showLoading(false);
+    drawAll();
+  }
+
+  function bothFailed() {
+    if (settled) return;
+    settled = true;
+    clearTimeout(masterTimeout);
+    imgCache[url] = null;
+    showLoading(false);
+    showError('Garment image could not be loaded. Try a different color or go back to Products.');
+  }
+
+  // Master timeout — if neither track delivers in 25s, give up
+  const masterTimeout = setTimeout(() => {
+    if (!settled) bothFailed();
+  }, 25000);
+
+  // ── Track 1: direct CDN (fast path) ──────────────────────────────────────
+  // Extract the raw CDN URL from the proxy wrapper if needed
+  let rawCDN = url;
+  try {
+    const proxyPrefix = `${PROXY}/api/img-proxy?url=`;
+    if (url.startsWith(proxyPrefix)) {
+      rawCDN = decodeURIComponent(url.slice(proxyPrefix.length));
+    }
+  } catch(e) {}
+
+  const directImg = new Image();
+  directImg.crossOrigin = 'anonymous';
+  directImg.onload = () => {
+    // Test if we can actually use this on canvas without taint
+    try {
+      const testCanvas = document.createElement('canvas');
+      testCanvas.width = 1; testCanvas.height = 1;
+      testCanvas.getContext('2d').drawImage(directImg, 0, 0, 1, 1);
+      // No error → canvas-safe, use it
+      applyImg(directImg);
+    } catch(e) {
+      // CORS tainted — discard, let Track 2 win
+    }
+  };
+  directImg.onerror = () => { /* silent — Track 2 handles it */ };
+  directImg.src = rawCDN;
+
+  // ── Track 2: proxy → blob URL (reliable path) ────────────────────────────
+  const controller = new AbortController();
   fetch(url, { signal: controller.signal })
     .then(r => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.blob();
     })
     .then(blob => {
-      clearTimeout(timeoutId);
+      if (settled) return; // Track 1 already won
       const objURL = URL.createObjectURL(blob);
-      const img = new Image();
-      img.onload = () => {
-        imgCache[url] = img;
-        S.garmentImg = img;
-        showLoading(false);
-        drawAll();
-        // revoke after a tick so drawImage has already consumed it
-        setTimeout(() => URL.revokeObjectURL(objURL), 5000);
+      const proxyImg2 = new Image();
+      proxyImg2.onload = () => {
+        applyImg(proxyImg2);
+        setTimeout(() => URL.revokeObjectURL(objURL), 8000);
       };
-      img.onerror = () => {
+      proxyImg2.onerror = () => {
         URL.revokeObjectURL(objURL);
-        imgCache[url] = null;
-        showLoading(false);
-        showError('Garment image could not be displayed.');
+        bothFailed();
       };
-      img.src = objURL;
+      proxyImg2.src = objURL;
     })
     .catch(err => {
-      if (err.name === 'AbortError') return; // timeout already handled
-      clearTimeout(timeoutId);
-      imgCache[url] = null;
-      // Fallback: try front view of current color
-      const fallback = S.colors[S.colorIdx]?.front;
-      if (fallback && fallback !== url) {
-        loadGarmentImage(fallback);
-      } else {
-        showLoading(false);
-        showError('Garment image could not be loaded. Try a different color.');
-      }
+      if (err.name === 'AbortError' || settled) return;
+      // Track 2 failed — Track 1 might still succeed or master timeout fires
     });
 }
 
