@@ -178,6 +178,10 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 .lnav-panel.active { display:flex; }
 
 /* Add Text */
+.add-text-hint {
+  font-size:.76rem; color:var(--txt3); line-height:1.45;
+  margin-bottom:12px; font-family:var(--font-body);
+}
 .text-inputs { display:flex; flex-direction:column; gap:8px; }
 .input-row { display:flex; flex-direction:column; gap:4px; }
 .input-label {
@@ -864,148 +868,22 @@ select.field { cursor:pointer; }
     <!-- TEXT TAB -->
     <div class="lnav-panel active" id="ltab-text">
       <div class="panel-section">
+        <p class="add-text-hint">Type your text below — use Enter for multiple lines. All styling options appear on the right after adding.</p>
         <div class="text-inputs">
-          <div class="input-row">
-            <label class="input-label">Text</label>
-            <textarea class="field" id="textInput" rows="3" placeholder="Line 1&#10;Line 2&#10;Line 3…" style="resize:vertical;font-family:inherit;"></textarea>
-          </div>
-          <div class="input-row">
-            <label class="input-label">Font</label>
-            <select class="field" id="fontSelect">
-              <optgroup label="Bold &amp; Display">
-                <option value="Bebas Neue">Bebas Neue</option>
-                <option value="Anton">Anton</option>
-                <option value="Bangers">Bangers</option>
-                <option value="Alfa Slab One">Alfa Slab One</option>
-                <option value="Russo One">Russo One</option>
-                <option value="Righteous">Righteous</option>
-                <option value="Black Han Sans">Black Han Sans</option>
-                <option value="Orbitron">Orbitron</option>
-              </optgroup>
-              <optgroup label="Labels &amp; Headers">
-                <option value="Oswald" selected>Oswald</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Teko">Teko</option>
-                <option value="Barlow Condensed">Barlow Condensed</option>
-                <option value="Raleway">Raleway</option>
-              </optgroup>
-              <optgroup label="Script &amp; Fun">
-                <option value="Permanent Marker">Permanent Marker</option>
-                <option value="Pacifico">Pacifico</option>
-              </optgroup>
-              <optgroup label="Classic &amp; Clean">
-                <option value="Roboto">Roboto</option>
-                <option value="Inter">Inter</option>
-                <option value="Source Sans 3">Source Sans 3</option>
-                <option value="Playfair Display">Playfair Display</option>
-                <option value="Arial">Arial</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Courier New">Courier New</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="input-row">
-            <label class="input-label">Style</label>
-            <div class="text-style-btns" id="textStyleBtns">
-              <button type="button" class="style-btn" id="styleBold" title="Bold" onclick="toggleTextStyle('bold')"><b>B</b></button>
-              <button type="button" class="style-btn" id="styleItalic" title="Italic" onclick="toggleTextStyle('italic')"><i>I</i></button>
-              <button type="button" class="style-btn" id="styleUnderline" title="Underline" onclick="toggleTextStyle('underline')"><u>U</u></button>
-              <button type="button" class="style-btn" id="styleUppercase" title="ALL CAPS" onclick="toggleTextStyle('uppercase')">AA</button>
-            </div>
-          </div>
-          <div class="input-row">
-            <label class="input-label">Size</label>
-            <div class="size-stepper">
-              <button type="button" onclick="stepTextSize(-4)" title="Smaller">−</button>
-              <input class="field" id="textSizeInput" type="range" min="12" max="200" value="48"
-                oninput="document.getElementById('textSizeVal').textContent=this.value+'px'">
-              <span id="textSizeVal" class="size-val">48px</span>
-              <button type="button" onclick="stepTextSize(4)" title="Larger">+</button>
-            </div>
-          </div>
-          <div class="input-row">
-            <label class="input-label">Color</label>
-            <div class="color-row">
-              <input class="field" type="color" id="textColorInput" value="#ffffff">
-              <input class="field" id="textColorHex" type="text" value="#ffffff" maxlength="7" placeholder="#ffffff">
-            </div>
-          </div>
-
-          <!-- Shape picker (flyout) -->
-          <div class="input-row">
-            <label class="input-label">Shape</label>
-            <div class="shape-trigger" id="shapeAddTrigger" onclick="toggleShapeFlyout('shapeAddFlyout','shapeAddTrigger')">
-              <span class="shape-trigger-label" id="shapeAddLabel">Normal</span>
-              <span class="shape-trigger-chevron">▼</span>
-            </div>
-            <div class="shape-flyout" id="shapeAddFlyout">
-              <div class="shape-grid">
-                <div class="shape-opt active" data-shape="normal" onclick="pickShape('add','normal',this)">
-                  <div class="shape-opt-preview">ABC</div>
-                  <div class="shape-opt-label">Normal</div>
-                </div>
-                <div class="shape-opt" data-shape="arch_up" onclick="pickShape('add','arch_up',this)">
-                  <div class="shape-opt-preview" style="transform:translateY(2px)">⌒</div>
-                  <div class="shape-opt-label">Arch Up</div>
-                </div>
-                <div class="shape-opt" data-shape="arch_down" onclick="pickShape('add','arch_down',this)">
-                  <div class="shape-opt-preview" style="transform:translateY(-2px)">⌣</div>
-                  <div class="shape-opt-label">Arch Down</div>
-                </div>
-                <div class="shape-opt" data-shape="circle" onclick="pickShape('add','circle',this)">
-                  <div class="shape-opt-preview">◯</div>
-                  <div class="shape-opt-label">Circle</div>
-                </div>
-              </div>
-              <div class="shape-arch-settings" id="shapeAddArchSettings">
-                <label>Arc angle <span id="shapeAddAngleVal">120°</span></label>
-                <input type="range" min="30" max="340" value="120" id="shapeAddAngle"
-                  oninput="document.getElementById('shapeAddAngleVal').textContent=this.value+'°'">
-              </div>
-              <div class="shape-flyout-footer">
-                <button class="shape-remove" onclick="pickShape('add','normal',document.querySelector('#shapeAddFlyout .shape-opt[data-shape=normal]'));toggleShapeFlyout('shapeAddFlyout','shapeAddTrigger')">Remove shape</button>
-                <button class="shape-done" onclick="toggleShapeFlyout('shapeAddFlyout','shapeAddTrigger')">Done</button>
-              </div>
-            </div>
-            <!-- Hidden select for JS compatibility -->
-            <select id="textShapeSelect" style="display:none">
-              <option value="normal">Normal</option>
-              <option value="arch_up">Arch Up</option>
-              <option value="arch_down">Arch Down</option>
-              <option value="circle">Full Circle</option>
-            </select>
-          </div>
-
-          <!-- Outline picker (flyout) -->
-          <div class="input-row">
-            <label class="input-label">Outline</label>
-            <div class="outline-trigger" id="outlineAddTrigger" onclick="toggleOutlineFlyout('outlineAddFlyout','outlineAddTrigger')">
-              <div class="outline-trigger-left">
-                <div class="outline-swatch-preview" id="outlineAddPreview" style="background:#000000;"></div>
-                <span class="outline-trigger-text" id="outlineAddText">No outline</span>
-              </div>
-              <span class="outline-trigger-chevron">▼</span>
-            </div>
-            <div class="outline-flyout" id="outlineAddFlyout">
-              <div class="outline-swatch-grid" id="outlineAddSwatchGrid"></div>
-              <div class="outline-thickness">
-                <label>Thickness</label>
-                <input type="range" min="1" max="10" value="2" id="textOutlineWidth"
-                  oninput="document.getElementById('textOutlineWidthVal').textContent=this.value;syncOutlinePreview('add')">
-                <span class="ot-val" id="textOutlineWidthVal">2</span>
-              </div>
-              <div class="outline-flyout-footer">
-                <button class="outline-remove" onclick="removeOutline('add')">Remove outline</button>
-                <button class="outline-done" onclick="toggleOutlineFlyout('outlineAddFlyout','outlineAddTrigger')">Done</button>
-              </div>
-            </div>
-            <!-- Hidden inputs for JS compatibility -->
-            <input type="checkbox" id="textOutlineOn" style="display:none">
-            <input type="color" id="textOutlineColor" value="#000000" style="display:none">
-          </div>
-
-          <button class="btn-add-text" id="btnAddText">Add Text</button>
+          <textarea class="field" id="textInput" rows="4" placeholder="Line 1&#10;Line 2&#10;…" style="resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
+          <button class="btn-add-text" id="btnAddText">+ Add Text to Design</button>
         </div>
+        <!-- Hidden defaults used by btnAddText handler -->
+        <select id="fontSelect" style="display:none"><option value="Oswald" selected>Oswald</option></select>
+        <input type="color" id="textColorInput" value="#ffffff" style="display:none">
+        <input id="textColorHex" type="text" value="#ffffff" style="display:none">
+        <input id="textSizeInput" type="range" min="12" max="200" value="48" style="display:none">
+        <span id="textSizeVal" style="display:none">48px</span>
+        <select id="textShapeSelect" style="display:none"><option value="normal">Normal</option></select>
+        <input type="checkbox" id="textOutlineOn" style="display:none">
+        <input type="color" id="textOutlineColor" value="#000000" style="display:none">
+        <input type="range" id="textOutlineWidth" value="2" style="display:none">
+        <span id="textOutlineWidthVal" style="display:none">2</span>
       </div>
     </div>
 
@@ -1151,6 +1029,48 @@ select.field { cursor:pointer; }
           <div style="margin-bottom:5px;">
             <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Text</div>
             <input class="field" id="propText" type="text" style="width:100%;">
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Font</div>
+            <select class="field" id="propFont" style="width:100%;" onchange="applyPropFont(this.value)">
+              <optgroup label="Bold &amp; Display">
+                <option value="Bebas Neue">Bebas Neue</option>
+                <option value="Anton">Anton</option>
+                <option value="Bangers">Bangers</option>
+                <option value="Alfa Slab One">Alfa Slab One</option>
+                <option value="Russo One">Russo One</option>
+                <option value="Righteous">Righteous</option>
+                <option value="Black Han Sans">Black Han Sans</option>
+                <option value="Orbitron">Orbitron</option>
+              </optgroup>
+              <optgroup label="Labels &amp; Headers">
+                <option value="Oswald" selected>Oswald</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Teko">Teko</option>
+                <option value="Barlow Condensed">Barlow Condensed</option>
+                <option value="Raleway">Raleway</option>
+              </optgroup>
+              <optgroup label="Script &amp; Fun">
+                <option value="Permanent Marker">Permanent Marker</option>
+                <option value="Pacifico">Pacifico</option>
+              </optgroup>
+              <optgroup label="Classic &amp; Clean">
+                <option value="Roboto">Roboto</option>
+                <option value="Inter">Inter</option>
+                <option value="Source Sans 3">Source Sans 3</option>
+                <option value="Playfair Display">Playfair Display</option>
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Courier New">Courier New</option>
+              </optgroup>
+            </select>
+          </div>
+          <div style="margin-bottom:5px;">
+            <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Size</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="range" id="propSize" min="12" max="200" value="48" style="flex:1;" oninput="applyPropSize(this.value)">
+              <span id="propSizeVal" style="font-size:.75rem;font-weight:700;color:var(--txt);min-width:36px;text-align:right;">48px</span>
+            </div>
           </div>
           <div style="margin-bottom:5px;">
             <div style="font-size:.72rem;color:var(--txt3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;">Style</div>
@@ -2488,87 +2408,90 @@ function drawLayer(layer) {
       }
     } else {
       // ── Arch / Circle curved text ──────────────────────────────────────────
-      // Each character is placed individually around an imaginary circle.
+      // Strategy: place each character individually around a circle of radius R.
       //
-      // Arch Up  : text arcs upward (smile). Arc centre is below. Characters
-      //            sit on top of the arc, sweeping clockwise L→R.
+      // arch_up  : pivot BELOW the text band, characters arc upward (smile).
+      //            Sweep clockwise from -π/2-sweep/2 to -π/2+sweep/2.
       //
-      // Arch Down: text arcs downward (frown). Arc centre is above. Characters
-      //            hang below the arc. We sweep counter-clockwise so reading
-      //            order stays L→R when viewed from outside the circle.
+      // arch_down: pivot ABOVE the text band, characters arc downward (frown).
+      //            We use the SAME clockwise sweep as arch_up but then rotate
+      //            each character 180° so the text reads L→R hanging below.
       //
-      // Circle   : same geometry as Arch Up but with a ~324° sweep.
+      // circle   : arch_up with a 324° sweep.
       //
-      // Per-character pattern:
-      //   1. rotate(angle)          — point toward position on circle
-      //   2. translate(0, -radius)  — move out to the rim (upward in local coords)
-      //   3. fillText(char)         — draw character upright, centred on the rim
-      //   For arch_down we negate the angle increment so the sweep goes the
-      //   other way, which keeps the reading order left-to-right.
+      // textBaseline 'middle' keeps character centred on the rim point.
 
       ctx.font = fontStyle;
-      ctx.textBaseline = 'alphabetic';
+      ctx.textBaseline = 'middle';
 
       const chars = displayText.split('');
-      const sweepRad = (archAngle * Math.PI) / 180;
-      const totalW = ctx.measureText(displayText).width;
-      const isDown = shape === 'arch_down';
-      const isCircle = shape === 'circle';
+      const sweepRad   = (archAngle * Math.PI) / 180;
+      const isDown      = shape === 'arch_down';
+      const isCircle    = shape === 'circle';
       const actualSweep = isCircle ? (Math.PI * 2 * 0.9) : sweepRad;
 
-      // Radius: large enough that all characters fit on the arc
-      const radius = Math.max(totalW / actualSweep, effectiveSize * 1.5);
+      // Measure total text width to set radius
+      let totalW = 0;
+      const charWidths = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
-      // Bounding box
+      // Radius: arc length ≥ total text width, and at least 1.6× font size
+      const radius = Math.max(totalW / actualSweep, effectiveSize * 1.6);
+
+      // Bounding box — generous so handles and hit-test work
       const chord   = 2 * radius * Math.sin(actualSweep / 2);
       const sagitta = radius * (1 - Math.cos(actualSweep / 2));
-      layer.w = Math.max(chord + effectiveSize, effectiveSize * 3);
-      layer.h = Math.max(sagitta + effectiveSize * 2, effectiveSize * 2.5);
+      const boxW = Math.max(chord + effectiveSize, effectiveSize * 3);
+      const boxH = Math.max(sagitta + effectiveSize * 2.5, effectiveSize * 3);
+      layer.w = boxW;
+      layer.h = boxH;
 
-      // Move canvas origin to layer centre; apply layer rotation & flip
-      ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
+      // Centre on layer position, apply rotation & flip
+      ctx.translate(layer.x + boxW / 2, layer.y + boxH / 2);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
 
-      // Shift origin to the arc pivot point.
-      // Arch Up  → pivot is below  layer centre (positive Y), text appears at top.
-      // Arch Down → pivot is above layer centre (negative Y), text appears at bottom.
+      // For arch_up: pivot is below the visible text (positive Y from centre).
+      // For arch_down: pivot is above (negative Y). The text band occupies roughly
+      //   sagitta + effectiveSize. We centre the band vertically in boxH.
+      const bandCentreOffset = (sagitta / 2);   // where the arc midpoint sits rel. to pivot
       const pivotY = isDown
-        ? -(radius - sagitta / 2)
-        :  (radius - sagitta / 2);
+        ?  -(radius - boxH / 2 + effectiveSize * 0.3)
+        :   (radius - boxH / 2 + effectiveSize * 0.3);
+
       ctx.save();
       ctx.translate(0, pivotY);
 
-      // Starting angle and sweep direction.
-      // Arch Up  : begin left of top (-π/2 − sweep/2), sweep clockwise (+).
-      // Arch Down: begin right of bottom (+π/2 + sweep/2), sweep counter-CW (−).
-      const startAngle = isDown
-        ? (Math.PI / 2) + actualSweep / 2
-        : -(Math.PI / 2) - actualSweep / 2;
-      const dir = isDown ? -1 : 1;
-
+      // Sweep: always clockwise (+), start at left of top of circle
+      // For arch_down we flip each char 180° so it reads correctly
+      const startAngle = -(Math.PI / 2) - actualSweep / 2;
       let angle = startAngle;
+
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
-        const charW = ctx.measureText(ch).width;
-        const delta = (charW / radius) * dir;
-        angle += delta / 2;
+        const cw = charWidths[i];
+        const delta = cw / radius;           // arc angle consumed by this char
+        angle += delta / 2;                  // advance to char centre
 
         ctx.save();
         ctx.rotate(angle);
-        ctx.translate(0, -radius); // move out to rim
+        ctx.translate(0, -radius);           // move out to rim
+
+        if (isDown) ctx.rotate(Math.PI);     // flip char for arch_down
+
+        const drawX = -cw / 2;
+        const drawY = 0;                     // baseline:'middle' centres on rim
 
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
           ctx.lineWidth = (layer.outlineWidth || 2) * 2;
           ctx.lineJoin = 'round';
-          ctx.strokeText(ch, -charW / 2, 0);
+          ctx.strokeText(ch, drawX, drawY);
         }
         ctx.fillStyle = layer.color;
-        ctx.fillText(ch, -charW / 2, 0);
+        ctx.fillText(ch, drawX, drawY);
 
-        angle += delta / 2;
+        angle += delta / 2;                  // advance past this char
         ctx.restore();
       }
       ctx.restore();
@@ -3043,6 +2966,20 @@ function toggleLayerStyle(style) {
   drawAll(); syncT();
 }
 
+function applyPropFont(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l.font = val;
+  drawAll();
+}
+function applyPropSize(val) {
+  const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
+  if (!l) return;
+  l.size = parseInt(val, 10);
+  const sv = document.getElementById('propSizeVal');
+  if (sv) sv.textContent = val + 'px';
+  drawAll();
+}
 function applyTextShape(val) {
   const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
   if (!l) return;
@@ -3237,9 +3174,15 @@ function syncT() {
     const pt = document.getElementById('propText');
     const pc = document.getElementById('propColor');
     const ph = document.getElementById('propColorHex');
+    const pf = document.getElementById('propFont');
+    const ps2 = document.getElementById('propSize');
+    const psv = document.getElementById('propSizeVal');
     if (pt) pt.value = l.text || '';
     if (pc) pc.value = l.color || '#000000';
     if (ph) ph.value = l.color || '#000000';
+    if (pf) pf.value = l.font || 'Oswald';
+    if (ps2) ps2.value = l.size || 48;
+    if (psv) psv.textContent = (l.size || 48) + 'px';
     // Sync style toggle buttons in Transform panel
     ['bold','italic','underline','uppercase'].forEach(s => {
       const cap = s.charAt(0).toUpperCase() + s.slice(1);
