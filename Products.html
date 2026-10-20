@@ -234,8 +234,6 @@ body{
 }
 .card-desc{font-size:12px;color:var(--txt2);line-height:1.65;margin-bottom:12px;flex:1;}
 .card-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.card-price{font-family:var(--font-label);font-size:15px;letter-spacing:.04em;color:var(--txt);}
-.card-price span{font-size:10px;color:var(--txt3);}
 .card-color-label{font-size:11px;color:var(--txt3);letter-spacing:.04em;}
 .btn-customize{
   display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
@@ -395,7 +393,6 @@ body{
         <div class="card-name">Core Cotton Tee</div>
         <div class="card-desc">5.4 oz 100% cotton. Classic fit with a removable tag for custom relabeling. The go-to for events, teams, and merch drops — S through 6XL.</div>
         <div class="card-meta">
-          <div class="card-price">From $10 <span>/ piece</span></div>
           <div class="card-color-label" id="pc54-color-label">Aquatic Blue</div>
         </div>
         <button class="btn-customize" onclick="openPicker('pc54')">
@@ -421,7 +418,6 @@ body{
         <div class="card-name">Essential Tee</div>
         <div class="card-desc">5.5 oz 100% cotton. Relaxed, slightly longer fit with double-needle stitching. An everyday wardrobe staple in 40+ colors — great for bulk orders.</div>
         <div class="card-meta">
-          <div class="card-price">From $8 <span>/ piece</span></div>
           <div class="card-color-label" id="pc61-color-label">Lime</div>
         </div>
         <button class="btn-customize" onclick="openPicker('pc61')">
@@ -447,7 +443,6 @@ body{
         <div class="card-name">Bouncer Tee</div>
         <div class="card-desc">6.1 oz 100% cotton. Heavier, structured tee that holds its shape. Vibrant dyed-through colors that won't fade — built for bold statement prints.</div>
         <div class="card-meta">
-          <div class="card-price">From $11 <span>/ piece</span></div>
           <div class="card-color-label" id="pc600-color-label">Lemon Yellow</div>
         </div>
         <button class="btn-customize" onclick="openPicker('pc600')">
@@ -472,7 +467,6 @@ body{
         <div class="card-name">Core Fleece Hoodie</div>
         <div class="card-desc">7.8 oz 50/50 cotton/poly blend. Kangaroo pocket, double-needle stitching, ribbed cuffs and waistband. The go-to pullover for teams and crews.</div>
         <div class="card-meta">
-          <div class="card-price">From $26 <span>/ piece</span></div>
           <div class="card-color-label" id="hoodie-color-label">Black</div>
         </div>
         <button class="btn-customize" onclick="openPicker('hoodie')">
@@ -498,7 +492,6 @@ body{
         <div class="card-name">Structured Cap</div>
         <div class="card-desc">6-panel structured twill cap with a pre-curved visor and Velcro closure. Clean front panel for embroidery or DTF print. One size fits most.</div>
         <div class="card-meta">
-          <div class="card-price">From $10 <span>/ piece</span></div>
           <div class="card-color-label" id="hat-color-label">Black</div>
         </div>
         <button class="btn-customize" onclick="openPicker('hat')">
@@ -524,7 +517,6 @@ body{
         <div class="card-name">Garment Washed Cap</div>
         <div class="card-desc">Unstructured low-profile dad cap with a relaxed, broken-in feel right out of the bag. Garment washed for a soft vintage look. Adjustable strap closure.</div>
         <div class="card-meta">
-          <div class="card-price">From $12 <span>/ piece</span></div>
           <div class="card-color-label" id="pwu-color-label">Faded Blue</div>
         </div>
         <button class="btn-customize" onclick="openPicker('pwu')">
@@ -534,10 +526,14 @@ body{
       </div>
     </article>
 
-    <!-- JOGGERS placeholder -->
+    <!-- JOGGERS -->
     <article class="card" data-cat="bottoms" data-product-id="joggers">
-      <div class="card-image" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;">
-        <div class="card-photo-placeholder">👖</div>
+      <div class="card-image">
+        <img class="card-photo" id="joggers-card-img"
+          src=""
+          alt="Eversoft Joggers" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👖</div>
         <div class="card-badge new">New</div>
       </div>
       <div class="card-swatch-row" id="joggers-swatches"></div>
@@ -546,7 +542,6 @@ body{
         <div class="card-name">Eversoft Joggers</div>
         <div class="card-desc">60/40 cotton/poly fleece joggers with tapered fit, side pockets, and elastic waistband. Branded athleisure that moves with your crew.</div>
         <div class="card-meta">
-          <div class="card-price">From $22 <span>/ piece</span></div>
           <div class="card-color-label" id="joggers-color-label">Black</div>
         </div>
         <button class="btn-customize" onclick="openPicker('joggers')">
@@ -839,14 +834,11 @@ let pickerProductId = null;
 
 // ── BUILD INLINE SWATCHES ON EACH CARD ──────────────────────────
 function buildSwatches() {
-  const MAX_DOTS = 10;
   Object.entries(PRODUCTS).forEach(([id, prod]) => {
     const row = document.getElementById(id + '-swatches');
     if (!row) return;
-    const show  = prod.colors.slice(0, MAX_DOTS);
-    const extra = prod.colors.length - MAX_DOTS;
 
-    show.forEach((c, i) => {
+    prod.colors.forEach((c, i) => {
       const dot = document.createElement('div');
       dot.className = 'cswatch' + (i === selectedIdx[id] ? ' active' : '');
       dot.style.background = c.hex;
@@ -858,15 +850,6 @@ function buildSwatches() {
       };
       row.appendChild(dot);
     });
-
-    if (extra > 0) {
-      const more = document.createElement('span');
-      more.className = 'cswatch-more';
-      more.textContent = '+' + extra + ' more';
-      more.style.cursor = 'pointer';
-      more.onclick = (e) => { e.stopPropagation(); openPicker(id); };
-      row.appendChild(more);
-    }
   });
 }
 
@@ -1312,9 +1295,7 @@ async function autoPopulateProduct(productId) {
   const swatchRow = document.getElementById(`${productId}-swatches`);
   if (swatchRow) {
     swatchRow.innerHTML = '';
-    const MAX_DOTS = 10;
-    const show = prod.colors.slice(0, MAX_DOTS);
-    show.forEach((c, i) => {
+    prod.colors.forEach((c, i) => {
       const dot = document.createElement('div');
       dot.className = 'cswatch' + (i === selectedIdx[productId] ? ' active' : '');
       dot.style.background = c.hex;
@@ -1323,14 +1304,6 @@ async function autoPopulateProduct(productId) {
       dot.onclick = () => selectColorOnCard(productId, i);
       swatchRow.appendChild(dot);
     });
-    if (prod.colors.length > MAX_DOTS) {
-      const more = document.createElement('span');
-      more.className = 'cswatch-more';
-      more.textContent = `+${prod.colors.length - MAX_DOTS} more`;
-      more.style.cursor = 'pointer';
-      more.onclick = (e) => { e.stopPropagation(); openPicker(productId); };
-      swatchRow.appendChild(more);
-    }
   }
 
   // Update card image to show selected color
