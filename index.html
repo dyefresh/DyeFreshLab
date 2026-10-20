@@ -2881,10 +2881,10 @@ const PX_PER_INCH = 24;
 
 // Print zone: the shaded/dashed overlay showing the 12"×16" printable area
 // Centered horizontally; top at ~28% down (below collar), bottom near hem.
-const PRINT_ZONE_W  = 12 * PX_PER_INCH;  // 360px = 12"
-const PRINT_ZONE_H  = 16 * PX_PER_INCH;  // 480px = 16"
-const PRINT_ZONE_X  = (CANVAS_W - PRINT_ZONE_W) / 2;   // 120px from left
-const PRINT_ZONE_Y  = Math.round(CANVAS_H * 0.20);      // 144px from top
+const PRINT_ZONE_W  = 12 * PX_PER_INCH;  // 288px = 12"
+const PRINT_ZONE_H  = 14 * PX_PER_INCH;  // 336px = 14"
+const PRINT_ZONE_X  = (CANVAS_W - PRINT_ZONE_W) / 2;   // centred horizontally
+const PRINT_ZONE_Y  = Math.round(CANVAS_H * 0.33);      // ~33% down = chest level
 
 // ── SWATCHES ──────────────────────────────────────────────────────────────
 function buildSwatches() {
@@ -4005,7 +4005,11 @@ function mmove(e) {
     l.rotation = Math.round((S.drag.startRot + angle * 180/Math.PI) % 360);
     syncT(); drawAll();
   } else if (t === 'lmove') {
-    l.x = mx - S.drag.ox; l.y = my - S.drag.oy;
+    // Clamp so layer stays fully inside print zone
+    const newX = mx - S.drag.ox;
+    const newY = my - S.drag.oy;
+    l.x = Math.max(PRINT_ZONE_X, Math.min(PRINT_ZONE_X + PRINT_ZONE_W - l.w, newX));
+    l.y = Math.max(PRINT_ZONE_Y, Math.min(PRINT_ZONE_Y + PRINT_ZONE_H - l.h, newY));
     syncT(); drawAll();
   } else if (t === 'lresize') {
     const h = S.drag.h;
@@ -4021,6 +4025,9 @@ function mmove(e) {
       newW = Math.max(20, S.drag.sw + diag);
       newH = Math.round(newW * ratio);
     }
+    // Clamp size so layer can't exceed print zone bounds
+    newW = Math.min(newW, PRINT_ZONE_W);
+    newH = Math.min(newH, PRINT_ZONE_H);
     // Text layers: convert new size to a scale multiplier instead of setting w/h directly
     // (drawLayer recomputes w/h from font size each frame, so l.w/l.h have no visual effect)
     // origScale = scale at drag start; sw/sh = rendered w/h at drag start
@@ -4044,6 +4051,9 @@ function mmove(e) {
     } else {
       l.w = newW; l.h = newH;
     }
+    // After resize, re-clamp position so layer edge doesn't go outside print zone
+    l.x = Math.max(PRINT_ZONE_X, Math.min(PRINT_ZONE_X + PRINT_ZONE_W - l.w, l.x));
+    l.y = Math.max(PRINT_ZONE_Y, Math.min(PRINT_ZONE_Y + PRINT_ZONE_H - l.h, l.y));
     syncT(); drawAll();
   }
 }
