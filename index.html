@@ -2617,16 +2617,26 @@ function drawLayer(layer) {
       const chars = displayText.split('');
       const isDown   = shape === 'arch_down' || shape === 'bridge';
       const isCircle = shape === 'circle';
-      // bridge/valley use a tighter default angle for a flatter arc
-      const defaultAngle = (shape === 'bridge' || shape === 'valley') ? 80 : 120;
-      const sweepDeg = archAngle || defaultAngle;
-      const sweep     = isCircle ? Math.PI * 1.75 : sweepDeg * Math.PI / 180;
-      const halfSweep = sweep / 2;
 
       let totalW = 0;
       const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
-      const R = Math.max(totalW / sweep, effectiveSize * 1.2);
+      let R, sweep, halfSweep;
+      if (isCircle) {
+        // Full circle: radius sized so text fits around ~315° of arc
+        sweep = Math.PI * 1.75;
+        R = Math.max(totalW / sweep, effectiveSize * 1.0);
+        halfSweep = sweep / 2;
+      } else {
+        // archAngle (30–340) controls radius: higher = larger radius = flatter arch
+        // Map: 120 (default) → radius ≈ totalW * 1.2 (gentle arch)
+        //      30 → tight,  340 → very flat
+        const curveFactor = (archAngle || 120) / 120; // 0.25 (tight) → 2.83 (flat)
+        R = Math.max(totalW * curveFactor * 0.8, effectiveSize * 2.5);
+        // Derive sweep from R so arc length = totalW
+        sweep = Math.min(totalW / R, Math.PI * 0.9); // cap at 162° so it never flips vertical
+        halfSweep = sweep / 2;
+      }
 
       const sagitta = R * (1 - Math.cos(halfSweep));
       const boxW    = 2 * R * Math.sin(halfSweep);
