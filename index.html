@@ -782,24 +782,30 @@ const CANVAS_H = 720;
 
   showLoading(true);
 
+  // Fetch colors — this also loads the garment image via the API
+  fetchColors(productKey, colorSlug, directImg);
+
   // If a garment image URL was passed directly (from Products page),
-  // start loading it immediately — don't wait for the colors API call.
-  // This hides the Railway cold-start latency completely.
+  // ALSO start loading it immediately in parallel so it appears faster.
+  // The first one to finish wins; we guard with S.garmentImg check.
   if (directImg) {
     const proxied = proxyImg(directImg);
     const earlyImg = new Image();
+    earlyImg.crossOrigin = 'anonymous';
     earlyImg.onload = () => {
+      if (S.garmentImg) return; // fetchColors already loaded one — skip
       imgCache[proxied] = earlyImg;
       S.garmentImg = earlyImg;
       showLoading(false);
       drawAll();
     };
+    earlyImg.onerror = () => {
+      // Silent — fetchColors will handle it via loadGarmentImage
+      imgCache[proxied] = null;
+    };
     imgCache[proxied] = 'loading';
     earlyImg.src = proxied;
   }
-
-  // Fetch colors in parallel — updates swatches + color panel when ready
-  fetchColors(productKey, colorSlug, directImg);
 })();
 
 // ── FETCH COLORS ──────────────────────────────────────────────────────────
@@ -907,6 +913,7 @@ function preloadImage(url) {
   if (!url || imgCache[url]) return;
   imgCache[url] = 'loading';
   const img = new Image();
+  img.crossOrigin = 'anonymous';
   img.onload  = () => { imgCache[url] = img; };
   img.onerror = () => { imgCache[url] = null; };
   img.src = url;
@@ -937,15 +944,27 @@ function loadGarmentImage(overrideUrl) {
 
   showLoading(true);
   const img = new Image();
+  img.crossOrigin = 'anonymous';
+
+  // Safety timeout — if image hasn't loaded in 15s, stop the spinner
+  const timeoutId = setTimeout(() => {
+    img.src = '';   // cancel the pending load
+    showLoading(false);
+    showError('Garment image timed out. Please go back and try again.');
+  }, 15000);
+
   img.onload = () => {
+    clearTimeout(timeoutId);
     imgCache[url] = img;
     S.garmentImg = img;
     showLoading(false);
     drawAll();
   };
   img.onerror = () => {
+    clearTimeout(timeoutId);
     showLoading(false);
-    // Try front view as fallback
+    imgCache[url] = null;
+    // Try front view from API colors as fallback
     const fallback = S.colors[S.colorIdx]?.front;
     if (fallback && fallback !== url) {
       if (imgCache[fallback] && imgCache[fallback] !== 'loading') {
@@ -954,11 +973,12 @@ function loadGarmentImage(overrideUrl) {
         return;
       }
       const img2 = new Image();
+      img2.crossOrigin = 'anonymous';
       img2.onload = () => { imgCache[fallback] = img2; S.garmentImg = img2; drawAll(); };
-      img2.onerror = () => showError('Image could not be loaded.');
+      img2.onerror = () => showError('Garment image could not be loaded. Please go back and try again.');
       img2.src = fallback;
     } else {
-      showError('Image could not be loaded.');
+      showError('Garment image could not be loaded. Please go back and try again.');
     }
   };
   imgCache[url] = 'loading';
