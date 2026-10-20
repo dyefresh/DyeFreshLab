@@ -977,7 +977,7 @@ select.field { cursor:pointer; }
   <div class="mob-sheet">
     <span class="mob-sheet-handle"></span>
     <div class="mob-sheet-title">Start Designing</div>
-    <button class="mob-sheet-btn mob-sheet-upload" onclick="document.getElementById('fileUpload').click();closeMobSheet()">
+    <button class="mob-sheet-btn mob-sheet-upload" onclick="document.getElementById('uploadInput').click();closeMobSheet()">
       <span class="sh-icon">☁</span>
       <span style="font-size:.85rem;font-weight:700;">Upload Image or Art</span>
     </button>
@@ -2058,6 +2058,11 @@ function drawAll() {
     const layer = S.layers.find(l => l.id === S.activeLayer);
     if (layer) drawHandles(layer);
   }
+
+  // Mobile: update floating handles overlay after each draw
+  if (typeof updateMobHandles === 'function' && typeof isMobile === 'function' && isMobile()) {
+    requestAnimationFrame(updateMobHandles);
+  }
 }
 
 function drawLayer(layer) {
@@ -2310,14 +2315,14 @@ function selectColor(idx) {
   loadGarmentImage(null);
 }
 
+// ── INVENTORY ─────────────────────────────────────────────────────────────
+const _invCache = {};
+
 function updateProductInfo() {
   const color = S.colors[S.colorIdx];
   document.getElementById('prodColorName').textContent = color ? color.name : '';
   loadInventory(color);
 }
-
-// ── INVENTORY ─────────────────────────────────────────────────────────────
-const _invCache = {};
 async function loadInventory(color) {
   const panel = document.getElementById('inventoryPanel');
   if (!panel) return;
@@ -2603,6 +2608,12 @@ function syncT() {
   }
   const wh = document.getElementById('whSliders');
   if (wh) wh.style.display = aspectLocked ? 'none' : 'block';
+
+  // Mobile: update toolbar and context sheet after sync
+  if (typeof updateMobUI === 'function' && typeof isMobile === 'function' && isMobile()) {
+    updateMobUI();
+    if (typeof mobSyncCtx === 'function') mobSyncCtx();
+  }
 }
 
 function toggleLock() {
@@ -3237,7 +3248,7 @@ function buildMobColorGrid() {
 }
 function mobSelectColor(idx) {
   // Delegate to desktop color button
-  const btn = document.querySelectorAll('.color-swatch')[idx];
+  const btn = document.querySelectorAll('.swatch-btn')[idx];
   if (btn) { btn.click(); }
   else { S.colorIdx = idx; updateProductInfo(S.colors[idx]); drawAll(); }
   // Update mobile grid selection
@@ -3352,13 +3363,7 @@ function updateMobUI() {
   if(fab) fab.style.display = hasSelection ? 'none' : (isMobile() ? 'flex' : 'none');
 }
 
-// Hook into syncT to also update mobile UI
-const _origSyncT = syncT;
-function syncT() { _origSyncT(); updateMobUI(); }
-
-// Also hook drawAll to update handles after redraw
-const _origDrawAll = drawAll;
-function drawAll() { _origDrawAll(); if(isMobile()) updateMobHandles(); }
+// Mobile UI updates are called directly from syncT and drawAll (see those functions)
 
 // Deselect on canvas background tap (mobile)
 canvas.addEventListener('touchend', e => {
