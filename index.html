@@ -35,28 +35,28 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 .topbar {
   display:flex; align-items:center; justify-content:space-between;
   padding:0 20px; height:52px;
-  background:#fff; border-bottom:1.5px solid var(--border);
+  background:#1c1c1e; border-bottom:2px solid var(--red);
   position:sticky; top:0; z-index:100;
 }
 .topbar-logo {
   font-family:var(--font-display); font-size:1.45rem;
-  letter-spacing:.05em; color:var(--txt);
+  letter-spacing:.05em; color:#fff;
   text-decoration:none;
 }
 .topbar-logo span { color:var(--red); }
 .topbar-title {
   font-family:var(--font-label); font-size:.8rem; font-weight:500;
-  letter-spacing:.12em; text-transform:uppercase; color:var(--txt2);
+  letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.5);
 }
 .topbar-back {
   display:flex; align-items:center; gap:6px;
   font-family:var(--font-label); font-size:.75rem; font-weight:500;
-  letter-spacing:.08em; text-transform:uppercase; color:var(--txt2);
-  text-decoration:none; border:1.5px solid var(--border);
+  letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.7);
+  text-decoration:none; border:1.5px solid rgba(255,255,255,.2);
   padding:6px 14px; border-radius:var(--radius);
   transition:all .18s;
 }
-.topbar-back:hover { border-color:var(--red); color:var(--red); }
+.topbar-back:hover { border-color:var(--red); color:#fff; }
 
 /* ── MAIN LAYOUT ─────────────────────────────────────────────────────────── */
 .lab-wrap {
@@ -69,8 +69,8 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 
 /* ── LEFT PANEL ──────────────────────────────────────────────────────────── */
 .panel-left {
-  border-right:1.5px solid var(--border);
-  background:#fff;
+  border-right:1px solid var(--border);
+  background:#fafafa;
   overflow-y:auto;
   display:flex; flex-direction:column;
 }
@@ -156,21 +156,23 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 
 /* ── LEFT PANEL NAV TABS ──────────────────────────────────────────────────── */
 .lnav {
-  display:flex; border-bottom:1.5px solid var(--border);
-  position:sticky; top:0; background:#fff; z-index:10;
+  display:flex; border-bottom:none;
+  position:sticky; top:0; z-index:10;
+  background:#1c1c1e;
+  box-shadow:0 2px 8px rgba(0,0,0,.22);
 }
 .lnav-tab {
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:4px; padding:10px 4px 8px; border:none; background:none;
-  cursor:pointer; font-family:var(--font-label); font-size:.58rem; font-weight:600;
-  letter-spacing:.08em; text-transform:uppercase; color:var(--txt3);
-  border-bottom:2px solid transparent; margin-bottom:-1.5px;
-  transition:color .15s, border-color .15s;
+  gap:5px; padding:11px 4px 9px; border:none; background:none;
+  cursor:pointer; font-family:var(--font-label); font-size:.56rem; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.45);
+  border-bottom:2.5px solid transparent;
+  transition:color .15s, border-color .15s, background .15s;
   -webkit-tap-highlight-color:transparent;
 }
-.lnav-tab:hover { color:var(--txt2); }
-.lnav-tab.active { color:var(--red); border-bottom-color:var(--red); }
-.lnav-icon { font-size:18px; line-height:1; }
+.lnav-tab:hover { color:rgba(255,255,255,.8); background:rgba(255,255,255,.06); }
+.lnav-tab.active { color:#fff; border-bottom-color:var(--red); background:rgba(232,41,11,.12); }
+.lnav-icon { font-size:20px; line-height:1; }
 
 .lnav-panel { display:none; flex-direction:column; }
 .lnav-panel.active { display:flex; }
@@ -195,13 +197,15 @@ select.field { cursor:pointer; }
 }
 .color-row .field { flex:1; padding:6px 10px; height:36px; }
 .btn-add-text {
-  width:100%; padding:10px;
-  font-family:var(--font-label); font-size:.75rem; font-weight:600;
-  letter-spacing:.1em; text-transform:uppercase;
+  width:100%; padding:11px;
+  font-family:var(--font-label); font-size:.8rem; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase;
   background:var(--red); color:#fff; border:none;
-  border-radius:var(--radius); cursor:pointer; transition:background .15s;
+  border-radius:var(--radius); cursor:pointer; transition:background .15s, transform .1s;
+  box-shadow:0 2px 8px rgba(232,41,11,.35);
 }
-.btn-add-text:hover { background:var(--red-hover); }
+.btn-add-text:hover { background:var(--red-hover); transform:translateY(-1px); }
+.btn-add-text:active { transform:translateY(0); }
 
 /* ── SIZE STEPPER ─────────────────────────────────────────────────────────── */
 .size-stepper {
@@ -863,7 +867,7 @@ select.field { cursor:pointer; }
         <div class="text-inputs">
           <div class="input-row">
             <label class="input-label">Text</label>
-            <input class="field" id="textInput" type="text" placeholder="Your text here…" maxlength="60">
+            <textarea class="field" id="textInput" rows="3" placeholder="Line 1&#10;Line 2&#10;Line 3…" style="resize:vertical;font-family:inherit;"></textarea>
           </div>
           <div class="input-row">
             <label class="input-label">Font</label>
@@ -3076,8 +3080,9 @@ document.getElementById('textOutlineWidth').addEventListener('input', () => {
 });
 
 document.getElementById('btnAddText').addEventListener('click', () => {
-  const text = document.getElementById('textInput').value.trim();
-  if (!text) { document.getElementById('textInput').focus(); return; }
+  const raw = document.getElementById('textInput').value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (!lines.length) { document.getElementById('textInput').focus(); return; }
   const size = parseInt(document.getElementById('textSizeInput').value,10) || 48;
   const font = document.getElementById('fontSelect').value;
   const color = textColorInput.value || '#ffffff';
@@ -3086,36 +3091,46 @@ document.getElementById('btnAddText').addEventListener('click', () => {
   const outlineColor = document.getElementById('textOutlineColor').value;
   const outlineWidth = parseInt(document.getElementById('textOutlineWidth').value, 10) || 2;
 
-  const layer = {
-    id:    Date.now(),
-    type:  'text',
-    text,
-    font,
-    size,
-    color,
-    bold:      textStyleState.bold,
-    italic:    textStyleState.italic,
-    underline: textStyleState.underline,
-    uppercase: textStyleState.uppercase,
-    shape:     shape,
-    archAngle: 120,
-    outline:      outlineOn,
-    outlineColor: outlineColor,
-    outlineWidth: outlineWidth,
-    x:     CANVAS_W/2 - size*text.length*0.3,
-    y:     CANVAS_H/2 - size/2,
-    w:     size * text.length * 0.6,
-    h:     size * 1.25,
-    _origW: size * text.length * 0.6,
-    _origH: size * 1.25,
-    rot:      0,
-    rotation: 0,
-    opacity:  1,
-    flipH:    false,
-    scale:    1,
-  };
-  S.layers.push(layer);
-  S.activeLayer = layer.id;
+  // Stack multiple lines vertically, centred on the canvas
+  const lineHeight = size * 1.4;
+  const totalH = lines.length * lineHeight;
+  const baseY = CANVAS_H / 2 - totalH / 2;
+  let lastLayer = null;
+
+  lines.forEach((text, i) => {
+    const layer = {
+      id:    Date.now() + i,
+      type:  'text',
+      text,
+      font,
+      size,
+      color,
+      bold:      textStyleState.bold,
+      italic:    textStyleState.italic,
+      underline: textStyleState.underline,
+      uppercase: textStyleState.uppercase,
+      shape:     shape,
+      archAngle: 120,
+      outline:      outlineOn,
+      outlineColor: outlineColor,
+      outlineWidth: outlineWidth,
+      x:     CANVAS_W/2 - size*text.length*0.3,
+      y:     baseY + i * lineHeight,
+      w:     size * text.length * 0.6,
+      h:     size * 1.25,
+      _origW: size * text.length * 0.6,
+      _origH: size * 1.25,
+      rot:      0,
+      rotation: 0,
+      opacity:  1,
+      flipH:    false,
+      scale:    1,
+    };
+    S.layers.push(layer);
+    lastLayer = layer;
+  });
+
+  if (lastLayer) S.activeLayer = lastLayer.id;
   renderLayerList();
   drawAll();
   syncT();
