@@ -405,6 +405,7 @@ select.field { cursor:pointer; }
         <button class="view-tab active" data-view="front">Front</button>
         <button class="view-tab" data-view="back">Back</button>
         <button class="view-tab" data-view="side">Side</button>
+        <button class="view-tab" data-view="threeQ">3/4</button>
       </div>
     </div>
 
@@ -669,9 +670,10 @@ async function fetchColors(productKey, targetSlug, directImg) {
     S.colors = data.map(c => ({
       name:   c.name || c.catalogColor || 'Unknown',
       slug:   slugify(c.name || c.catalogColor || ''),
-      front:  proxyImg(c.front   || c.frontFlat || null),
-      back:   proxyImg(c.back    || c.backFlat  || null),
-      side:   proxyImg(c.side    || null),
+      front:  proxyImg(c.front     || c.frontFlat || null),
+      back:   proxyImg(c.back      || c.backFlat  || null),
+      side:   proxyImg(c.side      || null),
+      threeQ: proxyImg(c.threeQ    || null),
       swatch: c.colorSwatch || null,  // swatch used only as CSS bg-image, no canvas — no proxy needed
       hex:    null,
     }));
@@ -715,9 +717,33 @@ function slugify(str) {
 function getImgForView() {
   const c = S.colors[S.colorIdx];
   if (!c) return null;
-  if (S.view === 'back') return c.back || c.front || null;
-  if (S.view === 'side') return c.side || c.front || null;
+  if (S.view === 'back')   return c.back   || c.front || null;
+  if (S.view === 'side')   return c.side   || c.front || null;
+  if (S.view === 'threeQ') return c.threeQ || c.front || null;
   return c.front || null;
+}
+
+// Show/hide view tabs based on what's available for the current color
+function updateViewTabs() {
+  const c = S.colors[S.colorIdx];
+  if (!c) return;
+  const avail = {
+    front:  !!c.front,
+    back:   !!c.back,
+    side:   !!c.side,
+    threeQ: !!c.threeQ,
+  };
+  const vt = document.getElementById('viewTabs');
+  vt.querySelectorAll('.view-tab').forEach(btn => {
+    const view = btn.dataset.view;
+    btn.style.display = avail[view] ? '' : 'none';
+    // If current active view is no longer available, reset to front
+    if (S.view === view && !avail[view]) {
+      S.view = 'front';
+      btn.classList.remove('active');
+      vt.querySelector('[data-view="front"]').classList.add('active');
+    }
+  });
 }
 
 function loadGarmentImage(overrideUrl) {
@@ -828,12 +854,8 @@ function buildSwatches() {
   const grid = document.getElementById('swatchGrid');
   grid.innerHTML = '';
 
-  // Check which views are available
-  const hasBack = S.colors.some(c => c.back);
-  const hasSide = S.colors.some(c => c.side);
-  const vt = document.getElementById('viewTabs');
-  vt.querySelector('[data-view="back"]').style.display = hasBack ? '' : 'none';
-  vt.querySelector('[data-view="side"]').style.display = hasSide ? '' : 'none';
+  // View tabs updated per-color after swatches are built
+  updateViewTabs();
 
   S.colors.forEach((color, i) => {
     const btn = document.createElement('button');
@@ -892,6 +914,7 @@ function selectColor(idx) {
     b.classList.toggle('active', i === idx);
   });
   updateProductInfo();
+  updateViewTabs();
   loadGarmentImage(null);
 }
 
@@ -901,13 +924,13 @@ function updateProductInfo() {
 }
 
 // ── VIEW TABS ─────────────────────────────────────────────────────────────
-document.querySelectorAll('.view-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    S.view = btn.dataset.view;
-    document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadGarmentImage(null);
-  });
+document.getElementById('viewTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.view-tab');
+  if (!btn) return;
+  S.view = btn.dataset.view;
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadGarmentImage(null);
 });
 
 // ── TEXT TOOL ─────────────────────────────────────────────────────────────
