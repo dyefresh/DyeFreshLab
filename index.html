@@ -3070,13 +3070,22 @@ function mmove(e) {
       newW = Math.max(20, S.drag.sw + diag);
       newH = Math.round(newW * ratio);
     }
-    // Text layers: convert new width to a scale multiplier instead of setting w/h directly
-    // (drawLayer recomputes w/h from font size each frame)
+    // Text layers: convert new size to a scale multiplier instead of setting w/h directly
+    // (drawLayer recomputes w/h from font size each frame, so l.w/l.h have no visual effect)
+    // origScale = scale at drag start; sw/sh = rendered w/h at drag start
+    // For width-based handles use newW ratio; for height-only (scaleH) use newH ratio
     if (l.type === 'text') {
-      const baseW = S.drag.origScale ? S.drag.sw / S.drag.origScale : S.drag.sw;
-      const newScale = Math.max(0.1, newW / (baseW || 1));
+      const origScale = S.drag.origScale || 1;
+      let newScale;
+      if (h === 'scaleH') {
+        // vertical-only drag → use height ratio
+        newScale = Math.max(0.1, origScale * (newH / (S.drag.sh || 1)));
+      } else {
+        // all other handles: use width ratio (width is the primary text dimension)
+        newScale = Math.max(0.1, origScale * (newW / (S.drag.sw || 1)));
+      }
       l.scale = newScale;
-      // update slider
+      // update scale slider and readout
       const slSc = document.getElementById('slSc');
       const vSc  = document.getElementById('vSc');
       if (slSc) slSc.value = Math.round(newScale * 100);
