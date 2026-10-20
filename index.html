@@ -2611,70 +2611,53 @@ function drawLayer(layer) {
         ctx.lineTo(tx + m.width, ty + effectiveSize * 0.12);
         ctx.stroke();
       }
-    } else {
-      // ── Arch / Circle curved text ─────────────────────────────────────────
-      // Pivot is offset from box CENTRE so arc is always centred in the box.
-      // arch_up: pivot below centre, text curves upward (smile)
-      // arch_down: pivot above centre, text curves downward (arch/banner)
-
+    } else if (shape === 'arch_up' || shape === 'arch_down' || shape === 'circle' || shape === 'bridge' || shape === 'valley') {
+      // ── Arch / Circle / Bridge / Valley curved text ───────────────────────
       ctx.textBaseline = 'alphabetic';
       const chars = displayText.split('');
-      const isDown   = shape === 'arch_down';
+      const isDown   = shape === 'arch_down' || shape === 'bridge';
       const isCircle = shape === 'circle';
-      const sweepDeg = archAngle || 120;
+      // bridge/valley use a tighter default angle for a flatter arc
+      const defaultAngle = (shape === 'bridge' || shape === 'valley') ? 80 : 120;
+      const sweepDeg = archAngle || defaultAngle;
       const sweep     = isCircle ? Math.PI * 1.75 : sweepDeg * Math.PI / 180;
       const halfSweep = sweep / 2;
 
-      // Measure characters
       let totalW = 0;
       const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
-      // Radius: arc length must equal total text width
       const R = Math.max(totalW / sweep, effectiveSize * 1.2);
 
-      // Bounding box dimensions
-      const sagitta = R * (1 - Math.cos(halfSweep));  // arc band height
+      const sagitta = R * (1 - Math.cos(halfSweep));
       const boxW    = 2 * R * Math.sin(halfSweep);
       const boxH    = sagitta + effectiveSize * 1.3;
       layer.w = Math.max(boxW, effectiveSize * 2);
       layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      // Pivot offset FROM BOX CENTRE so text is always centred in the box.
-      // The arc band spans sagitta vertically; the text occupies fontSize height.
-      // Box centre is at sagitta/2 + fontSize*0.65 from the top of the box.
-      // Pivot for arch_up is below box centre; for arch_down is above box centre.
-      // Pivot-to-top-of-arc = R, so pivot offset from centre = R - (sagitta/2 + fontSize*0.65)
       const pivotOffset = (R - sagitta / 2 - effectiveSize * 0.65) * (isDown ? -1 : 1);
 
-      // All drawing happens relative to pivot; wrap in save/restore
       ctx.save();
-
-      // Translate to box centre, apply rotation/flip, shift to pivot
       ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
       ctx.translate(0, pivotOffset);
 
-      // Walk characters along arc from left to right
-      // Start angle: -π/2 puts us at top (straight up from pivot)
-      // Sweep left from -π/2 - halfSweep to -π/2 + halfSweep
       let a = -Math.PI / 2 - halfSweep;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
         const cw = cws[i];
-        a += (cw / R) / 2;       // step to char centre
+        a += (cw / R) / 2;
 
         ctx.save();
         ctx.rotate(a);
         if (isDown) {
-          ctx.translate(0, R);   // go to bottom of circle
-          ctx.rotate(Math.PI);   // flip so text is readable
+          ctx.translate(0, R);
+          ctx.rotate(Math.PI);
         } else {
-          ctx.translate(0, -R);  // go to top of circle
+          ctx.translate(0, -R);
         }
-        // baseline at y=0 (on the arc rim)
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
           ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
@@ -2691,11 +2674,191 @@ function drawLayer(layer) {
           ctx.lineTo( cw / 2, effectiveSize * 0.1);
           ctx.stroke();
         }
-        a += (cw / R) / 2;       // step past char
+        a += (cw / R) / 2;
         ctx.restore();
       }
 
-      ctx.restore();  // ← matches the ctx.save() above, undoes translate-to-pivot
+      ctx.restore();
+
+    } else {
+      // ── Per-character effect shapes: bulge, perspective, pointed, downward, upward, cone ──
+      ctx.textBaseline = 'alphabetic';
+      const chars = displayText.split('');
+      let totalW = 0;
+      const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
+
+      const rot = layer.rotation || layer.rot || 0;
+
+      if (shape === 'bulge' || shape === 'pointed') {
+        // Characters scale taller in the center, smaller at edges
+        // bulge: smooth bell curve scale
+        // pointed: sharper peak (diamond/pointed effect)
+        const maxScale = 1.6;
+        const minScale = 0.5;
+        const boxH = effectiveSize * maxScale * 1.4;
+        layer.w = totalW * 1.1 + 4;
+        layer.h = boxH;
+
+        ctx.save();
+        ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
+        if (rot) ctx.rotate(rot * Math.PI / 180);
+        if (layer.flipH) ctx.scale(-1, 1);
+        ctx.translate(-layer.w / 2, 0);
+
+        let xPos = 2;
+        for (let i = 0; i < chars.length; i++) {
+          const ch = chars[i];
+          const cw = cws[i];
+          const t = chars.length > 1 ? i / (chars.length - 1) : 0.5; // 0..1 across string
+          const mid = 0.5;
+          const dist = Math.abs(t - mid) * 2; // 0 at center, 1 at edge
+          let sc;
+          if (shape === 'bulge') {
+            sc = minScale + (maxScale - minScale) * Math.cos(dist * Math.PI / 2);
+          } else {
+            // pointed: triangle falloff
+            sc = minScale + (maxScale - minScale) * (1 - dist);
+          }
+          ctx.save();
+          ctx.translate(xPos + cw / 2, 0);
+          ctx.scale(1, sc);
+          if (layer.outline && layer.outlineColor) {
+            ctx.strokeStyle = layer.outlineColor;
+            ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
+            ctx.lineJoin    = 'round';
+            ctx.strokeText(ch, -cw / 2, effectiveSize * 0.35);
+          }
+          ctx.fillStyle = layer.color;
+          ctx.fillText(ch, -cw / 2, effectiveSize * 0.35);
+          if (layer.underline) {
+            ctx.strokeStyle = layer.color;
+            ctx.lineWidth   = Math.max(1, effectiveSize * 0.06);
+            ctx.beginPath();
+            ctx.moveTo(-cw / 2, effectiveSize * sc * 0.45);
+            ctx.lineTo( cw / 2, effectiveSize * sc * 0.45);
+            ctx.stroke();
+          }
+          ctx.restore();
+          xPos += cw;
+        }
+        ctx.restore();
+
+      } else if (shape === 'perspective') {
+        // Text appears to recede — left side tall, right side shorter (or vice versa)
+        const leftScale  = 1.4;
+        const rightScale = 0.5;
+        const boxH = effectiveSize * leftScale * 1.4;
+        layer.w = totalW * 1.05 + 4;
+        layer.h = boxH;
+
+        ctx.save();
+        ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
+        if (rot) ctx.rotate(rot * Math.PI / 180);
+        if (layer.flipH) ctx.scale(-1, 1);
+        ctx.translate(-layer.w / 2, 0);
+
+        let xPos = 2;
+        for (let i = 0; i < chars.length; i++) {
+          const ch = chars[i];
+          const cw = cws[i];
+          const t = chars.length > 1 ? i / (chars.length - 1) : 0.5;
+          const sc = leftScale + (rightScale - leftScale) * t;
+          ctx.save();
+          ctx.translate(xPos + cw / 2, 0);
+          ctx.scale(1, sc);
+          if (layer.outline && layer.outlineColor) {
+            ctx.strokeStyle = layer.outlineColor;
+            ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
+            ctx.lineJoin    = 'round';
+            ctx.strokeText(ch, -cw / 2, effectiveSize * 0.35);
+          }
+          ctx.fillStyle = layer.color;
+          ctx.fillText(ch, -cw / 2, effectiveSize * 0.35);
+          ctx.restore();
+          xPos += cw;
+        }
+        ctx.restore();
+
+      } else if (shape === 'downward' || shape === 'upward') {
+        // Baseline steps down (downward) or up (upward) across the text
+        const stepTotal = effectiveSize * 0.8;
+        const dir = shape === 'downward' ? 1 : -1;
+        const boxH = effectiveSize * 1.5 + stepTotal;
+        layer.w = totalW + 4;
+        layer.h = boxH;
+
+        ctx.save();
+        ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
+        if (rot) ctx.rotate(rot * Math.PI / 180);
+        if (layer.flipH) ctx.scale(-1, 1);
+        ctx.translate(-layer.w / 2, -boxH / 2);
+
+        let xPos = 2;
+        for (let i = 0; i < chars.length; i++) {
+          const ch = chars[i];
+          const cw = cws[i];
+          const t = chars.length > 1 ? i / (chars.length - 1) : 0;
+          const yOff = dir * stepTotal * t;
+          ctx.save();
+          if (layer.outline && layer.outlineColor) {
+            ctx.strokeStyle = layer.outlineColor;
+            ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
+            ctx.lineJoin    = 'round';
+            ctx.strokeText(ch, xPos, effectiveSize + yOff);
+          }
+          ctx.fillStyle = layer.color;
+          ctx.fillText(ch, xPos, effectiveSize + yOff);
+          if (layer.underline) {
+            ctx.strokeStyle = layer.color;
+            ctx.lineWidth   = Math.max(1, effectiveSize * 0.06);
+            ctx.beginPath();
+            ctx.moveTo(xPos,       effectiveSize + yOff + effectiveSize * 0.12);
+            ctx.lineTo(xPos + cw,  effectiveSize + yOff + effectiveSize * 0.12);
+            ctx.stroke();
+          }
+          ctx.restore();
+          xPos += cw;
+        }
+        ctx.restore();
+
+      } else if (shape === 'cone') {
+        // Characters shrink progressively from left (tall) to right (short)
+        const maxSc = 1.3;
+        const minSc = 0.3;
+        const boxH = effectiveSize * maxSc * 1.4;
+        layer.w = totalW * 0.9 + 4;
+        layer.h = boxH;
+
+        ctx.save();
+        ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
+        if (rot) ctx.rotate(rot * Math.PI / 180);
+        if (layer.flipH) ctx.scale(-1, 1);
+        ctx.translate(-layer.w / 2, 0);
+
+        let xPos = 2;
+        for (let i = 0; i < chars.length; i++) {
+          const ch = chars[i];
+          const cw = cws[i];
+          const t = chars.length > 1 ? i / (chars.length - 1) : 0;
+          const sc = maxSc - (maxSc - minSc) * t;
+          // also compress x slightly as chars get smaller
+          const xSc = 0.6 + 0.4 * (1 - t);
+          ctx.save();
+          ctx.translate(xPos + (cw * xSc) / 2, 0);
+          ctx.scale(xSc, sc);
+          if (layer.outline && layer.outlineColor) {
+            ctx.strokeStyle = layer.outlineColor;
+            ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
+            ctx.lineJoin    = 'round';
+            ctx.strokeText(ch, -cw / 2, effectiveSize * 0.35);
+          }
+          ctx.fillStyle = layer.color;
+          ctx.fillText(ch, -cw / 2, effectiveSize * 0.35);
+          ctx.restore();
+          xPos += cw * xSc;
+        }
+        ctx.restore();
+      }
     }
     ctx.restore();
     return;
