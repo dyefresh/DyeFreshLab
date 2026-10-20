@@ -2408,79 +2408,103 @@ function drawLayer(layer) {
       }
     } else {
       // ── Arch / Circle curved text ──────────────────────────────────────────
-      // Strategy: place each character individually around a circle of radius R.
+      // We work entirely in "arc space" then translate to canvas.
       //
-      // arch_up  : pivot BELOW the text band, characters arc upward (smile).
-      //            Sweep clockwise from -π/2-sweep/2 to -π/2+sweep/2.
+      // Coordinate system:
+      //   - arc pivot = origin
+      //   - circle of radius R, characters sit ON the circle
+      //   - textBaseline 'alphabetic', characters drawn so baseline is on circle
       //
-      // arch_down: pivot ABOVE the text band, characters arc downward (frown).
-      //            We use the SAME clockwise sweep as arch_up but then rotate
-      //            each character 180° so the text reads L→R hanging below.
+      // arch_up  : pivot BELOW bounding box.
+      //            Start angle: -π/2 - sweep/2  (left side of top arc)
+      //            Sweep direction: clockwise (+1)
+      //            Characters point UP (normal orientation)
       //
-      // circle   : arch_up with a 324° sweep.
+      // arch_down: pivot ABOVE bounding box.
+      //            Start angle: π/2 - sweep/2  (left side of bottom arc)
+      //            Sweep direction: clockwise (+1)
+      //            Characters point DOWN (rotated π so baseline faces outward)
       //
-      // textBaseline 'middle' keeps character centred on the rim point.
+      // circle   : arch_up with sweep = 2π × 0.9
+      //
+      // Bounding box derivation (arch_up):
+      //   text band lives between y = -(R) [top of chars] and y = -(R - fontSize)
+      //   horizontally: ±R·sin(sweep/2)  plus half-char padding
+      //   boxW = 2·R·sin(sweep/2) + fontSize
+      //   boxH = R·(1-cos(sweep/2)) + fontSize·1.4   (sagitta + char height)
+      //   Pivot offset from box CENTRE:
+      //     arch_up:   pivotY = +R - sagitta/2 - fontSize*0.7   (below centre)
+      //     arch_down: pivotY = -(R - sagitta/2 - fontSize*0.7) (above centre)
 
       ctx.font = fontStyle;
-      ctx.textBaseline = 'middle';
+      ctx.textBaseline = 'alphabetic';
 
       const chars = displayText.split('');
-      const sweepRad   = (archAngle * Math.PI) / 180;
-      const isDown      = shape === 'arch_down';
-      const isCircle    = shape === 'circle';
-      const actualSweep = isCircle ? (Math.PI * 2 * 0.9) : sweepRad;
+      const sweepDeg  = archAngle || 120;
+      const isDown    = shape === 'arch_down';
+      const isCircle  = shape === 'circle';
+      const sweep     = isCircle ? Math.PI * 2 * 0.9 : (sweepDeg * Math.PI / 180);
 
-      // Measure total text width to set radius
+      // Measure characters
       let totalW = 0;
-      const charWidths = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
+      const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
 
-      // Radius: arc length ≥ total text width, and at least 1.6× font size
-      const radius = Math.max(totalW / actualSweep, effectiveSize * 1.6);
+      // Radius: arc must fit all characters, minimum 1.5× font size
+      const radius = Math.max(totalW / sweep, effectiveSize * 1.5);
 
-      // Bounding box — generous so handles and hit-test work
-      const chord   = 2 * radius * Math.sin(actualSweep / 2);
-      const sagitta = radius * (1 - Math.cos(actualSweep / 2));
-      const boxW = Math.max(chord + effectiveSize, effectiveSize * 3);
-      const boxH = Math.max(sagitta + effectiveSize * 2.5, effectiveSize * 3);
+      // Geometry
+      const halfSweep = sweep / 2;
+      const sagitta   = radius * (1 - Math.cos(halfSweep));
+      const halfChord = radius * Math.sin(halfSweep);
+
+      // Bounding box (generous)
+      const boxW = Math.max(halfChord * 2 + effectiveSize, effectiveSize * 3);
+      const boxH = Math.max(sagitta + effectiveSize * 1.6, effectiveSize * 2.5);
       layer.w = boxW;
       layer.h = boxH;
 
-      // Centre on layer position, apply rotation & flip
+      // Canvas origin → layer centre, then apply layer rotation/flip
       ctx.translate(layer.x + boxW / 2, layer.y + boxH / 2);
       const rot = layer.rotation || layer.rot || 0;
       if (rot) ctx.rotate(rot * Math.PI / 180);
       if (layer.flipH) ctx.scale(-1, 1);
 
-      // For arch_up: pivot is below the visible text (positive Y from centre).
-      // For arch_down: pivot is above (negative Y). The text band occupies roughly
-      //   sagitta + effectiveSize. We centre the band vertically in boxH.
-      const bandCentreOffset = (sagitta / 2);   // where the arc midpoint sits rel. to pivot
-      const pivotY = isDown
-        ?  -(radius - boxH / 2 + effectiveSize * 0.3)
-        :   (radius - boxH / 2 + effectiveSize * 0.3);
-
+      // Shift origin to arc pivot
+      //   arch_up:   pivot is BELOW centre by (radius - sagitta/2 - fontSize*0.3)
+      //   arch_down: pivot is ABOVE centre by the same amount
+      const pivotOffset = radius - sagitta / 2 - effectiveSize * 0.3;
       ctx.save();
-      ctx.translate(0, pivotY);
+      ctx.translate(0, isDown ? -pivotOffset : pivotOffset);
 
-      // Sweep: always clockwise (+), start at left of top of circle
-      // For arch_down we flip each char 180° so it reads correctly
-      const startAngle = -(Math.PI / 2) - actualSweep / 2;
+      // Start angle and sweep direction
+      //   arch_up / circle: start at top-left, sweep clockwise
+      //   arch_down:        start at bottom-left, sweep clockwise, chars flipped
+      const startAngle = isDown
+        ? (Math.PI / 2) - halfSweep
+        : (-Math.PI / 2) - halfSweep;
+
       let angle = startAngle;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
-        const cw = charWidths[i];
-        const delta = cw / radius;           // arc angle consumed by this char
-        angle += delta / 2;                  // advance to char centre
+        const cw = cws[i];
+        const delta = cw / radius;
+        angle += delta / 2;
 
         ctx.save();
         ctx.rotate(angle);
-        ctx.translate(0, -radius);           // move out to rim
 
-        if (isDown) ctx.rotate(Math.PI);     // flip char for arch_down
+        if (isDown) {
+          // Character hangs below arc: pivot to circle rim, flip, draw baseline outward
+          ctx.translate(0, radius);
+          ctx.rotate(Math.PI);
+        } else {
+          // Character sits above arc: pivot to circle rim, draw baseline on rim
+          ctx.translate(0, -radius);
+        }
 
         const drawX = -cw / 2;
-        const drawY = 0;                     // baseline:'middle' centres on rim
+        const drawY = 0; // baseline on rim
 
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
@@ -2491,7 +2515,7 @@ function drawLayer(layer) {
         ctx.fillStyle = layer.color;
         ctx.fillText(ch, drawX, drawY);
 
-        angle += delta / 2;                  // advance past this char
+        angle += delta / 2;
         ctx.restore();
       }
       ctx.restore();
