@@ -72,7 +72,8 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
   border-right:1px solid var(--border);
   background:#fafafa;
   overflow-y:auto;
-  display:flex; flex-direction:column;
+  display:flex; flex-direction:row !important;
+  padding:0 !important;
 }
 .panel-section {
   padding:18px 18px 14px;
@@ -155,33 +156,73 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 .view-tab.active { background:var(--red); border-color:var(--red); color:#fff; }
 
 /* ── LEFT PANEL NAV TABS ──────────────────────────────────────────────────── */
+.panel-left {
+  display:flex !important;
+  flex-direction:row !important;
+}
 .lnav {
-  display:flex; border-bottom:none;
+  display:flex; flex-direction:column;
+  width:80px; min-width:80px;
+  background:#1a1a1a;
+  border-right:1px solid rgba(255,255,255,.07);
   position:sticky; top:0; z-index:10;
-  background:#1c1c1e;
-  box-shadow:0 2px 8px rgba(0,0,0,.22);
+  height:calc(100vh - 52px);
+  overflow-y:auto;
 }
 .lnav-tab {
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:5px; padding:11px 4px 9px; border:none; background:none;
-  cursor:pointer; font-family:var(--font-label); font-size:.56rem; font-weight:600;
-  letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.45);
-  border-bottom:2.5px solid transparent;
+  width:80px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:18px 6px 16px; border:none; background:none;
+  cursor:pointer; font-family:var(--font-label); font-size:.65rem; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.45);
+  border-left:3px solid transparent;
   transition:color .15s, border-color .15s, background .15s;
   -webkit-tap-highlight-color:transparent;
 }
 .lnav-tab:hover { color:rgba(255,255,255,.8); background:rgba(255,255,255,.06); }
-.lnav-tab.active { color:#fff; border-bottom-color:var(--red); background:rgba(232,41,11,.12); }
-.lnav-icon { font-size:20px; line-height:1; }
+.lnav-tab.active { color:#fff; border-left-color:var(--red); background:rgba(232,41,11,.12); }
+.lnav-icon { font-size:26px; line-height:1; display:block; }
+.lnav-icon-svg { width:30px; height:30px; display:block; }
 
+.lnav-panels { flex:1; overflow-y:auto; min-width:0; }
 .lnav-panel { display:none; flex-direction:column; }
 .lnav-panel.active { display:flex; }
 
-/* Add Text */
-.add-text-hint {
-  font-size:.76rem; color:var(--txt3); line-height:1.45;
-  margin-bottom:12px; font-family:var(--font-body);
+/* Add Text Panel */
+.add-text-panel {
+  padding:28px 20px 24px;
+  display:flex; flex-direction:column; gap:0;
 }
+.add-text-header {
+  margin-bottom:20px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.add-text-title {
+  font-family:var(--font-label); font-size:1.1rem; font-weight:600;
+  color:var(--txt); letter-spacing:.02em;
+}
+.add-text-body { display:flex; flex-direction:column; gap:14px; }
+.add-text-input {
+  width:100%; padding:14px 16px;
+  border:1.5px solid var(--border); border-radius:10px;
+  font-family:var(--font-body); font-size:1rem; color:var(--txt);
+  background:#fff; outline:none;
+  transition:border-color .18s;
+}
+.add-text-input:focus { border-color:var(--txt); }
+.add-text-input::placeholder { color:var(--txt3); }
+.add-text-btn {
+  width:100%; padding:15px;
+  background:#1a1a1a; color:#fff;
+  border:none; border-radius:30px;
+  font-family:var(--font-label); font-size:1rem; font-weight:600;
+  letter-spacing:.04em; cursor:pointer;
+  transition:background .18s, transform .1s;
+}
+.add-text-btn:hover { background:#333; }
+.add-text-btn:active { transform:scale(.98); }
+/* Legacy hint (keep hidden) */
+.add-text-hint { display:none; }
 .text-inputs { display:flex; flex-direction:column; gap:8px; }
 .input-row { display:flex; flex-direction:column; gap:4px; }
 .input-label {
@@ -849,29 +890,52 @@ select.field { cursor:pointer; }
   <!-- LEFT PANEL -->
   <aside class="panel-left" id="panelLeft">
 
-    <!-- Icon nav tabs -->
+    <!-- Icon nav tabs - vertical sidebar -->
     <div class="lnav">
       <button class="lnav-tab active" data-ltab="text" onclick="switchLTab('text',this)">
-        <span class="lnav-icon">T</span>Text
+        <svg class="lnav-icon-svg" viewBox="0 0 30 30" fill="currentColor">
+          <rect x="3" y="5" width="24" height="3" rx="1.5"/>
+          <rect x="12" y="5" width="6" height="20" rx="1.5"/>
+        </svg>
+        Add Text
       </button>
       <button class="lnav-tab" data-ltab="art" onclick="switchLTab('art',this)">
-        <span class="lnav-icon">🖼</span>Art
+        <svg class="lnav-icon-svg" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="24" height="24" rx="3"/>
+          <circle cx="10" cy="10" r="2.5" fill="currentColor" stroke="none"/>
+          <path d="M3 20 L10 13 L16 19 L20 15 L27 22" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Add Art
       </button>
       <button class="lnav-tab" data-ltab="product" onclick="switchLTab('product',this)">
-        <span class="lnav-icon">👕</span>Product
+        <svg class="lnav-icon-svg" viewBox="0 0 30 30" fill="currentColor">
+          <path d="M8 4h14l3 8H5L8 4z" opacity=".6"/>
+          <path d="M5 12c0 0-1 2-1 5s1 9 11 9 11-6 11-9-1-5-1-5H5z"/>
+        </svg>
+        Product
       </button>
       <button class="lnav-tab" data-ltab="layers" onclick="switchLTab('layers',this)">
-        <span class="lnav-icon">⧉</span>Layers
+        <svg class="lnav-icon-svg" viewBox="0 0 30 30" fill="currentColor">
+          <rect x="3" y="5" width="24" height="5" rx="2" opacity=".4"/>
+          <rect x="3" y="13" width="24" height="5" rx="2" opacity=".7"/>
+          <rect x="3" y="21" width="24" height="5" rx="2"/>
+        </svg>
+        Layers
       </button>
     </div>
 
+    <!-- Panel content wrapper -->
+    <div class="lnav-panels">
+
     <!-- TEXT TAB -->
     <div class="lnav-panel active" id="ltab-text">
-      <div class="panel-section">
-        <p class="add-text-hint">Type your text below — use Enter for multiple lines. All styling options appear on the right after adding.</p>
-        <div class="text-inputs">
-          <textarea class="field" id="textInput" rows="4" placeholder="Line 1&#10;Line 2&#10;…" style="resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
-          <button class="btn-add-text" id="btnAddText">+ Add Text to Design</button>
+      <div class="add-text-panel">
+        <div class="add-text-header">
+          <h2 class="add-text-title">Add Text</h2>
+        </div>
+        <div class="add-text-body">
+          <input class="add-text-input" id="textInput" type="text" placeholder="Enter text here">
+          <button class="add-text-btn" id="btnAddText">Add To Design</button>
         </div>
         <!-- Hidden defaults used by btnAddText handler -->
         <select id="fontSelect" style="display:none"><option value="Oswald" selected>Oswald</option></select>
@@ -950,6 +1014,8 @@ select.field { cursor:pointer; }
       </div>
     </div>
 
+    </div><!-- /lnav-panels -->
+
   </aside>
 
   <!-- CANVAS -->
@@ -978,8 +1044,8 @@ select.field { cursor:pointer; }
 
     <!-- Selection / Transform properties -->
     <div class="panel-section">
-      <div class="panel-label">Transform</div>
-      <div id="noSel" style="font-size:.75rem;color:var(--txt3);padding:4px 0;">Select an object on the canvas.</div>
+      <div class="panel-label" id="rightPanelLabel">Properties</div>
+      <div id="noSel" style="font-size:.75rem;color:var(--txt3);padding:4px 0;">Select an object on the canvas to edit.</div>
       <div id="tCtrl" style="display:none;">
         <!-- Scale (proportional) -->
         <div style="margin-bottom:6px;">
@@ -3191,6 +3257,8 @@ function syncT() {
   if (tCtrl)  tCtrl.style.display  = 'block';
 
   const isImg = l.type === 'img';
+  const lbl = document.getElementById('rightPanelLabel');
+  if (lbl) lbl.textContent = isImg ? 'Edit Image' : 'Edit Text';
   if (txtEdit) txtEdit.style.display = isImg ? 'none' : 'block';
 
   // Populate text fields
