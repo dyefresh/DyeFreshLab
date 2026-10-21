@@ -2653,7 +2653,9 @@ function drawLayer(layer) {
       if (layer.flipH) ctx.scale(-1, 1);
       ctx.translate(0, pivotOffset);
 
-      let a = -Math.PI / 2 - halfSweep;
+      // Start angle: 0 = top of circle (directly above pivot).
+      // Sweep from -halfSweep to +halfSweep, centred at top.
+      let a = -halfSweep;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
