@@ -1383,8 +1383,8 @@ select.field { cursor:pointer; }
       <div class="shape-modal-section-label">Choose Text Shape</div>
       <div class="shape-modal-grid">
         <button class="sm-opt active" data-shape="normal" onclick="selectShapeModal('normal',this)"><span class="sm-preview sm-normal">NORMAL</span></button>
-        <button class="sm-opt" data-shape="arch_up" onclick="selectShapeModal('arch_up',this)"><span class="sm-preview sm-curve">CURVE</span></button>
-        <button class="sm-opt" data-shape="arch_down" onclick="selectShapeModal('arch_down',this)"><span class="sm-preview sm-arch">ARCH</span></button>
+        <button class="sm-opt" data-shape="curve" onclick="selectShapeModal('curve',this)"><span class="sm-preview sm-curve">CURVE</span></button>
+        <button class="sm-opt" data-shape="arch_up" onclick="selectShapeModal('arch_up',this)"><span class="sm-preview sm-arch">ARCH</span></button>
         <button class="sm-opt" data-shape="bridge" onclick="selectShapeModal('bridge',this)"><span class="sm-preview sm-bridge">BRIDGE</span></button>
         <button class="sm-opt" data-shape="valley" onclick="selectShapeModal('valley',this)"><span class="sm-preview sm-valley">VALLEY</span></button>
         <button class="sm-opt" data-shape="circle" onclick="selectShapeModal('circle',this)"><span class="sm-preview sm-pinch">PINCH</span></button>
@@ -1398,7 +1398,7 @@ select.field { cursor:pointer; }
       <div class="shape-modal-section-label" id="shapeSettingsLabel" style="margin-top:18px;">Choose shape settings</div>
       <div class="shape-modal-slider-wrap" id="shapeModalSlider">
         <input type="range" id="shapeModalAngle" min="-100" max="100" value="50" oninput="onShapeModalAngle(this.value)">
-        <div class="shape-modal-slider-labels"><span>Down</span><span>Up</span></div>
+        <div class="shape-modal-slider-labels"><span id="shapeSliderLabelLeft">Down</span><span id="shapeSliderLabelRight">Up</span></div>
       </div>
       <div class="shape-modal-footer">
         <button class="sm-btn-remove" onclick="selectShapeModal('normal',document.querySelector('.sm-opt[data-shape=normal]'));closeShapeModal()">Remove Shape</button>
@@ -2612,10 +2612,11 @@ function drawLayer(layer) {
         ctx.lineTo(tx + m.width, ty + effectiveSize * 0.12);
         ctx.stroke();
       }
-    } else if (shape === 'arch_up' || shape === 'arch_down' || shape === 'circle' || shape === 'bridge' || shape === 'valley') {
-      // ── Arch / Circle / Bridge / Valley curved text ───────────────────────
+    } else if (shape === 'arch_up' || shape === 'arch_down' || shape === 'curve' || shape === 'circle' || shape === 'bridge' || shape === 'valley') {
+      // ── Arch / Circle / Bridge / Valley / Curve curved text ───────────────
       const chars = displayText.split('');
-      const isDown   = shape === 'arch_down' || shape === 'bridge';
+      // 'curve' with no direction set yet = treat as arch_up (upward)
+      const isDown   = shape === 'arch_down' || shape === 'bridge' || shape === 'valley';
       const isCircle = shape === 'circle';
 
       let totalW = 0;
@@ -3339,7 +3340,7 @@ function pickShape(context, shape, el) {
 
 // ── SHAPE MODAL ────────────────────────────────────────────────────────────
 const SHAPE_LABELS = {
-  normal:'Normal', arch_up:'Curve', arch_down:'Arch',
+  normal:'Normal', curve:'Curve', arch_up:'Arch', arch_down:'Arch',
   bridge:'Bridge', valley:'Valley', circle:'Pinch',
   bulge:'Bulge', perspective:'Perspective', pointed:'Pointed',
   downward:'Downward', upward:'Upward', cone:'Cone'
@@ -3351,12 +3352,17 @@ function openShapeModal() {
   // sync active state from current layer
   const l = S.layers.find(x => x.id === S.activeLayer && x.type === 'text');
   const currentShape = l ? (l.shape || 'normal') : 'normal';
+  // arch_up/arch_down stored by CURVE shape maps to 'curve' button
+  const isCurve = currentShape === 'arch_up' || currentShape === 'arch_down';
+  const activeBtn = isCurve ? 'curve' : currentShape;
   modal.querySelectorAll('.sm-opt').forEach(o => {
-    o.classList.toggle('active', o.dataset.shape === currentShape);
+    o.classList.toggle('active', o.dataset.shape === activeBtn);
   });
   // sync slider from archAngle (map 30-340 -> -100 to 100)
   const angle = l ? (l.archAngle || 120) : 120;
-  const sliderVal = Math.round(((angle - 30) / 310) * 200 - 100);
+  let sliderVal = Math.round(((angle - 30) / 310) * 200 - 100);
+  // if stored shape is arch_down (CURVE going down), make slider negative
+  if (currentShape === 'arch_down') sliderVal = -Math.abs(sliderVal || 50);
   const sl = document.getElementById('shapeModalAngle');
   if (sl) sl.value = sliderVal;
   // show/hide slider
@@ -3365,6 +3371,14 @@ function openShapeModal() {
   const slLabel = document.getElementById('shapeSettingsLabel');
   if (slWrap) slWrap.style.display = isArched ? 'block' : 'none';
   if (slLabel) slLabel.style.display = isArched ? 'block' : 'none';
+  // sync slider labels
+  const leftLbl  = document.getElementById('shapeSliderLabelLeft');
+  const rightLbl = document.getElementById('shapeSliderLabelRight');
+  if (leftLbl && rightLbl) {
+    const smallLarge = currentShape === 'bridge' || currentShape === 'valley' || currentShape === 'circle';
+    leftLbl.textContent  = smallLarge ? 'Small' : 'Down';
+    rightLbl.textContent = smallLarge ? 'Large' : 'Up';
+  }
   modal.style.display = 'flex';
 }
 
@@ -3386,13 +3400,39 @@ function selectShapeModal(shape, el) {
   const slLabel = document.getElementById('shapeSettingsLabel');
   if (slWrap) slWrap.style.display = isArched ? 'block' : 'none';
   if (slLabel) slLabel.style.display = isArched ? 'block' : 'none';
+  // update slider labels per shape
+  const leftLbl  = document.getElementById('shapeSliderLabelLeft');
+  const rightLbl = document.getElementById('shapeSliderLabelRight');
+  const sliderEl = document.getElementById('shapeModalAngle');
+  if (leftLbl && rightLbl) {
+    const smallLarge = shape === 'bridge' || shape === 'valley' || shape === 'circle';
+    leftLbl.textContent  = smallLarge ? 'Small' : 'Down';
+    rightLbl.textContent = smallLarge ? 'Large' : 'Up';
+  }
+  // reset slider: curve starts at center (0), others start at 50 (Up/Large)
+  if (sliderEl) {
+    sliderEl.value = shape === 'curve' ? '0' : '50';
+    onShapeModalAngle(sliderEl.value);
+  }
   // apply to layer
   applyTextShape(shape);
 }
 
 function onShapeModalAngle(val) {
+  const v = parseInt(val);
   // map -100..100 -> 30..340
-  const angle = Math.round(((parseInt(val) + 100) / 200) * 310 + 30);
+  const angle = Math.round(((v + 100) / 200) * 310 + 30);
+  // For CURVE shape: negative slider = curves down (arch_down), positive = curves up (arch_up)
+  const activeShape = document.querySelector('.sm-opt.active');
+  const shape = activeShape ? activeShape.dataset.shape : null;
+  if (shape === 'curve') {
+    // direction flips at slider midpoint (0)
+    if (v < 0) {
+      applyTextShape('arch_down');
+    } else {
+      applyTextShape('arch_up');
+    }
+  }
   applyTextArchAngle(angle);
 }
 
