@@ -2225,6 +2225,7 @@ const CANVAS_H = 720;
 
 // ── IMAGE CACHE (must be declared before init runs) ───────────────────────
 const imgCache = {};
+const _invCache = {};  // inventory cache — must be declared before fetchColors calls updateProductInfo
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 (function init() {
@@ -3151,7 +3152,6 @@ function selectColor(idx) {
 }
 
 // ── INVENTORY ─────────────────────────────────────────────────────────────
-const _invCache = {};
 
 function updateProductInfo() {
   const color = S.colors[S.colorIdx];
