@@ -2225,7 +2225,7 @@ const CANVAS_H = 720;
 
 // ── IMAGE CACHE (must be declared before init runs) ───────────────────────
 const imgCache = {};
-const _invCache = {};  // inventory cache — must be declared before fetchColors calls updateProductInfo
+var _invCache = {};  // inventory cache — hoisted so no TDZ issues
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 (function init() {
