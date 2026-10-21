@@ -2617,7 +2617,7 @@ function drawLayer(layer) {
       const chars = displayText.split('');
       const isDown   = shape === 'arch_down' || shape === 'bridge';
       const isCircle = shape === 'circle';
-      // arch_up/circle: alphabetic baseline, chars sit ON the arc (baseline touches arc)
+      // arch_up/valley: alphabetic baseline, chars sit ON the arc (baseline touches arc)
       // arch_down/bridge: top baseline, chars hang DOWN from arc
       ctx.textBaseline = isDown ? 'top' : 'alphabetic';
 
@@ -2628,29 +2628,56 @@ function drawLayer(layer) {
       if (isCircle) {
         // Full circle: radius sized so text fits around ~315° of arc
         sweep = Math.PI * 1.75;
-        R = Math.max(totalW / sweep, effectiveSize * 1.0);
+        R = Math.max(totalW / sweep, effectiveSize * 1.2);
         halfSweep = sweep / 2;
       } else {
-        // archAngle (30–340) controls radius: higher = larger radius = flatter arch
-        // Map: 120 (default) → radius ≈ totalW * 1.2 (gentle arch)
-        //      30 → tight,  340 → very flat
-        const curveFactor = (archAngle || 120) / 120; // 0.25 (tight) → 2.83 (flat)
+        // archAngle slider: higher value = slider toward "Up" = tighter (smaller R)
+        // Inverted mapping: curveFactor = 120 / archAngle  →  angle=30 → very flat, angle=340 → very tight
+        const aa = archAngle || 120;
+        const curveFactor = 120 / aa; // 30→4.0 (flat), 120→1.0 (default), 340→0.35 (tight)
         R = Math.max(totalW * curveFactor * 0.8, effectiveSize * 2.5);
-        // Derive sweep from R so arc length = totalW
-        sweep = Math.min(totalW / R, Math.PI * 0.9); // cap at 162° so it never flips vertical
+        sweep = Math.min(totalW / R, Math.PI * 0.9); // cap at 162°
         halfSweep = sweep / 2;
       }
 
+      // Geometry:
+      // arch_up/valley: chars baseline at -R from pivot; top of chars at -(R+capH)
+      //   highest point = -(R + effectiveSize*0.75) [cap top at center]
+      //   lowest baseline = -(R - sagitta) [at edges]
+      //   boxH = sagitta + effectiveSize * 1.3  (arc sag + full char height)
+      //   pivotOffset: want baseline at box bottom → pivot at layer.y+layerH/2+offset, baseline = pivot - R
+      //     → boxH/2 + offset - R = boxH/2 - effectiveSize*0.2  → offset = R - effectiveSize*0.2
+      //
+      // arch_down/bridge: chars top at +R from pivot at center; top at +(R-sagitta) at edges
+      //   lowest point = R + effectiveSize  [char bottom at center]
+      //   highest top  = R - sagitta        [char top at edges — highest point]
+      //   boxH = sagitta + effectiveSize * 1.3
+      //   pivotOffset: want top-of-edge-chars at box top → (boxH/2 + offset + R - sagitta) = -boxH/2
+      //     → offset = -boxH - R + sagitta = -(boxH + R - sagitta)
+
       const sagitta = R * (1 - Math.cos(halfSweep));
       const boxW    = 2 * R * Math.sin(halfSweep);
-      const boxH    = sagitta + effectiveSize * 1.3;
-      layer.w = Math.max(boxW, effectiveSize * 2);
-      layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      // arch_up: pivot below center so arc sits above mid; arch_down: pivot above center
-      const pivotOffset = isDown
-        ? -(R - boxH / 2)                              // pivot above box center
-        : (R - sagitta / 2 - effectiveSize * 0.65);    // pivot below box center
+      let boxH, pivotOffset;
+      if (isCircle) {
+        // For circle: 2R diameter + letter height
+        boxH = 2 * R + effectiveSize * 1.5;
+        layer.w = boxH;
+        layer.h = boxH;
+        pivotOffset = 0; // centered — letters go around the circle
+      } else if (isDown) {
+        boxH = sagitta + effectiveSize * 1.5;
+        layer.w = Math.max(boxW, effectiveSize * 2);
+        layer.h = Math.max(boxH, effectiveSize * 1.5);
+        // pivot above center so text hangs down into box
+        pivotOffset = -(layer.h / 2 + R - sagitta);
+      } else {
+        boxH = sagitta + effectiveSize * 1.3;
+        layer.w = Math.max(boxW, effectiveSize * 2);
+        layer.h = Math.max(boxH, effectiveSize * 1.5);
+        // pivot below center so arc curves up into box
+        pivotOffset = R - effectiveSize * 0.2;
+      }
 
       ctx.save();
       ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
@@ -2659,8 +2686,7 @@ function drawLayer(layer) {
       if (layer.flipH) ctx.scale(-1, 1);
       ctx.translate(0, pivotOffset);
 
-      // Start angle: 0 = top of circle (directly above pivot).
-      // Sweep from -halfSweep to +halfSweep, centred at top.
+      // Sweep centred at top (a=0 = directly above pivot)
       let a = -halfSweep;
 
       for (let i = 0; i < chars.length; i++) {
@@ -2671,10 +2697,9 @@ function drawLayer(layer) {
         ctx.save();
         ctx.rotate(a);
         if (isDown) {
-          // No flip — textBaseline='top' makes chars hang below the arc line
-          ctx.translate(0, R);
+          ctx.translate(0, R);   // chars hang below arc
         } else {
-          ctx.translate(0, -R);
+          ctx.translate(0, -R);  // chars sit above arc
         }
         if (layer.outline && layer.outlineColor) {
           ctx.strokeStyle = layer.outlineColor;
