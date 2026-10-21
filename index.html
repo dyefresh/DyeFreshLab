@@ -2613,10 +2613,12 @@ function drawLayer(layer) {
       }
     } else if (shape === 'arch_up' || shape === 'arch_down' || shape === 'circle' || shape === 'bridge' || shape === 'valley') {
       // ── Arch / Circle / Bridge / Valley curved text ───────────────────────
-      ctx.textBaseline = 'alphabetic';
       const chars = displayText.split('');
       const isDown   = shape === 'arch_down' || shape === 'bridge';
       const isCircle = shape === 'circle';
+      // arch_up/circle: alphabetic baseline, chars sit ON the arc (baseline touches arc)
+      // arch_down/bridge: top baseline, chars hang DOWN from arc
+      ctx.textBaseline = isDown ? 'top' : 'alphabetic';
 
       let totalW = 0;
       const cws = chars.map(ch => { const w = ctx.measureText(ch).width; totalW += w; return w; });
@@ -2644,7 +2646,10 @@ function drawLayer(layer) {
       layer.w = Math.max(boxW, effectiveSize * 2);
       layer.h = Math.max(boxH, effectiveSize * 1.5);
 
-      const pivotOffset = (R - sagitta / 2 - effectiveSize * 0.65) * (isDown ? -1 : 1);
+      // arch_up: pivot below center so arc sits above mid; arch_down: pivot above center
+      const pivotOffset = isDown
+        ? -(R - boxH / 2)                              // pivot above box center
+        : (R - sagitta / 2 - effectiveSize * 0.65);    // pivot below box center
 
       ctx.save();
       ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
@@ -2665,8 +2670,8 @@ function drawLayer(layer) {
         ctx.save();
         ctx.rotate(a);
         if (isDown) {
+          // No flip — textBaseline='top' makes chars hang below the arc line
           ctx.translate(0, R);
-          ctx.rotate(Math.PI);
         } else {
           ctx.translate(0, -R);
         }
@@ -2682,8 +2687,9 @@ function drawLayer(layer) {
           ctx.strokeStyle = layer.color;
           ctx.lineWidth   = Math.max(1, effectiveSize * 0.06);
           ctx.beginPath();
-          ctx.moveTo(-cw / 2, effectiveSize * 0.1);
-          ctx.lineTo( cw / 2, effectiveSize * 0.1);
+          const ulY = isDown ? effectiveSize * 0.9 : effectiveSize * 0.1;
+          ctx.moveTo(-cw / 2, ulY);
+          ctx.lineTo( cw / 2, ulY);
           ctx.stroke();
         }
         a += (cw / R) / 2;
