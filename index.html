@@ -2624,50 +2624,45 @@ function drawLayer(layer) {
 
       let R, sweep, halfSweep;
       if (isCircle) {
-        // Full circle: text fits around ~315° of arc, starting at top, going clockwise
-        sweep = Math.PI * 1.75;
-        R = Math.max(totalW / sweep, effectiveSize * 1.2);
+        // PINCH: tight upward arch — same geometry as arch_up but forced tight radius
+        // archAngle slider controls how tight (Small=gentle, Large=very tight)
+        const aa = archAngle || 200;
+        const curveFactor = 120 / aa;
+        R = Math.max(totalW * curveFactor * 0.5, effectiveSize * 1.5); // tighter than arch_up
+        sweep = Math.min(totalW / R, Math.PI * 1.2); // allow wider sweep for pinch
         halfSweep = sweep / 2;
       } else {
         // archAngle slider: higher value = tighter arch (smaller R)
         const aa = archAngle || 120;
         const curveFactor = 120 / aa; // 30→4.0 (flat), 120→1.0 (default), 340→0.35 (tight)
         R = Math.max(totalW * curveFactor * 0.8, effectiveSize * 2.5);
-        sweep = Math.min(totalW / R, Math.PI * 0.9); // cap at 162°
+        sweep = Math.min(totalW / R, Math.PI * 0.95); // cap at ~171°
         halfSweep = sweep / 2;
       }
 
       const sagitta = R * (1 - Math.cos(halfSweep));
-      const boxW    = 2 * R * Math.sin(halfSweep);
       const capH    = effectiveSize * 0.75; // approximate cap-height of glyphs
+      // For down-arc: edge chars are rotated, their width projects onto more horizontal space
+      // Add a small extra pad so rotated edge glyphs don't clip
+      const edgePad = isDown ? effectiveSize * 0.6 : effectiveSize * 0.3;
+      const boxW    = 2 * R * Math.sin(halfSweep) + edgePad;
 
       // Geometry for bounding box and pivot placement:
       //
-      // arch_up / valley  (translate 0,−R  per char; textBaseline='alphabetic'):
-      //   char BASELINE at pivot_y − R; char CAP TOP at pivot_y − R − capH
-      //   at centre (a=0): baseline = pivot_y − R   (lowest baseline point)
-      //   at edges (a=±hs): baseline = pivot_y − R·cos(hs) = pivot_y − R + sagitta  (highest baseline)
-      //   box top  = pivot_y − R − capH   (cap top at centre char)
-      //   box bot  = pivot_y − R + sagitta (baseline at edge chars, + small pad)
-      //   boxH = capH + sagitta + pad
-      //   pivotOffset = R + capH − layerH/2  (so box top = layer.y exactly)
+      // arch_up / circle(pinch): translate(0,−R) per char; textBaseline='alphabetic'
+      //   pivotOffset = R + capH − layerH/2
       //
-      // arch_down / bridge  (translate 0,+R  per char; textBaseline='top'):
-      //   char TOP at pivot_y + R·cos(a); at edges: pivot_y + R − sagitta  (highest top)
-      //   char BOTTOM at centre: pivot_y + R + effectiveSize
-      //   box top  = pivot_y + R − sagitta
-      //   box bot  = pivot_y + R + effectiveSize
-      //   boxH = sagitta + effectiveSize + pad
-      //   pivotOffset = −(layerH/2 + R − sagitta)  (so box top = layer.y exactly)
-      //
-      // circle: pivot at box centre, radius R, text goes clockwise from top (−π/2)
+      // arch_down / bridge / valley: translate(0,+R) per char; textBaseline='top'
+      //   pivotOffset = −(layerH/2 + R − sagitta)
 
       let boxH, pivotOffset;
       if (isCircle) {
-        boxH = 2 * R + effectiveSize * 1.5;
-        layer.w = boxH;
-        layer.h = boxH;
-        pivotOffset = 0;
+        // PINCH uses same up-arch geometry
+        ctx.textBaseline = 'alphabetic';
+        boxH = capH + sagitta + effectiveSize * 0.3;
+        layer.w = Math.max(boxW, effectiveSize * 2);
+        layer.h = Math.max(boxH, effectiveSize * 1.0);
+        pivotOffset = R + capH - layer.h / 2;
       } else if (isDown) {
         ctx.textBaseline = 'top';
         boxH = sagitta + effectiveSize * 1.3;
@@ -2689,39 +2684,13 @@ function drawLayer(layer) {
       if (layer.flipH) ctx.scale(-1, 1);
       ctx.translate(0, pivotOffset);
 
-      if (isCircle) {
-        // Circle: start at top (−π/2), sweep clockwise
-        // translate(0,−R) maps angle a to world: x=R·sin(a), y=−R·cos(a)
-        // starting at a=−π/2 puts chars at the LEFT; we want top → use a starting at 0 offset from −π/2
-        // Actually: at a=−π/2, x=R·sin(−π/2)=−R (leftmost). We want to start at top:
-        // top = a where x=0 (sin(a)=0) and y=−R (cos(a)=1) → a=0. But translate(0,−R) gives y=−R at a=0. ✓
-        // So start at a = −totalW/(2R) (left edge of text arc) going right
-        ctx.textBaseline = 'alphabetic';
-        let a = -totalW / (2 * R);
-        for (let i = 0; i < chars.length; i++) {
-          const ch = chars[i];
-          const cw = cws[i];
-          a += (cw / R) / 2;
-          ctx.save();
-          ctx.rotate(a);
-          ctx.translate(0, -R);
-          if (layer.outline && layer.outlineColor) {
-            ctx.strokeStyle = layer.outlineColor;
-            ctx.lineWidth   = (layer.outlineWidth || 2) * 2;
-            ctx.lineJoin    = 'round';
-            ctx.strokeText(ch, -cw / 2, 0);
-          }
-          ctx.fillStyle = layer.color;
-          ctx.fillText(ch, -cw / 2, 0);
-          a += (cw / R) / 2;
-          ctx.restore();
-        }
-      } else {
-        // Arch up/down, bridge, valley
-        // For arch_up (translate 0,−R): world x = R·sin(a), left-to-right → a goes −hs → +hs ✓
-        // For arch_down (translate 0,+R): world x = −R·sin(a), so left-to-right → a goes +hs → −hs
-        let a = isDown ? halfSweep : -halfSweep;
-        const aStep = isDown ? -1 : 1;
+      {
+        // Arch up / down / bridge / valley / pinch (circle)
+        // For up-arc (isDown=false, isCircle or arch_up): translate(0,−R), a: −hs→+hs
+        // For down-arc (isDown=true): translate(0,+R), a: +hs→−hs
+        const goDown = isDown; // circle(pinch) is up-arc like arch_up
+        let a = goDown ? halfSweep : -halfSweep;
+        const aStep = goDown ? -1 : 1;
 
         for (let i = 0; i < chars.length; i++) {
           const ch = chars[i];
@@ -2730,7 +2699,7 @@ function drawLayer(layer) {
 
           ctx.save();
           ctx.rotate(a);
-          ctx.translate(0, isDown ? R : -R);
+          ctx.translate(0, goDown ? R : -R);
 
           if (layer.outline && layer.outlineColor) {
             ctx.strokeStyle = layer.outlineColor;
@@ -2744,7 +2713,7 @@ function drawLayer(layer) {
             ctx.strokeStyle = layer.color;
             ctx.lineWidth   = Math.max(1, effectiveSize * 0.06);
             ctx.beginPath();
-            const ulY = isDown ? effectiveSize * 0.9 : effectiveSize * 0.1;
+            const ulY = goDown ? effectiveSize * 0.9 : effectiveSize * 0.1;
             ctx.moveTo(-cw / 2, ulY);
             ctx.lineTo( cw / 2, ulY);
             ctx.stroke();
