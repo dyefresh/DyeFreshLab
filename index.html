@@ -2687,12 +2687,16 @@ function drawLayer(layer) {
       ctx.translate(0, pivotOffset);
 
       // Sweep centred at top (a=0 = directly above pivot)
-      let a = -halfSweep;
+      // For arch_up/valley: start at -halfSweep, step +cw/R → chars go left-to-right
+      // For arch_down/bridge: translate(0,R) maps a→x as pivot_x - R*sin(a),
+      //   so to get left-to-right we start at +halfSweep and step -cw/R
+      let a = isDown ? halfSweep : -halfSweep;
+      const aStep = isDown ? -1 : 1;
 
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i];
         const cw = cws[i];
-        a += (cw / R) / 2;
+        a += aStep * (cw / R) / 2;
 
         ctx.save();
         ctx.rotate(a);
@@ -2718,7 +2722,7 @@ function drawLayer(layer) {
           ctx.lineTo( cw / 2, ulY);
           ctx.stroke();
         }
-        a += (cw / R) / 2;
+        a += aStep * (cw / R) / 2;
         ctx.restore();
       }
 
