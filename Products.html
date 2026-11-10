@@ -1,5 +1,5 @@
 <title>DyeFresh Product Catalog</title>
-<!-- build: 20261110e -->
+<!-- build: 20261110f -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Oswald:wght@500;700&display=swap">
 
@@ -2383,6 +2383,13 @@ function initCardImages() {
                   document.getElementById(id + '-img');
     if (!imgEl) return;
     const proxied = proxyImg(defColor.img);
+    // Reset visibility in case onerror already fired on the raw CDN src
+    imgEl.style.display = '';
+    imgEl.style.opacity = '1';
+    const placeholder = imgEl.nextElementSibling;
+    if (placeholder && placeholder.classList.contains('card-photo-placeholder')) {
+      placeholder.style.display = 'none';
+    }
     imgEl.src = proxied;
     // Update color label to match default
     const lbl = document.getElementById(id + '-color-label');
