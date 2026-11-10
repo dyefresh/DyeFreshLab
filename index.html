@@ -3197,26 +3197,26 @@ function drawAll() {
   // ── Print zone guide (dashed rectangle) ─────────────────────────────────
   if (S.showPrintZone === true) {
     ctx.save();
-    // Light blue tinted fill to show printable area
-    ctx.fillStyle = 'rgba(59,130,246,0.04)';
+    // Light red tinted fill to show printable area
+    ctx.fillStyle = 'rgba(220,38,38,0.04)';
     ctx.fillRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
-    // Dashed border
-    ctx.strokeStyle = 'rgba(59,130,246,0.55)';
+    // Dashed border — red
+    ctx.strokeStyle = 'rgba(220,38,38,0.70)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6,4]);
     ctx.strokeRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
     ctx.setLineDash([]);
-    // Width label: "12"" at the top edge
+    // Width label at the top edge
     ctx.font = '600 11px Inter, sans-serif';
-    ctx.fillStyle = 'rgba(59,130,246,0.9)';
+    ctx.fillStyle = 'rgba(220,38,38,0.9)';
     ctx.textAlign = 'center';
-    ctx.fillText('← 12" print width →', CANVAS_W/2, PRINT_ZONE_Y - 5);
+    ctx.fillText('← 14.5" print width →', CANVAS_W/2, PRINT_ZONE_Y - 5);
     // Ruler tick marks along top edge every inch
-    ctx.strokeStyle = 'rgba(59,130,246,0.45)';
+    ctx.strokeStyle = 'rgba(220,38,38,0.45)';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 12; i++) {
+    for (let i = 0; i <= 14; i++) {
       const rx = PRINT_ZONE_X + i * PX_PER_INCH;
-      const tickH = (i === 0 || i === 12) ? 8 : (i % 4 === 0 ? 6 : 3);
+      const tickH = (i === 0 || i === 14) ? 8 : (i % 4 === 0 ? 6 : 3);
       ctx.beginPath();
       ctx.moveTo(rx, PRINT_ZONE_Y);
       ctx.lineTo(rx, PRINT_ZONE_Y + tickH);
@@ -3766,8 +3766,8 @@ const PX_PER_INCH = 24;
 
 // Print zone: the shaded/dashed overlay showing the 12"×16" printable area
 // Centered horizontally; top at ~28% down (below collar), bottom near hem.
-const PRINT_ZONE_W  = 12 * PX_PER_INCH;  // 288px = 12"
-const PRINT_ZONE_H  = 14 * PX_PER_INCH;  // 336px = 14"
+const PRINT_ZONE_W  = 14.5 * PX_PER_INCH;  // 348px = 14.5" (underarm to underarm)
+const PRINT_ZONE_H  = 14 * PX_PER_INCH;    // 336px = 14"
 const PRINT_ZONE_X  = (CANVAS_W - PRINT_ZONE_W) / 2;   // centred horizontally
 const PRINT_ZONE_Y  = Math.round(CANVAS_H * 0.33);      // ~33% down = chest level
 
@@ -4556,7 +4556,7 @@ function toggleLock() {
   }
 }
 
-const MAX_PRINT_W_PX = 12 * PX_PER_INCH; // 12" max print width
+const MAX_PRINT_W_PX = 14.5 * PX_PER_INCH; // 14.5" max print width
 function apSc(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   const pct = +v / 100;
@@ -4986,16 +4986,7 @@ document.addEventListener('touchend', () => { S.drag = null; })
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
 document.getElementById('btnDownload').addEventListener('click', () => {
-  // Temporarily deselect to hide handles
-  const prev = S.activeLayer;
-  S.activeLayer = null;
-  drawAll();
-  const link = document.createElement('a');
-  link.download = `dyefresh-design.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  S.activeLayer = prev;
-  drawAll();
+  downloadPreview();
 });
 
 document.getElementById('btnClear').addEventListener('click', () => {
@@ -5167,12 +5158,129 @@ drawAll();
 function isMobile() { return window.innerWidth <= 700; }
 
 // Named functions used by mobile toolbar (inline onclick)
-function downloadCanvas() {
-  const prev = S.activeLayer; S.activeLayer = null; drawAll();
-  const link = document.createElement('a');
-  link.download = 'dyefresh-design.png';
-  link.href = canvas.toDataURL('image/png'); link.click();
-  S.activeLayer = prev; drawAll();
+function downloadCanvas() { downloadPreview(); }
+
+function downloadPreview() {
+  // 1. Render canvas without print guide and without selection handles
+  const prevActive = S.activeLayer;
+  const prevZone   = S.showPrintZone;
+  S.activeLayer    = null;
+  S.showPrintZone  = false;
+  drawAll();
+  const garmentDataUrl = canvas.toDataURL('image/png');
+  S.activeLayer   = prevActive;
+  S.showPrintZone = prevZone;
+  drawAll();
+
+  // 2. Gather order info
+  const productName = document.getElementById('prodName').textContent || '—';
+  const style       = document.getElementById('prodStyle').textContent || '—';
+  const colorName   = (S.colors && S.colors[S.colorIdx]) ? S.colors[S.colorIdx].name : '—';
+  const brand       = productName.split(' ')[0] || 'Port & Company'; // first word or fallback
+
+  // Artwork width: find the widest image/text layer and report in inches
+  let artworkWidthIn = '—';
+  const imgLayer = S.layers.slice().sort((a,b) => b.w - a.w)[0];
+  if (imgLayer) {
+    artworkWidthIn = (imgLayer.w / PX_PER_INCH).toFixed(1) + '"';
+  }
+
+  // Size breakdown from sidebar inputs
+  const sizeEntries = [];
+  document.querySelectorAll('.sidebar-size').forEach(inp => {
+    const qty = parseInt(inp.value, 10) || 0;
+    if (qty > 0) sizeEntries.push(`${inp.dataset.size}: ${qty}`);
+  });
+  const sizesText   = sizeEntries.length ? sizeEntries.join('  ·  ') : 'No sizes entered';
+  const totalPieces = sizeEntries.reduce((sum, e) => sum + parseInt(e.split(': ')[1],10), 0);
+
+  // 3. Build composite canvas: garment on top, info panel below
+  const INFO_H  = 130; // height of info panel in px
+  const PADDING = 24;
+  const comp    = document.createElement('canvas');
+  comp.width    = CANVAS_W;
+  comp.height   = CANVAS_H + INFO_H;
+  const cx      = comp.getContext('2d');
+
+  // Info panel background
+  cx.fillStyle = '#111111';
+  cx.fillRect(0, 0, comp.width, comp.height);
+
+  // Draw garment design area (white card bg to match the lab's card)
+  cx.fillStyle = '#ffffff';
+  cx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Draw garment image
+  const img = new Image();
+  img.onload = () => {
+    cx.drawImage(img, 0, 0, CANVAS_W, CANVAS_H);
+
+    // Draw info panel
+    cx.fillStyle = '#111111';
+    cx.fillRect(0, CANVAS_H, comp.width, INFO_H);
+
+    // DyeFresh logo text top-left
+    cx.font = 'bold 15px Inter, Arial, sans-serif';
+    cx.fillStyle = '#E8292A';
+    cx.textAlign = 'left';
+    cx.fillText('DYEFRESH', PADDING, CANVAS_H + 28);
+    cx.fillStyle = '#ffffff';
+    cx.fillText(' DESIGN PREVIEW', PADDING + 86, CANVAS_H + 28);
+
+    // Info rows
+    const col1X = PADDING;
+    const col2X = CANVAS_W / 2;
+    const row1Y = CANVAS_H + 56;
+    const row2Y = CANVAS_H + 78;
+    const row3Y = CANVAS_H + 100;
+
+    cx.font = '11px Inter, Arial, sans-serif';
+    cx.fillStyle = '#888888';
+
+    // Row 1
+    cx.textAlign = 'left';
+    cx.fillText('PRODUCT', col1X, row1Y - 14);
+    cx.fillStyle = '#ffffff';
+    cx.font = '13px Inter, Arial, sans-serif';
+    cx.fillText(productName, col1X, row1Y);
+
+    cx.font = '11px Inter, Arial, sans-serif';
+    cx.fillStyle = '#888888';
+    cx.fillText('STYLE #', col2X, row1Y - 14);
+    cx.fillStyle = '#ffffff';
+    cx.font = '13px Inter, Arial, sans-serif';
+    cx.fillText(style, col2X, row1Y);
+
+    // Row 2
+    cx.font = '11px Inter, Arial, sans-serif';
+    cx.fillStyle = '#888888';
+    cx.fillText('COLOR', col1X, row2Y - 14);
+    cx.fillStyle = '#ffffff';
+    cx.font = '13px Inter, Arial, sans-serif';
+    cx.fillText(colorName, col1X, row2Y);
+
+    cx.font = '11px Inter, Arial, sans-serif';
+    cx.fillStyle = '#888888';
+    cx.fillText('ARTWORK WIDTH', col2X, row2Y - 14);
+    cx.fillStyle = '#ffffff';
+    cx.font = '13px Inter, Arial, sans-serif';
+    cx.fillText(artworkWidthIn, col2X, row2Y);
+
+    // Row 3: sizes spanning full width
+    cx.font = '11px Inter, Arial, sans-serif';
+    cx.fillStyle = '#888888';
+    cx.fillText('SIZES  (' + totalPieces + ' pcs)', col1X, row3Y - 14);
+    cx.fillStyle = '#ffffff';
+    cx.font = '13px Inter, Arial, sans-serif';
+    cx.fillText(sizesText, col1X, row3Y);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `dyefresh-${productName.replace(/\s+/g,'-').toLowerCase()}-${colorName.replace(/\s+/g,'-').toLowerCase()}.png`;
+    link.href = comp.toDataURL('image/png');
+    link.click();
+  };
+  img.src = garmentDataUrl;
 }
 function openQuoteModal() {
   syncSidebarToModal();
