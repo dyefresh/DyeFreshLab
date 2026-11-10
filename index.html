@@ -2892,6 +2892,9 @@ const S = {
   dragging: false,
   dragOffX: 0, dragOffY: 0,
   resizing: false,
+  pzX: null,  // print zone X (null = use default centered)
+  pzY: null,  // print zone Y (null = use default)
+  drag: null, // current drag descriptor
 };
 
 // ── CANVAS SETUP ──────────────────────────────────────────────────────────
@@ -3176,6 +3179,10 @@ function loadGarmentImage(overrideUrl) {
 
 // ── DRAW ──────────────────────────────────────────────────────────────────
 function drawAll() {
+  // Sync live print zone position from state
+  PRINT_ZONE_X = getPZX();
+  PRINT_ZONE_Y = getPZY();
+
   ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
 
   // White canvas background
@@ -3197,12 +3204,13 @@ function drawAll() {
   // ── Print zone guide (dashed rectangle) ─────────────────────────────────
   if (S.showPrintZone === true) {
     ctx.save();
-    // Light red tinted fill to show printable area
-    ctx.fillStyle = 'rgba(220,38,38,0.04)';
+    const isDraggingPZ = S.drag && S.drag.type === 'pzmove';
+    // Light red tinted fill — slightly more visible while dragging
+    ctx.fillStyle = isDraggingPZ ? 'rgba(220,38,38,0.08)' : 'rgba(220,38,38,0.04)';
     ctx.fillRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
     // Dashed border — red
-    ctx.strokeStyle = 'rgba(220,38,38,0.70)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = isDraggingPZ ? 'rgba(220,38,38,0.95)' : 'rgba(220,38,38,0.70)';
+    ctx.lineWidth = isDraggingPZ ? 2 : 1.5;
     ctx.setLineDash([6,4]);
     ctx.strokeRect(PRINT_ZONE_X, PRINT_ZONE_Y, PRINT_ZONE_W, PRINT_ZONE_H);
     ctx.setLineDash([]);
@@ -3210,7 +3218,7 @@ function drawAll() {
     ctx.font = '600 11px Inter, sans-serif';
     ctx.fillStyle = 'rgba(220,38,38,0.9)';
     ctx.textAlign = 'center';
-    ctx.fillText('← 12" print width →', CANVAS_W/2, PRINT_ZONE_Y - 5);
+    ctx.fillText('← 12" print width →', PRINT_ZONE_X + PRINT_ZONE_W/2, PRINT_ZONE_Y - 5);
     // Ruler tick marks along top edge every inch
     ctx.strokeStyle = 'rgba(220,38,38,0.45)';
     ctx.lineWidth = 1;
@@ -3221,6 +3229,13 @@ function drawAll() {
       ctx.moveTo(rx, PRINT_ZONE_Y);
       ctx.lineTo(rx, PRINT_ZONE_Y + tickH);
       ctx.stroke();
+    }
+    // Drag hint label — admin mode only
+    if (ADMIN_MODE && !S.activeLayer && !isDraggingPZ) {
+      ctx.font = '500 10px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(220,38,38,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('⠿ drag to reposition', PRINT_ZONE_X + PRINT_ZONE_W/2, PRINT_ZONE_Y + PRINT_ZONE_H/2);
     }
     ctx.restore();
   }
@@ -3764,12 +3779,21 @@ function _roundRect(c, x, y, w, h, r) {
 // 450px / 19" ≈ 23.7, rounded to 24 for clean numbers.
 const PX_PER_INCH = 24;
 
-// Print zone: the shaded/dashed overlay showing the 12"×16" printable area
-// Centered horizontally; top at ~28% down (below collar), bottom near hem.
-const PRINT_ZONE_W  = 12 * PX_PER_INCH;  // 288px = 12"
-const PRINT_ZONE_H  = 14 * PX_PER_INCH;  // 336px = 14"
-const PRINT_ZONE_X  = (CANVAS_W - PRINT_ZONE_W) / 2;   // centred horizontally
-const PRINT_ZONE_Y  = Math.round(CANVAS_H * 0.33);      // ~33% down = chest level
+// Admin mode: enabled via ?admin=1 in URL — allows dragging the print zone to set its position.
+// Not visible or accessible to customers on the normal URL.
+const ADMIN_MODE = new URLSearchParams(location.search).get('admin') === '1';
+
+// Print zone: the shaded/dashed overlay showing the 12"×14" printable area
+const PRINT_ZONE_W        = 12 * PX_PER_INCH;                    // 288px = 12"
+const PRINT_ZONE_H        = 14 * PX_PER_INCH;                    // 336px = 14"
+const PRINT_ZONE_X_DEFAULT = (CANVAS_W - PRINT_ZONE_W) / 2;      // centred horizontally
+const PRINT_ZONE_Y_DEFAULT = Math.round(CANVAS_H * 0.33);        // ~33% down = chest level
+// Keep legacy names as getters so existing clamp code still works
+function getPZX() { return S.pzX !== null ? S.pzX : PRINT_ZONE_X_DEFAULT; }
+function getPZY() { return S.pzY !== null ? S.pzY : PRINT_ZONE_Y_DEFAULT; }
+// Aliases used directly in drawAll and clamp logic
+let PRINT_ZONE_X = PRINT_ZONE_X_DEFAULT;
+let PRINT_ZONE_Y = PRINT_ZONE_Y_DEFAULT;
 
 // ── SWATCHES ──────────────────────────────────────────────────────────────
 function buildSwatches() {
@@ -4869,6 +4893,21 @@ function mdown(e) {
   e.preventDefault();
   const { x: mx, y: my } = canvasCoords(e);
 
+  // Admin mode: allow dragging the print zone when no layer is under cursor
+  if (ADMIN_MODE && S.showPrintZone === true) {
+    const pzHit = mx >= PRINT_ZONE_X && mx <= PRINT_ZONE_X + PRINT_ZONE_W &&
+                  my >= PRINT_ZONE_Y && my <= PRINT_ZONE_Y + PRINT_ZONE_H;
+    // Only grab the zone if no layer is on top of this point
+    const layerOnTop = S.layers.slice().reverse().some(l => layerBodyHit(mx, my, l));
+    if (pzHit && !layerOnTop) {
+      S.drag = { type:'pzmove', ox: mx - PRINT_ZONE_X, oy: my - PRINT_ZONE_Y };
+      S.activeLayer = null;
+      canvas.style.cursor = 'grabbing';
+      drawAll();
+      return;
+    }
+  }
+
   // Check handle on selected layer first
   if (S.activeLayer !== null) {
     const sel = S.layers.find(l => l.id === S.activeLayer);
@@ -4915,9 +4954,30 @@ document.addEventListener('mousemove', mmove);
 document.addEventListener('touchmove', e => { if (S.drag) { e.preventDefault(); mmove(e); } }, { passive:false });
 
 function mmove(e) {
-  if (!S.drag) return;
   const { x: mx, y: my } = canvasCoords(e);
+
+  // Admin mode: update cursor when hovering over print zone (no drag active)
+  if (ADMIN_MODE && S.showPrintZone === true && !S.drag) {
+    const pzHit = mx >= PRINT_ZONE_X && mx <= PRINT_ZONE_X + PRINT_ZONE_W &&
+                  my >= PRINT_ZONE_Y && my <= PRINT_ZONE_Y + PRINT_ZONE_H;
+    const layerOnTop = S.layers.slice().reverse().some(l => layerBodyHit(mx, my, l));
+    canvas.style.cursor = (pzHit && !layerOnTop) ? 'grab' : '';
+  }
+
+  if (!S.drag) return;
   const t = S.drag.type;
+
+  // Handle print zone drag
+  if (t === 'pzmove') {
+    const newX = mx - S.drag.ox;
+    const newY = my - S.drag.oy;
+    // Clamp so zone stays within canvas
+    S.pzX = Math.max(0, Math.min(CANVAS_W - PRINT_ZONE_W, newX));
+    S.pzY = Math.max(0, Math.min(CANVAS_H - PRINT_ZONE_H, newY));
+    drawAll();
+    return;
+  }
+
   const l = S.layers.find(x => x.id === S.activeLayer);
   if (!l) return;
 
@@ -4981,8 +5041,14 @@ function mmove(e) {
   }
 }
 
-document.addEventListener('mouseup',  () => { S.drag = null; });
-document.addEventListener('touchend', () => { S.drag = null; })
+document.addEventListener('mouseup', () => {
+  if (S.drag && S.drag.type === 'pzmove' && ADMIN_MODE) {
+    console.log(`[ADMIN] Print zone position set → pzX: ${Math.round(getPZX())}, pzY: ${Math.round(getPZY())}  (canvas: ${CANVAS_W}×${CANVAS_H})`);
+    canvas.style.cursor = 'grab';
+  }
+  S.drag = null;
+});
+document.addEventListener('touchend', () => { S.drag = null; });
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
 document.getElementById('btnDownload').addEventListener('click', () => {
