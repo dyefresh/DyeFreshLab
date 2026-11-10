@@ -3784,9 +3784,9 @@ const PX_PER_INCH = 24;
 const ADMIN_MODE = new URLSearchParams(location.search).get('admin') === '1';
 
 // Print zone: the shaded/dashed overlay showing the 12"×14" printable area
-const PRINT_ZONE_W        = 260;                                  // ~10.8" fits inside shirt body
+const PRINT_ZONE_W        = 240;                                  // 240px fits inside shirt body
 const PRINT_ZONE_H        = 16 * PX_PER_INCH;                    // 384px = 16"
-const PRINT_ZONE_X_DEFAULT = 170;  // centered: (600-260)/2 = 170, fits inside shirt body
+const PRINT_ZONE_X_DEFAULT = 180;  // centered: (600-240)/2 = 180, fits inside shirt body
 const PRINT_ZONE_Y_DEFAULT = 200;  // calibrated: just below collar
 // Keep legacy names as getters so existing clamp code still works
 function getPZX() { return S.pzX !== null ? S.pzX : PRINT_ZONE_X_DEFAULT; }
@@ -4580,7 +4580,7 @@ function toggleLock() {
   }
 }
 
-const MAX_PRINT_W_PX = 260; // max print width matches print zone width
+const MAX_PRINT_W_PX = 240; // max print width matches print zone width
 function apSc(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   const pct = +v / 100;
