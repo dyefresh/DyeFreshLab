@@ -3785,9 +3785,9 @@ const ADMIN_MODE = new URLSearchParams(location.search).get('admin') === '1';
 
 // Print zone: the shaded/dashed overlay showing the 12"×14" printable area
 const PRINT_ZONE_W        = 12 * PX_PER_INCH;                    // 288px = 12"
-const PRINT_ZONE_H        = 14 * PX_PER_INCH;                    // 336px = 14"
-const PRINT_ZONE_X_DEFAULT = 140;  // calibrated position
-const PRINT_ZONE_Y_DEFAULT = 200;  // calibrated position
+const PRINT_ZONE_H        = 16 * PX_PER_INCH;                    // 384px = 16"
+const PRINT_ZONE_X_DEFAULT = (CANVAS_W - PRINT_ZONE_W) / 2;  // centred horizontally
+const PRINT_ZONE_Y_DEFAULT = Math.round(CANVAS_H * 0.33);    // ~33% down = chest level
 // Keep legacy names as getters so existing clamp code still works
 function getPZX() { return S.pzX !== null ? S.pzX : PRINT_ZONE_X_DEFAULT; }
 function getPZY() { return S.pzY !== null ? S.pzY : PRINT_ZONE_Y_DEFAULT; }
