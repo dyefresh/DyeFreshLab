@@ -1,5 +1,5 @@
 <title>DyeFresh Product Catalog</title>
-<!-- build: 20261110g -->
+<!-- build: 20261110h -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Oswald:wght@500;700&display=swap">
 
@@ -2051,12 +2051,12 @@ document.getElementById('colorPickerModal').addEventListener('click', function(e
 // Once credentials are set, this proxy auto-populates all product colors/images/inventory
 const SANMAR_PROXY_URL = 'https://sanmar-proxy-production-8b0b.up.railway.app';
 
-// Route SanMar CDN images through the Railway proxy to avoid CORS blocks
+// SanMar CDN images are loaded directly — browsers can reach cdnp.sanmar.com
+// fine from the client side. The Railway proxy is only needed for API calls
+// (colors, inventory) which require server-side credentials.
 function proxyImg(url) {
   if (!url) return url;
-  if (url.includes('cdnp.sanmar.com') || url.includes('cdn.sanmar.com')) {
-    return `${SANMAR_PROXY_URL}/api/img-proxy?url=${encodeURIComponent(url)}`;
-  }
+  // Return CDN URLs as-is; <img> tags have no CORS restriction
   return url;
 }
 
