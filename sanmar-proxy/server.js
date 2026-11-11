@@ -40,9 +40,9 @@ const CONFIG = {
   allowedOrigins : (process.env.ALLOWED_ORIGINS || 'https://dyefresh.com,https://jcampos13.github.io').split(','),
 };
 
-// SanMar SOAP endpoints — port 8080 (Render allows all outbound ports)
-const SANMAR_WSDL = 'http://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort';
-const SANMAR_INV  = 'http://ws.sanmar.com:8080/SanMarWebService/SanMarInventoryServicePort';
+// SanMar SOAP endpoints — HTTPS port 8080 (per integration guide 24.6)
+const SANMAR_WSDL = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort';
+const SANMAR_INV  = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarWebServicePort';
 
 // Cache responses — product data for 6 hours, inventory for 15 minutes
 const productCache   = new NodeCache({ stdTTL: 6 * 60 * 60 });
@@ -67,7 +67,7 @@ function soapRequest(endpoint, action, bodyXml) {
     const envelope = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-  xmlns:san="http://www.sanmar.com/webservice">
+  xmlns:san="http://impl.webservice.integration.sanmar.com/">
   <soapenv:Header/>
   <soapenv:Body>
     ${bodyXml}
@@ -111,11 +111,13 @@ function soapRequest(endpoint, action, bodyXml) {
 }
 
 // ─── AUTH XML (reused in every call) ─────────────────────────────────────────
+// Auth fields per SanMar Web Services Integration Guide 24.6
 function authXml() {
   return `
     <san:sanMarCustomerNumber>${CONFIG.customerNumber}</san:sanMarCustomerNumber>
     <san:sanMarUserName>${CONFIG.username}</san:sanMarUserName>
-    <san:sanMarUserPassword>${CONFIG.password}</san:sanMarUserPassword>`;
+    <san:sanMarUserPassword>${CONFIG.password}</san:sanMarUserPassword>
+    <san:showMappingAttributes>true</san:showMappingAttributes>`;
 }
 
 // ─── PARSE IMAGE RESPONSE ────────────────────────────────────────────────────
