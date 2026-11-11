@@ -442,6 +442,33 @@ app.get('/api/img-proxy', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/debug?style=PC54
+ * Returns raw parsed XML from SanMar for debugging response structure.
+ * Remove or gate this endpoint before going to production.
+ */
+app.get('/api/debug', async (req, res) => {
+  const { style = 'PC54' } = req.query;
+  try {
+    const body = `
+      <san:getProductBulkInfo>
+        ${authXml()}
+        <san:style>${style}</san:style>
+      </san:getProductBulkInfo>`;
+    const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
+    // Return full parsed structure so we can see the actual keys
+    const env = result?.['soapenv:Envelope'] || result?.['S:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
+    const body2 = env?.['soapenv:Body'] || env?.['S:Body'] || env?.['SOAP-ENV:Body'] || env;
+    const keys = Object.keys(body2 || {});
+    const firstKey = keys[0];
+    const response = body2?.[firstKey];
+    const retKeys = Object.keys(response?.return || response || {}).slice(0, 20);
+    res.json({ envKeys: Object.keys(result || {}), bodyKeys: keys, responseKey: firstKey, returnKeys: retKeys, sample: JSON.stringify(response).substring(0, 2000) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── START ────────────────────────────────────────────────────────────────────
 app.listen(CONFIG.port, () => {
   console.log(`\n🎨 DyeFresh × SanMar Proxy running on port ${CONFIG.port}`);
