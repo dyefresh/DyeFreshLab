@@ -461,6 +461,68 @@ app.get('/api/img-proxy', async (req, res) => {
 });
 
 /**
+ * GET /api/rawdebug — returns exact XML sent and exact XML received from SanMar
+ */
+app.get('/api/rawdebug', async (req, res) => {
+  const style = req.query.style || 'PC54';
+  const color = req.query.color || 'Navy';
+  const size  = req.query.size  || 'M';
+
+  const bodyXml = `
+      <tns:getProductInfoByStyleColorSize>
+        <tns:arg0>
+          <tns:color>${color}</tns:color>
+          <tns:size>${size}</tns:size>
+          <tns:style>${style}</tns:style>
+        </tns:arg0>
+        <tns:arg1>
+          <tns:sanMarCustomerNumber>${CONFIG.customerNumber}</tns:sanMarCustomerNumber>
+          <tns:sanMarUserName>${CONFIG.username}</tns:sanMarUserName>
+          <tns:sanMarUserPassword>${CONFIG.password}</tns:sanMarUserPassword>
+        </tns:arg1>
+      </tns:getProductInfoByStyleColorSize>`;
+
+  const sentEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:tns="http://impl.webservice.integration.sanmar.com/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    ${bodyXml}
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  try {
+    const url = new URL(SANMAR_WSDL);
+    const rawXml = await new Promise((resolve, reject) => {
+      const opts = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml;charset=UTF-8',
+          'SOAPAction': '""',
+          'Content-Length': Buffer.byteLength(sentEnvelope),
+        }
+      };
+      const r = https.request(opts, resp => {
+        let d = '';
+        resp.on('data', c => d += c);
+        resp.on('end', () => resolve(d));
+      });
+      r.on('error', reject);
+      r.write(sentEnvelope);
+      r.end();
+    });
+    res.set('Content-Type', 'application/json');
+    res.json({ sent: sentEnvelope, received: rawXml.substring(0, 3000) });
+  } catch(e) {
+    res.json({ error: e.message, sent: sentEnvelope });
+  }
+});
+
+/**
  * GET /api/debug?style=PC54 — raw response inspection
  */
 app.get('/api/debug', async (req, res) => {
