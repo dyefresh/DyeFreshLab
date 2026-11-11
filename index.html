@@ -4776,16 +4776,16 @@ function extractImageColors(img, colorMap) {
   catch(e) { return []; }
 
   const buckets = {};
+  const activeLayer = S.layers.find(x => x.id === S.activeLayer);
   for (let i = 0; i < data.length; i += 4) {
     const a = data[i+3]; if (a < 30) continue; // skip transparent
-    // Quantise to 32-step grid
-    const r = Math.round(data[i]   / 32) * 32;
-    const g = Math.round(data[i+1] / 32) * 32;
-    const b = Math.round(data[i+2] / 32) * 32;
+    // Quantise to 24-step grid using string key (avoids bitwise overflow)
+    const r = Math.round(data[i]   / 24) * 24;
+    const g = Math.round(data[i+1] / 24) * 24;
+    const b = Math.round(data[i+2] / 24) * 24;
     // Skip near-white if remove-white is on
-    const l = S.layers.find(x => x.id === S.activeLayer);
-    if (l && l.removeWhite && r > 220 && g > 220 && b > 220) continue;
-    const key = (r<<16)|(g<<8)|b;
+    if (activeLayer && activeLayer.removeWhite && r > 200 && g > 200 && b > 200) continue;
+    const key = `${r},${g},${b}`;
     buckets[key] = (buckets[key] || 0) + 1;
   }
 
@@ -4795,7 +4795,7 @@ function extractImageColors(img, colorMap) {
     .slice(0, 8)
     .filter(([,cnt]) => cnt/total > 0.005)
     .map(([key, cnt]) => {
-      const r = (key>>16)&0xff, g=(key>>8)&0xff, b=key&0xff;
+      const [r,g,b] = key.split(',').map(Number);
       const hex = '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
       return { hex, pct: Math.round(cnt/total*100) };
     });
