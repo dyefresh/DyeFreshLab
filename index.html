@@ -4800,25 +4800,29 @@ function extractImageColors(img, colorMap) {
   }
 
   const total = Object.values(buckets).reduce((a,b)=>a+b, 0) || 1;
-  // Sort by frequency, then merge colors that are perceptually close (within 48 distance)
+  // Sort by frequency descending
   const sorted = Object.entries(buckets)
     .sort((a,b) => b[1]-a[1])
-    .filter(([,cnt]) => cnt/total > 0.005)
+    .filter(([,cnt]) => cnt/total > 0.003)
     .map(([key, cnt]) => {
       const [r,g,b] = key.split(',').map(Number);
       return { r, g, b, cnt };
     });
+  // Merge colors perceptually close to an already-accepted dominant color (threshold 80)
+  // This absorbs anti-aliasing blends into their nearest dominant color
   const merged = [];
   for (const c of sorted) {
     const close = merged.find(m => {
       const dr=m.r-c.r, dg=m.g-c.g, db=m.b-c.b;
-      return Math.sqrt(dr*dr+dg*dg+db*db) < 48;
+      return Math.sqrt(dr*dr+dg*dg+db*db) < 80;
     });
     if (close) { close.cnt += c.cnt; }
     else { merged.push({...c}); }
   }
+  // Keep top colors; drop any under 2% that aren't in the top 4
   return merged
     .sort((a,b) => b.cnt-a.cnt)
+    .filter((c, i) => i < 4 || c.cnt/total >= 0.02)
     .slice(0, 6)
     .map(({r,g,b,cnt}) => {
       const hex = '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
