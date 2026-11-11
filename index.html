@@ -4335,9 +4335,9 @@ document.getElementById('uploadInput').addEventListener('change', e => {
     const img = new Image();
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
-      // Cap at 13" wide (312px at 24px/in), scale height proportionally
-      const MAX_W_PX = 13 * PX_PER_INCH; // 312px
-      let w = Math.min(img.naturalWidth, MAX_W_PX);
+      // Default upload at 9" wide (216px at 24px/in), scale height proportionally
+      const DEFAULT_W_PX = 9 * PX_PER_INCH; // 216px
+      let w = Math.min(img.naturalWidth, DEFAULT_W_PX);
       let h = w / aspect;
       // Also cap height at 16" (print zone height)
       const MAX_H_PX = 16 * PX_PER_INCH; // 384px
@@ -4998,35 +4998,43 @@ function mmove(e) {
     const h = S.drag.h;
     const dx = mx - S.drag.sx, dy = my - S.drag.sy;
     let newW = S.drag.sw, newH = S.drag.sh;
+    const aspect = S.drag.sw / S.drag.sh; // preserve original aspect ratio
+
+    // Determine new width from drag direction
     if (h==='tl'||h==='bl') newW = Math.max(20, S.drag.sw - dx*2);
-    if (h==='tr'||h==='br'||h==='resize') newW = Math.max(20, S.drag.sw + dx*2);
-    if (h==='tr'||h==='tl'||h==='scaleH') newH = Math.max(20, S.drag.sh - dy*2);
-    if (h==='br'||h==='bl') newH = Math.max(20, S.drag.sh + dy*2);
+    else if (h==='tr'||h==='br'||h==='resize') newW = Math.max(20, S.drag.sw + dx*2);
+    else if (h==='scaleH') {
+      // vertical-only: derive width from height change
+      newH = Math.max(20, S.drag.sh - dy*2);
+      newW = Math.round(newH * aspect);
+    }
     if (h==='resize') {
       const diag = Math.sqrt(dx*dx + dy*dy) * (dx+dy > 0 ? 1 : -1);
-      const ratio = S.drag.sh / S.drag.sw;
       newW = Math.max(20, S.drag.sw + diag);
-      newH = Math.round(newW * ratio);
     }
-    // Clamp size so layer can't exceed print zone bounds
-    newW = Math.min(newW, PRINT_ZONE_W);
+
+    // Always scale proportionally for image layers
+    if (l.type !== 'text') {
+      newH = Math.round(newW / aspect);
+    }
+
+    // Hard cap: artwork cannot exceed 12" (MAX_PRINT_W_PX)
+    if (newW > MAX_PRINT_W_PX) {
+      newW = MAX_PRINT_W_PX;
+      newH = Math.round(newW / aspect);
+    }
     newH = Math.min(newH, PRINT_ZONE_H);
-    // Text layers: convert new size to a scale multiplier instead of setting w/h directly
-    // (drawLayer recomputes w/h from font size each frame, so l.w/l.h have no visual effect)
-    // origScale = scale at drag start; sw/sh = rendered w/h at drag start
-    // For width-based handles use newW ratio; for height-only (scaleH) use newH ratio
+
+    // Text layers: convert new size to a scale multiplier
     if (l.type === 'text') {
       const origScale = S.drag.origScale || 1;
       let newScale;
       if (h === 'scaleH') {
-        // vertical-only drag → use height ratio
         newScale = Math.max(0.1, origScale * (newH / (S.drag.sh || 1)));
       } else {
-        // all other handles: use width ratio (width is the primary text dimension)
         newScale = Math.max(0.1, origScale * (newW / (S.drag.sw || 1)));
       }
       l.scale = newScale;
-      // update scale slider and readout
       const slSc = document.getElementById('slSc');
       const vSc  = document.getElementById('vSc');
       if (slSc) slSc.value = Math.round(newScale * 100);
