@@ -124,14 +124,14 @@ function soapBody(result) {
 }
 
 // ─── AUTH XML (arg0 = webServiceUser per XSD) ────────────────────────────────
-// XSD: webServiceUser has sanMarCustomerNumber, sanMarUserName, sanMarUserPassword
+// document/literal: top-level op uses tns: prefix, inner complex-type elements are unqualified
 function authArg(argName = 'arg0') {
   return `
-    <tns:${argName}>
-      <tns:sanMarCustomerNumber>${CONFIG.customerNumber}</tns:sanMarCustomerNumber>
-      <tns:sanMarUserName>${CONFIG.username}</tns:sanMarUserName>
-      <tns:sanMarUserPassword>${CONFIG.password}</tns:sanMarUserPassword>
-    </tns:${argName}>`;
+    <${argName}>
+      <sanMarCustomerNumber>${CONFIG.customerNumber}</sanMarCustomerNumber>
+      <sanMarUserName>${CONFIG.username}</sanMarUserName>
+      <sanMarUserPassword>${CONFIG.password}</sanMarUserPassword>
+    </${argName}>`;
 }
 
 // ─── RESPONSE PARSERS ────────────────────────────────────────────────────────
@@ -211,11 +211,11 @@ app.get('/api/images', async (req, res) => {
   try {
     const body = `
       <tns:getProductInfoByStyleColorSize>
-        <tns:arg0>
-          <tns:color>${color}</tns:color>
-          <tns:size>${size}</tns:size>
-          <tns:style>${style}</tns:style>
-        </tns:arg0>
+        <arg0>
+          <color>${color}</color>
+          <size>${size}</size>
+          <style>${style}</style>
+        </arg0>
         ${authArg('arg1')}
       </tns:getProductInfoByStyleColorSize>`;
 
@@ -281,11 +281,11 @@ app.get('/api/colors', async (req, res) => {
     // Request style with empty color/size to get all colors
     const body = `
       <tns:getProductInfoByStyleColorSize>
-        <tns:arg0>
-          <tns:color></tns:color>
-          <tns:size></tns:size>
-          <tns:style>${style}</tns:style>
-        </tns:arg0>
+        <arg0>
+          <color></color>
+          <size></size>
+          <style>${style}</style>
+        </arg0>
         ${authArg('arg1')}
       </tns:getProductInfoByStyleColorSize>`;
 
@@ -338,11 +338,11 @@ app.get('/api/colors-with-inventory', async (req, res) => {
     if (!colors) {
       const body = `
         <tns:getProductInfoByStyleColorSize>
-          <tns:arg0>
-            <tns:color></tns:color>
-            <tns:size></tns:size>
-            <tns:style>${style}</tns:style>
-          </tns:arg0>
+          <arg0>
+            <color></color>
+            <size></size>
+            <style>${style}</style>
+          </arg0>
           ${authArg('arg1')}
         </tns:getProductInfoByStyleColorSize>`;
       const result = await soapRequest(SANMAR_WSDL, body);
@@ -470,16 +470,16 @@ app.get('/api/rawdebug', async (req, res) => {
 
   const bodyXml = `
       <tns:getProductInfoByStyleColorSize>
-        <tns:arg0>
-          <tns:color>${color}</tns:color>
-          <tns:size>${size}</tns:size>
-          <tns:style>${style}</tns:style>
-        </tns:arg0>
-        <tns:arg1>
-          <tns:sanMarCustomerNumber>${CONFIG.customerNumber}</tns:sanMarCustomerNumber>
-          <tns:sanMarUserName>${CONFIG.username}</tns:sanMarUserName>
-          <tns:sanMarUserPassword>${CONFIG.password}</tns:sanMarUserPassword>
-        </tns:arg1>
+        <arg0>
+          <color>${color}</color>
+          <size>${size}</size>
+          <style>${style}</style>
+        </arg0>
+        <arg1>
+          <sanMarCustomerNumber>${CONFIG.customerNumber}</sanMarCustomerNumber>
+          <sanMarUserName>${CONFIG.username}</sanMarUserName>
+          <sanMarUserPassword>${CONFIG.password}</sanMarUserPassword>
+        </arg1>
       </tns:getProductInfoByStyleColorSize>`;
 
   const sentEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
