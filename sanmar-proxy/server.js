@@ -116,16 +116,21 @@ function authXml() {
   return `
     <san:sanMarCustomerNumber>${CONFIG.customerNumber}</san:sanMarCustomerNumber>
     <san:sanMarUserName>${CONFIG.username}</san:sanMarUserName>
-    <san:sanMarUserPassword>${CONFIG.password}</san:sanMarUserPassword>
-    <san:showMappingAttributes>true</san:showMappingAttributes>`;
+    <san:sanMarUserPassword>${CONFIG.password}</san:sanMarUserPassword>`;
 }
 
 // ─── PARSE IMAGE RESPONSE ────────────────────────────────────────────────────
+// Helper to unwrap SOAP envelope regardless of prefix (S: or soapenv:)
+function soapBody(result) {
+  const env = result?.['S:Envelope'] || result?.['soapenv:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
+  return env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env;
+}
+
 function extractImages(productInfo) {
   // SanMar returns these fields in getProductInfoByStyleColorSize response
   try {
-    const pi = productInfo?.['soapenv:Envelope']?.['soapenv:Body']
-      ?.getProductInfoByStyleColorSizeResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
+    const body = soapBody(productInfo);
+    const pi = body?.getProductInfoByStyleColorSizeResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
 
     const first = Array.isArray(pi) ? pi[0] : pi;
     if (!first) return null;
@@ -148,8 +153,8 @@ function extractImages(productInfo) {
 // ─── PARSE INVENTORY RESPONSE ────────────────────────────────────────────────
 function extractInventory(invResponse) {
   try {
-    const items = invResponse?.['soapenv:Envelope']?.['soapenv:Body']
-      ?.getInventoryQtyForStyleColorSizeResponse?.return?.listOfInventorySwing?.inventorySwing;
+    const body = soapBody(invResponse);
+    const items = body?.getInventoryQtyForStyleColorSizeResponse?.return?.listOfInventorySwing?.inventorySwing;
 
     const list = Array.isArray(items) ? items : [items];
     const sizes = {};
@@ -266,8 +271,7 @@ app.get('/api/colors', async (req, res) => {
 
     // getProductBulkInfo returns one row per style/color/size combo
     // We deduplicate by color to get one entry per color
-    const items = result?.['soapenv:Envelope']?.['soapenv:Body']
-      ?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
+    const items = soapBody(result)?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
 
     const list = Array.isArray(items) ? items : [items];
     const colorMap = {};
@@ -320,8 +324,7 @@ app.get('/api/colors-with-inventory', async (req, res) => {
           <san:style>${style}</san:style>
         </san:getProductBulkInfo>`;
       const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
-      const items = result?.['soapenv:Envelope']?.['soapenv:Body']
-        ?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
+      const items = soapBody(result)?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
       const list = Array.isArray(items) ? items : [items];
       const colorMap = {};
       list.forEach(item => {
@@ -457,8 +460,8 @@ app.get('/api/debug', async (req, res) => {
       </san:getProductBulkInfo>`;
     const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
     // Return full parsed structure so we can see the actual keys
-    const env = result?.['soapenv:Envelope'] || result?.['S:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
-    const body2 = env?.['soapenv:Body'] || env?.['S:Body'] || env?.['SOAP-ENV:Body'] || env;
+    const env = result?.['S:Envelope'] || result?.['soapenv:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
+    const body2 = env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env;
     const keys = Object.keys(body2 || {});
     const firstKey = keys[0];
     const response = body2?.[firstKey];
