@@ -4708,31 +4708,44 @@ function openColorReplace(origHex, swatchEl) {
   // Remove any existing picker
   document.getElementById('_colorReplacePicker')?.remove();
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
+
+  // Position picker relative to swatch using fixed coords so it's never clipped
+  const rect = swatchEl.getBoundingClientRect();
   const picker = document.createElement('div');
   picker.id = '_colorReplacePicker';
-  picker.style.cssText = 'position:absolute;z-index:9999;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);right:0;top:32px;width:200px;';
+  picker.style.cssText = `position:fixed;z-index:99999;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 4px 24px rgba(0,0,0,.22);width:220px;top:${Math.min(rect.bottom + 6, window.innerHeight - 180)}px;left:${Math.max(rect.left - 190, 8)}px;`;
   picker.innerHTML = `
-    <div style="font-size:.72rem;color:var(--txt3);margin-bottom:6px;">Replace with</div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;" id="_rpSwatches"></div>
+    <div style="font-size:.75rem;font-weight:600;color:var(--txt);margin-bottom:8px;">Replace with</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;" id="_rpSwatches"></div>
     <div style="display:flex;align-items:center;gap:6px;">
-      <input type="color" id="_rpCustom" value="${(l.colorMap||{})[origHex]||origHex}" style="width:28px;height:28px;border:none;padding:0;border-radius:6px;cursor:pointer;background:none;">
+      <input type="color" id="_rpCustom" value="${(l.colorMap||{})[origHex]||origHex}" style="width:32px;height:32px;border:none;padding:0;border-radius:6px;cursor:pointer;background:none;flex-shrink:0;">
       <span style="font-size:.72rem;color:var(--txt3);">Custom</span>
-      <button onclick="applyColorReplace('${origHex}', document.getElementById('_rpCustom').value)" style="margin-left:auto;padding:3px 10px;font-size:.72rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Apply</button>
+      <button id="_rpApplyBtn" style="margin-left:auto;padding:4px 12px;font-size:.75rem;font-weight:600;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Apply</button>
     </div>
   `;
-  swatchEl.style.position = 'relative';
-  swatchEl.appendChild(picker);
+  document.body.appendChild(picker);
+
+  // Wire Apply button (use getElementById to avoid stale closure issues)
+  picker.querySelector('#_rpApplyBtn').addEventListener('click', () => {
+    applyColorReplace(origHex, document.getElementById('_rpCustom').value);
+  });
+
   // Populate preset swatches
   const sw = picker.querySelector('#_rpSwatches');
   ONE_COLOR_PRESETS.forEach(c => {
     const s = document.createElement('div');
     s.style.cssText = `width:22px;height:22px;border-radius:50%;background:${c};cursor:pointer;border:1px solid rgba(0,0,0,.1);flex-shrink:0;`;
     if (c === '#ffffff') s.style.boxShadow = 'inset 0 0 0 1px #ccc';
-    s.onclick = () => { applyColorReplace(origHex, c); picker.remove(); };
+    s.addEventListener('click', (e) => { e.stopPropagation(); applyColorReplace(origHex, c); picker.remove(); });
     sw.appendChild(s);
   });
+
   // Close on outside click
-  setTimeout(() => document.addEventListener('click', function _c(e){ if(!picker.contains(e.target)){picker.remove();document.removeEventListener('click',_c);} }), 10);
+  setTimeout(() => document.addEventListener('click', function _c(e){
+    if (!picker.contains(e.target) && e.target !== swatchEl) {
+      picker.remove(); document.removeEventListener('click', _c);
+    }
+  }), 50);
 }
 
 function applyColorReplace(origHex, newHex) {
