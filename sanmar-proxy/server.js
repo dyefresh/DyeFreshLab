@@ -306,36 +306,68 @@ app.get('/api/colors-with-inventory', async (req, res) => {
   const { style } = req.query;
   if (!style) return res.status(400).json({ error: 'style is required' });
 
-  // Fetch colors first
-  const colorsRes = await fetch(`http://localhost:${CONFIG.port}/api/colors?style=${style}`);
-  const colors = await colorsRes.json();
-
-  // Fetch inventory for each color in parallel
-  const withInventory = await Promise.all(
-    colors.map(async color => {
-      try {
-        const invRes = await fetch(
-          `http://localhost:${CONFIG.port}/api/inventory?style=${style}&color=${encodeURIComponent(color.catalogColor)}`
-        );
-        const inv = await invRes.json();
-
-        // Summarize: is ANY size in stock?
-        const sizes = inv.sizes || {};
-        const anyInStock = Object.values(sizes).some(s => s.status !== 'out_of_stock');
-        const anyLow     = Object.values(sizes).some(s => s.status === 'low_stock');
-
-        return {
-          ...color,
-          inventory: sizes,
-          availabilityStatus: anyInStock ? (anyLow ? 'low_stock' : 'in_stock') : 'out_of_stock'
+  try {
+    // Fetch colors via direct SOAP (no localhost self-call)
+    const colorCacheKey = `colors:${style}`.toLowerCase();
+    let colors = productCache.get(colorCacheKey);
+    if (!colors) {
+      const body = `
+        <san:getProductBulkInfo>
+          ${authXml()}
+          <san:style>${style}</san:style>
+        </san:getProductBulkInfo>`;
+      const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
+      const items = result?.['soapenv:Envelope']?.['soapenv:Body']
+        ?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
+      const list = Array.isArray(items) ? items : [items];
+      const colorMap = {};
+      list.forEach(item => {
+        if (!item) return;
+        const colorName = item.COLOR_NAME;
+        if (!colorName || colorMap[colorName]) return;
+        colorMap[colorName] = {
+          name: colorName, catalogColor: item.CATALOG_COLOR || colorName,
+          front: item.FRONT_MODEL_IMAGE_URL || null, back: item.BACK_MODEL_IMAGE_URL || null,
+          side: item.SIDE_MODEL || null, frontFlat: item.FRONT_FLAT_IMAGE_URL || null,
+          backFlat: item.BACK_FLAT_IMAGE_URL || null, colorSwatch: item.COLOR_SQUARE_IMAGE || null,
         };
-      } catch {
-        return { ...color, inventory: {}, availabilityStatus: 'unknown' };
-      }
-    })
-  );
+      });
+      colors = Object.values(colorMap);
+      productCache.set(colorCacheKey, colors);
+    }
 
-  res.json(withInventory);
+    // Fetch inventory for each color in parallel via direct SOAP
+    const withInventory = await Promise.all(
+      colors.map(async color => {
+        try {
+          const invCacheKey = `inv:${style}:${color.catalogColor}`.toLowerCase();
+          let inv = inventoryCache.get(invCacheKey);
+          if (!inv) {
+            const body = `
+              <san:getInventoryQtyForStyleColorSize>
+                ${authXml()}
+                <san:style>${style}</san:style>
+                <san:color>${color.catalogColor}</san:color>
+              </san:getInventoryQtyForStyleColorSize>`;
+            const result = await soapRequest(SANMAR_INV, 'getInventoryQtyForStyleColorSize', body);
+            inv = extractInventory(result);
+            inventoryCache.set(invCacheKey, inv);
+          }
+          const sizes = inv.sizes || {};
+          const anyInStock = Object.values(sizes).some(s => s.status !== 'out_of_stock');
+          const anyLow     = Object.values(sizes).some(s => s.status === 'low_stock');
+          return { ...color, inventory: sizes, availabilityStatus: anyInStock ? (anyLow ? 'low_stock' : 'in_stock') : 'out_of_stock' };
+        } catch {
+          return { ...color, inventory: {}, availabilityStatus: 'unknown' };
+        }
+      })
+    );
+
+    res.json(withInventory);
+  } catch (err) {
+    console.error('colors-with-inventory error:', err.message);
+    res.status(500).json({ error: 'SanMar API error', detail: err.message });
+  }
 });
 
 /**

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: dyefresh-sanmar-proxy
+    runtime: node
+    plan: starter          # $7/mo — always on, no cold starts
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SANMAR_CUSTOMER_NUMBER
+        sync: false        # Set manually in Render dashboard
+      - key: SANMAR_USERNAME
+        sync: false
+      - key: SANMAR_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://dyefresh.com,https://dyefresh.github.io
