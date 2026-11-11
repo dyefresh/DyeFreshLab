@@ -3676,8 +3676,8 @@ function drawHandles(layer) {
   ctx.setLineDash([]);
 
   // Size label below box
-  const wIn = (layer.w / PX_PER_INCH).toFixed(1);
-  const hIn = (layer.h / PX_PER_INCH).toFixed(1);
+  const wIn = (layer.w / PRINT_PX_PER_INCH).toFixed(1);
+  const hIn = (layer.h / PRINT_PX_PER_INCH).toFixed(1);
   const dimLabel = wIn + '" × ' + hIn + '"';
   ctx.font = 'bold 9px Inter,sans-serif';
   const lw2 = ctx.measureText(dimLabel).width;
@@ -3783,9 +3783,11 @@ const PX_PER_INCH = 24;
 // Not visible or accessible to customers on the normal URL.
 const ADMIN_MODE = new URLSearchParams(location.search).get('admin') === '1';
 
-// Print zone: the shaded/dashed overlay showing the 12"×14" printable area
-const PRINT_ZONE_W        = 220;                                  // 220px fits inside shirt body
-const PRINT_ZONE_H        = 16 * PX_PER_INCH;                    // 384px = 16"
+// Print zone: the shaded/dashed overlay showing the 12"×16" printable area
+const PRINT_ZONE_W        = 220;                                  // 220px fits inside shirt body = 12" real
+const PRINT_ZONE_H        = Math.round(220 * 16 / 12);           // 293px = 16" real (maintains 12:16 ratio)
+// Real-world scale: 220px = 12 inches, so 1px = 12/220 inches
+const PRINT_PX_PER_INCH   = PRINT_ZONE_W / 12;                   // 18.33px per real inch
 const PRINT_ZONE_X_DEFAULT = 190;  // centered: (600-220)/2 = 190, fits inside shirt body
 const PRINT_ZONE_Y_DEFAULT = 240;  // at shirt collar
 // Keep legacy names as getters so existing clamp code still works
@@ -4336,11 +4338,11 @@ document.getElementById('uploadInput').addEventListener('change', e => {
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
       // Default upload at 9" wide (216px at 24px/in), scale height proportionally
-      const DEFAULT_W_PX = 9 * PX_PER_INCH; // 216px
+      const DEFAULT_W_PX = Math.round(9 * PRINT_PX_PER_INCH); // 9" default
       let w = Math.min(img.naturalWidth, DEFAULT_W_PX);
       let h = w / aspect;
       // Also cap height at 16" (print zone height)
-      const MAX_H_PX = 16 * PX_PER_INCH; // 384px
+      const MAX_H_PX = PRINT_ZONE_H;
       if (h > MAX_H_PX) { h = MAX_H_PX; w = h * aspect; }
       // Centre within print zone
       const pzX = (CANVAS_W - PRINT_ZONE_W) / 2;
@@ -4434,8 +4436,8 @@ function syncT() {
   const imgEdit = document.getElementById('imgEdit');
   if (imgEdit) imgEdit.style.display = isImg ? 'block' : 'none';
   if (isImg) {
-    const wIn = (l.w / PX_PER_INCH).toFixed(2);
-    const hIn = (l.h / PX_PER_INCH).toFixed(2);
+    const wIn = (l.w / PRINT_PX_PER_INCH).toFixed(2);
+    const hIn = (l.h / PRINT_PX_PER_INCH).toFixed(2);
     const sizeEl = document.getElementById('imgSizeDisplay');
     if (sizeEl) sizeEl.textContent = wIn + '" × ' + hIn + '"';
     // Remove White toggle
@@ -4502,8 +4504,8 @@ function syncT() {
   }
 
   // Scale slider
-  const wIn = (l.w / PX_PER_INCH).toFixed(1);
-  const hIn = (l.h / PX_PER_INCH).toFixed(1);
+  const wIn = (l.w / PRINT_PX_PER_INCH).toFixed(1);
+  const hIn = (l.h / PRINT_PX_PER_INCH).toFixed(1);
   const slSc = document.getElementById('slSc');
   const vSc  = document.getElementById('vSc');
   if (l.type === 'text') {
@@ -4573,14 +4575,14 @@ function toggleLock() {
       const slW=document.getElementById('slW'), vW=document.getElementById('vW');
       const slH=document.getElementById('slH'), vH=document.getElementById('vH');
       if (slW) slW.value = Math.min(Math.round(l.w), 500);
-      if (vW)  vW.textContent = (l.w/PX_PER_INCH).toFixed(1)+'"';
+      if (vW)  vW.textContent = (l.w/PRINT_PX_PER_INCH).toFixed(1)+'"';
       if (slH) slH.value = Math.min(Math.round(l.h), 500);
-      if (vH)  vH.textContent = (l.h/PX_PER_INCH).toFixed(1)+'"';
+      if (vH)  vH.textContent = (l.h/PRINT_PX_PER_INCH).toFixed(1)+'"';
     }
   }
 }
 
-const MAX_PRINT_W_PX = 220; // max print width matches print zone width
+const MAX_PRINT_W_PX = PRINT_ZONE_W; // 12" max = full print zone width (220px)
 function apSc(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   const pct = +v / 100;
@@ -4593,7 +4595,7 @@ function apSc(v) {
     drawAll(); // drawLayer will recompute l.w/l.h from effectiveSize
     // Update W/H readouts after draw has refreshed dimensions
     requestAnimationFrame(() => {
-      const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+      const wIn=(l.w/PRINT_PX_PER_INCH).toFixed(1), hIn=(l.h/PRINT_PX_PER_INCH).toFixed(1);
       const vW=document.getElementById('vW'), vH=document.getElementById('vH');
       if(vW) vW.textContent=wIn+'"'; if(vH) vH.textContent=hIn+'"';
     });
@@ -4614,7 +4616,7 @@ function apSc(v) {
     l.w = Math.max(5, newW);
     l.h = Math.max(5, newH);
   }
-  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const wIn=(l.w/PRINT_PX_PER_INCH).toFixed(1), hIn=(l.h/PRINT_PX_PER_INCH).toFixed(1);
   const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=Math.round((l.w/l._origW)*100)+'% ('+wIn+'" × '+hIn+'")';
   const slW=document.getElementById('slW'), vW=document.getElementById('vW');
   const slH=document.getElementById('slH'), vH=document.getElementById('vH');
@@ -4625,7 +4627,7 @@ function apSc(v) {
 function apW(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   l.w = Math.max(5, Math.min(MAX_PRINT_W_PX, +v));
-  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const wIn=(l.w/PRINT_PX_PER_INCH).toFixed(1), hIn=(l.h/PRINT_PX_PER_INCH).toFixed(1);
   const vW=document.getElementById('vW'); if(vW) vW.textContent=wIn+'"';
   const pct = l._origW ? Math.round((l.w/l._origW)*100) : 100;
   const slSc=document.getElementById('slSc'), vSc=document.getElementById('vSc');
@@ -4635,7 +4637,7 @@ function apW(v) {
 function apH(v) {
   const l = S.layers.find(x => x.id === S.activeLayer); if (!l) return;
   l.h = Math.max(5, +v);
-  const wIn=(l.w/PX_PER_INCH).toFixed(1), hIn=(l.h/PX_PER_INCH).toFixed(1);
+  const wIn=(l.w/PRINT_PX_PER_INCH).toFixed(1), hIn=(l.h/PRINT_PX_PER_INCH).toFixed(1);
   const vH=document.getElementById('vH'); if(vH) vH.textContent=hIn+'"';
   const vSc=document.getElementById('vSc'); if(vSc) vSc.textContent=wIn+'" × '+hIn+'"';
   drawAll();
@@ -5256,7 +5258,7 @@ function downloadPreview() {
   let artworkWidthIn = '—';
   const imgLayer = S.layers.slice().sort((a,b) => b.w - a.w)[0];
   if (imgLayer) {
-    artworkWidthIn = (imgLayer.w / PX_PER_INCH).toFixed(1) + '"';
+    artworkWidthIn = (imgLayer.w / PRINT_PX_PER_INCH).toFixed(1) + '"';
   }
 
   // Size breakdown from sidebar inputs
