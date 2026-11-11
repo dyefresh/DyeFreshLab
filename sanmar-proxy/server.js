@@ -3,55 +3,55 @@
  * ================================
  * Bridges DyeFresh (Products.html + Design Lab) to SanMar's SOAP Web Services API.
  *
+ * API structure confirmed from WSDL + XSD at:
+ *   https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort?wsdl
+ *   https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort?xsd=1
+ *
+ * Key facts:
+ *   - Namespace: http://impl.webservice.integration.sanmar.com/
+ *   - Style: document/literal (arg0/arg1 wrappers, not flat fields)
+ *   - SOAPAction: "" (empty string)
+ *   - getProductBulkInfo: takes only arg0 (webServiceUser) — returns ALL products
+ *   - getProductInfoByStyleColorSize: takes arg0[] (product) + arg1 (webServiceUser)
+ *   - Response: return.listResponse[] with productBasicInfo, productImageInfo, productPriceInfo
+ *
  * Endpoints:
- *   GET /api/images?style=PC78H&color=Athletic+Heather
- *     → { front, back, side, threeQ, frontFlat, backFlat }
- *
+ *   GET /api/images?style=PC78H&color=Athletic+Heather&size=M
  *   GET /api/inventory?style=PC78H&color=Athletic+Heather
- *     → { sizes: { S: { qty, status }, M: { qty, status }, ... } }
- *
  *   GET /api/colors?style=PC78H
- *     → [ { name, catalogColor, hex, front, back, side } ... ]
- *
+ *   GET /api/img-proxy?url=https://cdnp.sanmar.com/...
  *   GET /health
- *     → { ok: true }
- *
- * Deploy to Railway / Render / Fly — set env vars and go.
  */
 
-const express = require('express');
-const cors    = require('cors');
-const https   = require('https');
-const http    = require('http');
-const xml2js  = require('xml2js');
+const express   = require('express');
+const cors      = require('cors');
+const https     = require('https');
+const http      = require('http');
+const xml2js    = require('xml2js');
 const NodeCache = require('node-cache');
 
 const app = express();
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-// Set these as environment variables in Railway / Render / Fly.
-// Never commit real credentials to git.
 const CONFIG = {
   customerNumber : process.env.SANMAR_CUSTOMER_NUMBER || 'YOUR_CUSTOMER_NUMBER',
   username       : process.env.SANMAR_USERNAME        || 'YOUR_USERNAME',
   password       : process.env.SANMAR_PASSWORD        || 'YOUR_PASSWORD',
   port           : process.env.PORT                   || 3000,
-  // Allowed origins — add your Webflow domain and GitHub Pages URL
-  allowedOrigins : (process.env.ALLOWED_ORIGINS || 'https://dyefresh.com,https://jcampos13.github.io').split(','),
+  allowedOrigins : (process.env.ALLOWED_ORIGINS || 'https://dyefresh.com,https://jcampos13.github.io,https://dyefresh.github.io').split(','),
 };
 
-// SanMar SOAP endpoints — HTTPS port 8080 (per integration guide 24.6)
+// SanMar SOAP endpoints — HTTPS port 8080 (confirmed from WSDL)
 const SANMAR_WSDL = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort';
 const SANMAR_INV  = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarWebServicePort';
 
-// Cache responses — product data for 6 hours, inventory for 15 minutes
+// Cache: product data 6h, inventory 15min
 const productCache   = new NodeCache({ stdTTL: 6 * 60 * 60 });
 const inventoryCache = new NodeCache({ stdTTL: 15 * 60 });
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (server-to-server, curl) and listed domains
     if (!origin || CONFIG.allowedOrigins.some(o => origin.startsWith(o.trim()))) {
       cb(null, true);
     } else {
@@ -62,12 +62,13 @@ app.use(cors({
 app.use(express.json());
 
 // ─── SOAP HELPER ─────────────────────────────────────────────────────────────
-function soapRequest(endpoint, action, bodyXml) {
+// SOAPAction must be empty string per WSDL binding definition
+function soapRequest(endpoint, bodyXml) {
   return new Promise((resolve, reject) => {
     const envelope = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-  xmlns:san="http://impl.webservice.integration.sanmar.com/">
+  xmlns:tns="http://impl.webservice.integration.sanmar.com/">
   <soapenv:Header/>
   <soapenv:Body>
     ${bodyXml}
@@ -82,7 +83,7 @@ function soapRequest(endpoint, action, bodyXml) {
       method   : 'POST',
       headers  : {
         'Content-Type'   : 'text/xml;charset=UTF-8',
-        'SOAPAction'     : action,
+        'SOAPAction'     : '""',
         'Content-Length' : Buffer.byteLength(envelope),
       }
     };
@@ -93,15 +94,21 @@ function soapRequest(endpoint, action, bodyXml) {
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         xml2js.parseString(data, { explicitArray: false, ignoreAttrs: true }, (err, result) => {
-          if (err) return reject(err);
+          if (err) return reject(new Error('XML parse error: ' + err.message));
+          // Check for SOAP fault
+          const body = soapBody(result);
+          const fault = body?.['S:Fault'] || body?.['soapenv:Fault'] || body?.Fault;
+          if (fault) {
+            const msg = fault.faultstring || fault.faultcode || JSON.stringify(fault);
+            return reject(new Error('SOAP Fault: ' + msg));
+          }
           resolve(result);
         });
       });
     });
 
-    // Fail fast if SanMar doesn't respond within 20 seconds
-    req.setTimeout(20000, () => {
-      req.destroy(new Error('SanMar SOAP request timed out after 20s'));
+    req.setTimeout(25000, () => {
+      req.destroy(new Error('SanMar SOAP request timed out after 25s'));
     });
 
     req.on('error', reject);
@@ -110,55 +117,65 @@ function soapRequest(endpoint, action, bodyXml) {
   });
 }
 
-// ─── AUTH XML (reused in every call) ─────────────────────────────────────────
-// Auth fields per SanMar Web Services Integration Guide 24.6
-function authXml() {
-  return `
-    <san:sanMarCustomerNumber>${CONFIG.customerNumber}</san:sanMarCustomerNumber>
-    <san:sanMarUserName>${CONFIG.username}</san:sanMarUserName>
-    <san:sanMarUserPassword>${CONFIG.password}</san:sanMarUserPassword>`;
-}
-
-// ─── PARSE IMAGE RESPONSE ────────────────────────────────────────────────────
-// Helper to unwrap SOAP envelope regardless of prefix (S: or soapenv:)
+// ─── SOAP ENVELOPE HELPER ────────────────────────────────────────────────────
 function soapBody(result) {
   const env = result?.['S:Envelope'] || result?.['soapenv:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
   return env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env;
 }
 
-function extractImages(productInfo) {
-  // SanMar returns these fields in getProductInfoByStyleColorSize response
-  try {
-    const body = soapBody(productInfo);
-    const pi = body?.getProductInfoByStyleColorSizeResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
-
-    const first = Array.isArray(pi) ? pi[0] : pi;
-    if (!first) return null;
-
-    return {
-      front     : first.FRONT_MODEL_IMAGE_URL  || null,
-      back      : first.BACK_MODEL_IMAGE_URL   || null,
-      side      : first.SIDE_MODEL             || null,
-      threeQ    : first.THREE_Q_MODEL          || null,
-      frontFlat : first.FRONT_FLAT_IMAGE_URL   || null,
-      backFlat  : first.BACK_FLAT_IMAGE_URL    || null,
-      colorName : first.COLOR_NAME             || null,
-      colorHex  : null, // SanMar doesn't provide hex — we map separately
-    };
-  } catch (e) {
-    return null;
-  }
+// ─── AUTH XML (arg0 = webServiceUser per XSD) ────────────────────────────────
+// XSD: webServiceUser has sanMarCustomerNumber, sanMarUserName, sanMarUserPassword
+function authArg(argName = 'arg0') {
+  return `
+    <tns:${argName}>
+      <tns:sanMarCustomerNumber>${CONFIG.customerNumber}</tns:sanMarCustomerNumber>
+      <tns:sanMarUserName>${CONFIG.username}</tns:sanMarUserName>
+      <tns:sanMarUserPassword>${CONFIG.password}</tns:sanMarUserPassword>
+    </tns:${argName}>`;
 }
 
-// ─── PARSE INVENTORY RESPONSE ────────────────────────────────────────────────
+// ─── RESPONSE PARSERS ────────────────────────────────────────────────────────
+// XSD: getProductInfoByStyleColorSizeResponse.return = productInfoResponseBean
+//      productInfoResponseBean.listResponse[] = productInfo
+//      productInfo.productImageInfo, productInfo.productBasicInfo
+function extractFromResponse(result) {
+  const body = soapBody(result);
+  // Try both response element names
+  const resp = body?.getProductInfoByStyleColorSizeResponse
+            || body?.getProductBulkInfoResponse
+            || body?.getProductInfoByBrandResponse;
+  if (!resp) return null;
+
+  const ret = resp?.return;
+  if (!ret) return null;
+
+  // listResponse is the array of productInfo objects
+  const items = ret.listResponse;
+  return Array.isArray(items) ? items : (items ? [items] : []);
+}
+
+function mapProductToImages(item) {
+  const img = item?.productImageInfo || {};
+  const info = item?.productBasicInfo || {};
+  return {
+    front        : img.frontModel         || null,
+    back         : img.backModel          || null,
+    side         : img.sideModel          || null,
+    threeQ       : img.threeQModel        || null,
+    frontFlat    : img.frontFlat          || null,
+    backFlat     : img.backFlat           || null,
+    colorName    : info.color             || null,
+    catalogColor : info.catalogColor      || null,
+    colorSwatch  : img.colorSquareImage   || img.colorSwatchImage || null,
+  };
+}
+
 function extractInventory(invResponse) {
   try {
     const body = soapBody(invResponse);
     const items = body?.getInventoryQtyForStyleColorSizeResponse?.return?.listOfInventorySwing?.inventorySwing;
-
     const list = Array.isArray(items) ? items : [items];
     const sizes = {};
-
     list.forEach(item => {
       if (!item) return;
       const size = item.SIZE || item.size;
@@ -168,7 +185,6 @@ function extractInventory(invResponse) {
         status: qty === 0 ? 'out_of_stock' : qty < 12 ? 'low_stock' : 'in_stock'
       };
     });
-
     return { sizes };
   } catch (e) {
     return { sizes: {} };
@@ -177,13 +193,12 @@ function extractInventory(invResponse) {
 
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 
-// Health check
 app.get('/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 /**
  * GET /api/images?style=PC78H&color=Athletic+Heather&size=M
- * Returns front/back/side CDN URLs for a specific style + color.
- * Size defaults to M (we only need one size to get image URLs).
+ * XSD: getProductInfoByStyleColorSize takes arg0[](product) + arg1(webServiceUser)
+ * product: { color, size, style }
  */
 app.get('/api/images', async (req, res) => {
   const { style, color, size = 'M' } = req.query;
@@ -195,18 +210,20 @@ app.get('/api/images', async (req, res) => {
 
   try {
     const body = `
-      <san:getProductInfoByStyleColorSize>
-        ${authXml()}
-        <san:style>${style}</san:style>
-        <san:color>${color}</san:color>
-        <san:size>${size}</san:size>
-      </san:getProductInfoByStyleColorSize>`;
+      <tns:getProductInfoByStyleColorSize>
+        <tns:arg0>
+          <tns:color>${color}</tns:color>
+          <tns:size>${size}</tns:size>
+          <tns:style>${style}</tns:style>
+        </tns:arg0>
+        ${authArg('arg1')}
+      </tns:getProductInfoByStyleColorSize>`;
 
-    const result = await soapRequest(SANMAR_WSDL, 'getProductInfoByStyleColorSize', body);
-    const images = extractImages(result);
+    const result = await soapRequest(SANMAR_WSDL, body);
+    const items = extractFromResponse(result);
+    if (!items || items.length === 0) return res.status(404).json({ error: 'Product not found' });
 
-    if (!images) return res.status(404).json({ error: 'Product not found or no images available' });
-
+    const images = mapProductToImages(items[0]);
     productCache.set(cacheKey, images);
     res.json(images);
   } catch (err) {
@@ -217,7 +234,6 @@ app.get('/api/images', async (req, res) => {
 
 /**
  * GET /api/inventory?style=PC78H&color=Athletic+Heather
- * Returns per-size inventory qty and status (in_stock / low_stock / out_of_stock).
  */
 app.get('/api/inventory', async (req, res) => {
   const { style, color } = req.query;
@@ -229,15 +245,14 @@ app.get('/api/inventory', async (req, res) => {
 
   try {
     const body = `
-      <san:getInventoryQtyForStyleColorSize>
-        ${authXml()}
-        <san:style>${style}</san:style>
-        <san:color>${color}</san:color>
-      </san:getInventoryQtyForStyleColorSize>`;
+      <tns:getInventoryQtyForStyleColorSize>
+        ${authArg('arg0')}
+        <tns:style>${style}</tns:style>
+        <tns:color>${color}</tns:color>
+      </tns:getInventoryQtyForStyleColorSize>`;
 
-    const result = await soapRequest(SANMAR_INV, 'getInventoryQtyForStyleColorSize', body);
+    const result = await soapRequest(SANMAR_INV, body);
     const inventory = extractInventory(result);
-
     inventoryCache.set(cacheKey, inventory);
     res.json(inventory);
   } catch (err) {
@@ -248,9 +263,11 @@ app.get('/api/inventory', async (req, res) => {
 
 /**
  * GET /api/colors?style=PC78H
- * Returns ALL colors for a style with their front image URLs.
- * Uses getProductBulkInfo — one call, all colors.
- * Cached for 6 hours.
+ * Uses getProductInfoByStyleColorSize with just style (all colors, size M).
+ * getProductBulkInfo returns ALL products (no style filter) so we avoid it.
+ * Instead we request each known size to get all colors — or use a known color
+ * wildcard. Actually we use getProductInfoByStyleColorSize with empty color to
+ * get all colors for a style. SanMar returns all matching rows.
  */
 app.get('/api/colors', async (req, res) => {
   const { style } = req.query;
@@ -261,37 +278,41 @@ app.get('/api/colors', async (req, res) => {
   if (cached) return res.json(cached);
 
   try {
+    // Request style with empty color/size to get all colors
     const body = `
-      <san:getProductBulkInfo>
-        ${authXml()}
-        <san:style>${style}</san:style>
-      </san:getProductBulkInfo>`;
+      <tns:getProductInfoByStyleColorSize>
+        <tns:arg0>
+          <tns:color></tns:color>
+          <tns:size></tns:size>
+          <tns:style>${style}</tns:style>
+        </tns:arg0>
+        ${authArg('arg1')}
+      </tns:getProductInfoByStyleColorSize>`;
 
-    const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
+    const result = await soapRequest(SANMAR_WSDL, body);
+    const items = extractFromResponse(result);
 
-    // getProductBulkInfo returns one row per style/color/size combo
-    // We deduplicate by color to get one entry per color
-    const items = soapBody(result)?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
+    if (!items || items.length === 0) {
+      return res.status(404).json({ error: 'No products found for style ' + style });
+    }
 
-    const list = Array.isArray(items) ? items : [items];
+    // Deduplicate by color
     const colorMap = {};
-
-    list.forEach(item => {
-      if (!item) return;
-      const colorName = item.COLOR_NAME;
-      if (!colorName || colorMap[colorName]) return; // deduplicate by color
-
+    items.forEach(item => {
+      const info = item?.productBasicInfo || {};
+      const img  = item?.productImageInfo || {};
+      const colorName = info.color || info.catalogColor;
+      if (!colorName || colorMap[colorName]) return;
       colorMap[colorName] = {
         name         : colorName,
-        catalogColor : item.CATALOG_COLOR || colorName,
-        front        : item.FRONT_MODEL_IMAGE_URL  || null,
-        back         : item.BACK_MODEL_IMAGE_URL   || null,
-        side         : item.SIDE_MODEL             || null,
-        threeQ       : item.THREE_Q_MODEL          || null,
-        frontFlat    : item.FRONT_FLAT_IMAGE_URL   || null,
-        backFlat     : item.BACK_FLAT_IMAGE_URL    || null,
-        colorSwatch  : item.COLOR_SQUARE_IMAGE     || null,
-        brandedImage : item.BRAND_COLOR_IMAGE      || null,
+        catalogColor : info.catalogColor || colorName,
+        front        : img.frontModel      || null,
+        back         : img.backModel       || null,
+        side         : img.sideModel       || null,
+        threeQ       : img.threeQModel     || null,
+        frontFlat    : img.frontFlat       || null,
+        backFlat     : img.backFlat        || null,
+        colorSwatch  : img.colorSquareImage || img.colorSwatchImage || null,
       };
     });
 
@@ -306,43 +327,43 @@ app.get('/api/colors', async (req, res) => {
 
 /**
  * GET /api/colors-with-inventory?style=PC78H
- * Returns all colors with their images AND a summary of overall availability.
- * Useful for showing which color swatches to gray out.
  */
 app.get('/api/colors-with-inventory', async (req, res) => {
   const { style } = req.query;
   if (!style) return res.status(400).json({ error: 'style is required' });
 
   try {
-    // Fetch colors via direct SOAP (no localhost self-call)
     const colorCacheKey = `colors:${style}`.toLowerCase();
     let colors = productCache.get(colorCacheKey);
     if (!colors) {
       const body = `
-        <san:getProductBulkInfo>
-          ${authXml()}
-          <san:style>${style}</san:style>
-        </san:getProductBulkInfo>`;
-      const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
-      const items = soapBody(result)?.getProductBulkInfoResponse?.return?.listOfProductInfoSwing?.productInfoSwing;
-      const list = Array.isArray(items) ? items : [items];
+        <tns:getProductInfoByStyleColorSize>
+          <tns:arg0>
+            <tns:color></tns:color>
+            <tns:size></tns:size>
+            <tns:style>${style}</tns:style>
+          </tns:arg0>
+          ${authArg('arg1')}
+        </tns:getProductInfoByStyleColorSize>`;
+      const result = await soapRequest(SANMAR_WSDL, body);
+      const items = extractFromResponse(result) || [];
       const colorMap = {};
-      list.forEach(item => {
-        if (!item) return;
-        const colorName = item.COLOR_NAME;
+      items.forEach(item => {
+        const info = item?.productBasicInfo || {};
+        const img  = item?.productImageInfo || {};
+        const colorName = info.color || info.catalogColor;
         if (!colorName || colorMap[colorName]) return;
         colorMap[colorName] = {
-          name: colorName, catalogColor: item.CATALOG_COLOR || colorName,
-          front: item.FRONT_MODEL_IMAGE_URL || null, back: item.BACK_MODEL_IMAGE_URL || null,
-          side: item.SIDE_MODEL || null, frontFlat: item.FRONT_FLAT_IMAGE_URL || null,
-          backFlat: item.BACK_FLAT_IMAGE_URL || null, colorSwatch: item.COLOR_SQUARE_IMAGE || null,
+          name: colorName, catalogColor: info.catalogColor || colorName,
+          front: img.frontModel || null, back: img.backModel || null,
+          side: img.sideModel || null, frontFlat: img.frontFlat || null,
+          backFlat: img.backFlat || null, colorSwatch: img.colorSquareImage || null,
         };
       });
       colors = Object.values(colorMap);
       productCache.set(colorCacheKey, colors);
     }
 
-    // Fetch inventory for each color in parallel via direct SOAP
     const withInventory = await Promise.all(
       colors.map(async color => {
         try {
@@ -350,12 +371,12 @@ app.get('/api/colors-with-inventory', async (req, res) => {
           let inv = inventoryCache.get(invCacheKey);
           if (!inv) {
             const body = `
-              <san:getInventoryQtyForStyleColorSize>
-                ${authXml()}
-                <san:style>${style}</san:style>
-                <san:color>${color.catalogColor}</san:color>
-              </san:getInventoryQtyForStyleColorSize>`;
-            const result = await soapRequest(SANMAR_INV, 'getInventoryQtyForStyleColorSize', body);
+              <tns:getInventoryQtyForStyleColorSize>
+                ${authArg('arg0')}
+                <tns:style>${style}</tns:style>
+                <tns:color>${color.catalogColor}</tns:color>
+              </tns:getInventoryQtyForStyleColorSize>`;
+            const result = await soapRequest(SANMAR_INV, body);
             inv = extractInventory(result);
             inventoryCache.set(invCacheKey, inv);
           }
@@ -378,9 +399,6 @@ app.get('/api/colors-with-inventory', async (req, res) => {
 
 /**
  * GET /api/img-proxy?url=https://cdnp.sanmar.com/...
- * Fetches a SanMar CDN image server-side and streams it back with CORS headers.
- * This lets the Design Lab draw images onto a canvas without tainted-canvas errors.
- * Only proxies URLs from trusted SanMar CDN domains.
  */
 const ALLOWED_IMG_HOSTS = ['cdnp.sanmar.com', 'cdn.sanmar.com', 'www.sanmar.com', 'sanmar.com'];
 const imgCache = new NodeCache({ stdTTL: 6 * 60 * 60, useClones: false });
@@ -389,14 +407,12 @@ app.get('/api/img-proxy', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url is required' });
 
-  // Security: only proxy images from SanMar domains
   let parsed;
   try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'invalid url' }); }
   if (!ALLOWED_IMG_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith('.' + h))) {
     return res.status(403).json({ error: 'domain not allowed' });
   }
 
-  // Check cache (store as Buffer)
   const cached = imgCache.get(url);
   if (cached) {
     res.set('Content-Type', cached.contentType);
@@ -434,7 +450,6 @@ app.get('/api/img-proxy', async (req, res) => {
 
     const data = Buffer.concat(chunks);
     imgCache.set(url, { data, contentType });
-
     res.set('Content-Type', contentType);
     res.set('Cache-Control', 'public, max-age=21600');
     res.set('Access-Control-Allow-Origin', '*');
@@ -446,51 +461,34 @@ app.get('/api/img-proxy', async (req, res) => {
 });
 
 /**
- * GET /api/wsdl — fetches SanMar's WSDL and returns the raw XML for inspection
- */
-app.get('/api/wsdl', async (req, res) => {
-  try {
-    const url = new URL(SANMAR_WSDL + '?wsdl');
-    const chunks = [];
-    await new Promise((resolve, reject) => {
-      const req2 = https.request({ hostname: url.hostname, port: url.port || 443, path: url.pathname + url.search, method: 'GET' }, r => {
-        r.on('data', c => chunks.push(c));
-        r.on('end', resolve);
-        r.on('error', reject);
-      });
-      req2.on('error', reject);
-      req2.end();
-    });
-    const xml = Buffer.concat(chunks).toString('utf8');
-    res.set('Content-Type', 'text/xml');
-    res.send(xml.substring(0, 50000)); // first 50kb
-  } catch(e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-/**
- * GET /api/debug?style=PC54
- * Returns raw parsed XML from SanMar for debugging response structure.
- * Remove or gate this endpoint before going to production.
+ * GET /api/debug?style=PC54 — raw response inspection
  */
 app.get('/api/debug', async (req, res) => {
   const { style = 'PC54' } = req.query;
   try {
     const body = `
-      <san:getProductBulkInfo>
-        ${authXml()}
-        <san:style>${style}</san:style>
-      </san:getProductBulkInfo>`;
-    const result = await soapRequest(SANMAR_WSDL, 'getProductBulkInfo', body);
-    // Return full parsed structure so we can see the actual keys
-    const env = result?.['S:Envelope'] || result?.['soapenv:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
-    const body2 = env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env;
-    const keys = Object.keys(body2 || {});
+      <tns:getProductInfoByStyleColorSize>
+        <tns:arg0>
+          <tns:color></tns:color>
+          <tns:size>M</tns:size>
+          <tns:style>${style}</tns:style>
+        </tns:arg0>
+        ${authArg('arg1')}
+      </tns:getProductInfoByStyleColorSize>`;
+    const result = await soapRequest(SANMAR_WSDL, body);
+    const bodyObj = soapBody(result);
+    const keys = Object.keys(bodyObj || {});
     const firstKey = keys[0];
-    const response = body2?.[firstKey];
-    const retKeys = Object.keys(response?.return || response || {}).slice(0, 20);
-    res.json({ envKeys: Object.keys(result || {}), bodyKeys: keys, responseKey: firstKey, returnKeys: retKeys, sample: JSON.stringify(response).substring(0, 2000) });
+    const response = bodyObj?.[firstKey];
+    const retObj = response?.return || response;
+    res.json({
+      envKeys: Object.keys(result || {}),
+      bodyKeys: keys,
+      responseKey: firstKey,
+      returnKeys: Object.keys(retObj || {}).slice(0, 20),
+      listResponseLength: Array.isArray(retObj?.listResponse) ? retObj.listResponse.length : (retObj?.listResponse ? 1 : 0),
+      sample: JSON.stringify(retObj?.listResponse?.[0] || retObj).substring(0, 2000)
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
