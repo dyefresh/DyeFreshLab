@@ -527,6 +527,31 @@ body{
       </div>
     </article>
 
+    <!-- PC460 Fan Favorite Varsity Tee -->
+    <article class="card" data-cat="tshirts" data-product-id="pc460">
+      <div class="card-image">
+        <img class="card-photo" id="pc460-img"
+          src="https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_jetblack_model_front.jpg"
+          alt="PC460 Fan Favorite Varsity Tee" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👕</div>
+        <div class="card-badge new">Varsity</div>
+      </div>
+      <div class="card-swatch-row" id="pc460-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC460 · Port &amp; Company</div>
+        <div class="card-name">Fan Favorite® Varsity Tee</div>
+        <div class="card-desc">4.5 oz 60/40 cotton/poly blend. The fan-favorite softness you love, now with a classic varsity look. Lightweight, tagless, and built for all-day comfort in 11 colors.</div>
+        <div class="card-meta">
+          <div class="card-color-label" id="pc460-color-label">Jet Black</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pc460')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
   </div><!-- /product-grid -->
 </main>
 
@@ -1806,6 +1831,59 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/images/h58/hb6/8818844172318/6466-LightBlue-5-LPC54LSLightBlueFlatFront-1200W.jpg' },
       { name:'Neon Pink', slug:'neon-pink', hex:'#ff69b4',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/images/h7e/hee/8828334178334/6466-NeonPink-5-LPC54LSNeonPinkFlatFront-1200W.jpg' }
+    ]
+  },
+  pc460: {
+    name: 'Fan Favorite® Varsity Tee',
+    style: 'SanMar PC460',
+    sanMarStyle: 'PC460',
+    designLabKey: 'pc460',
+    defaultColor: 7,
+    colors: [
+      { name:'Eggshell',       slug:'eggshell',      hex:'#f0ece0', light:true,
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_eggshell_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_eggshell_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_eggshell_model_side.jpg' },
+      { name:'Athletic Maroon',slug:'athletic-maroon',hex:'#6b1a2a',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticmaroon_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticmaroon_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticmaroon_model_side.jpg' },
+      { name:'Athletic Navy',  slug:'athletic-navy', hex:'#1a2952',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticnavy_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticnavy_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticnavy_model_side.jpg' },
+      { name:'Athletic Oxford', slug:'athletic-oxford', hex:'#b0a898', light:true,
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticoxford_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticoxford_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticoxford_model_side.jpg' },
+      { name:'Athletic Red',   slug:'athletic-red',  hex:'#c0202a',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticred_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticred_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticred_model_side.jpg' },
+      { name:'Black',          slug:'black',         hex:'#111111',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_black_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_black_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_black_model_side.jpg' },
+      { name:'Heathered Navy', slug:'heathered-navy', hex:'#2e3f6a',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_heathernavy_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_heathernavy_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_heathernavy_model_side.jpg' },
+      { name:'Jet Black',      slug:'jet-black',     hex:'#0a0a0a',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_jetblack_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_jetblack_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_jetblack_model_side.jpg' },
+      { name:'Navy',           slug:'navy',          hex:'#1f2d5a',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_navy_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_navy_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_navy_model_side.jpg' },
+      { name:'White',          slug:'white',         hex:'#f5f5f5', light:true,
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_white_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_white_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_white_model_side.jpg' },
+      { name:'Athletic Royal', slug:'athletic-royal', hex:'#1a3f9e',
+        img:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticroyal_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticroyal_model_back.jpg',
+        imgSide:'https://cdnm.sanmar.com/catalog/images/imglib/catl/PC460_athleticroyal_model_side.jpg' },
     ]
   }
 };
