@@ -40,9 +40,9 @@ const CONFIG = {
   allowedOrigins : (process.env.ALLOWED_ORIGINS || 'https://dyefresh.com,https://jcampos13.github.io').split(','),
 };
 
-// SanMar SOAP endpoints — use port 443 (Railway blocks outbound :8080)
-const SANMAR_WSDL = 'https://ws.sanmar.com/SanMarWebService/SanMarProductInfoServicePort';
-const SANMAR_INV  = 'https://ws.sanmar.com/SanMarWebService/SanMarInventoryServicePort';
+// SanMar SOAP endpoints — port 8080 (Render allows all outbound ports)
+const SANMAR_WSDL = 'http://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort';
+const SANMAR_INV  = 'http://ws.sanmar.com:8080/SanMarWebService/SanMarInventoryServicePort';
 
 // Cache responses — product data for 6 hours, inventory for 15 minutes
 const productCache   = new NodeCache({ stdTTL: 6 * 60 * 60 });
@@ -87,7 +87,8 @@ function soapRequest(endpoint, action, bodyXml) {
       }
     };
 
-    const req = https.request(options, res => {
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.request(options, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
