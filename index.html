@@ -4359,12 +4359,15 @@ document.getElementById('uploadInput').addEventListener('change', e => {
         id:    Date.now(),
         type:  'img',
         image: img,
+        imageHiRes: img, // keep full-res source for 300 DPI export
         label: file.name,
         x:     pzX + (PRINT_ZONE_W - w) / 2,
         y:     pzY + (PRINT_ZONE_H - h) / 2,
         w, h,
         _origW: w,
         _origH: h,
+        _srcNatW: img.naturalWidth,  // original pixel dimensions
+        _srcNatH: img.naturalHeight,
         rot:      0,
         rotation: 0,
         opacity:  1,
@@ -5276,6 +5279,113 @@ function isMobile() { return window.innerWidth <= 700; }
 // Named functions used by mobile toolbar (inline onclick)
 function downloadCanvas() { downloadPreview(); }
 
+// ── HI-RES PRINT EXPORT (300 DPI) ────────────────────────────────────────
+// Renders only the artwork layers onto a 300 DPI canvas (print zone = 12"×16")
+// Returns a data URL (PNG). Each layer is drawn using its full-res source image.
+function renderHiResPrintArtwork() {
+  const DPI = 300;
+  const PRINT_W_IN = 12, PRINT_H_IN = 16;
+  const HI_W = PRINT_W_IN * DPI; // 3600px
+  const HI_H = PRINT_H_IN * DPI; // 4800px
+  const scale = HI_W / PRINT_ZONE_W; // canvas-px → hi-res-px ratio
+
+  const hiCanvas = document.createElement('canvas');
+  hiCanvas.width  = HI_W;
+  hiCanvas.height = HI_H;
+  const hx = hiCanvas.getContext('2d');
+
+  // Transparent background (print-ready artwork only)
+  hx.clearRect(0, 0, HI_W, HI_H);
+
+  const pzX = getPZX(); // print zone left edge in canvas px
+  const pzY = getPZY(); // print zone top edge in canvas px
+
+  S.layers.forEach(layer => {
+    if (layer.type === 'text') {
+      // Scale text layer proportionally
+      hx.save();
+      hx.globalAlpha = layer.opacity ?? 1;
+      const lx = (layer.x - pzX) * scale;
+      const ly = (layer.y - pzY) * scale;
+      const lw = layer.w * scale;
+      const lh = layer.h * scale;
+      const cx2 = lx + lw / 2, cy2 = ly + lh / 2;
+      hx.translate(cx2, cy2);
+      hx.rotate((layer.rotation || layer.rot || 0) * Math.PI / 180);
+      if (layer.flipH) hx.scale(-1, 1);
+      const fontSize = (layer.fontSize || 36) * (layer.scale || 1) * scale;
+      hx.font = `${layer.fontStyle||'normal'} ${layer.fontWeight||'normal'} ${Math.round(fontSize)}px ${layer.fontFamily||'Inter, sans-serif'}`;
+      hx.fillStyle = layer.color || '#000000';
+      hx.textAlign = 'center';
+      hx.textBaseline = 'middle';
+      const displayText = layer.uppercase ? (layer.text||'').toUpperCase() : (layer.text||'');
+      hx.fillText(displayText, 0, 0);
+      hx.restore();
+      return;
+    }
+    if (!layer.image) return;
+    hx.save();
+    hx.globalAlpha = layer.opacity ?? 1;
+    const lx = (layer.x - pzX) * scale;
+    const ly = (layer.y - pzY) * scale;
+    const lw = layer.w * scale;
+    const lh = layer.h * scale;
+    const cx2 = lx + lw / 2, cy2 = ly + lh / 2;
+    hx.translate(cx2, cy2);
+    hx.rotate((layer.rotation || layer.rot || 0) * Math.PI / 180);
+    if (layer.flipH) hx.scale(-1, 1);
+
+    // Use full-res source image for maximum quality
+    const srcImg = layer.imageHiRes || layer.image;
+    const cmap = layer.colorMap || {};
+    const hasCmap = Object.keys(cmap).length > 0;
+    const hasRemoveWhite = !!layer.removeWhite;
+
+    if (hasCmap || hasRemoveWhite) {
+      // Draw src image to offscreen at FULL natural resolution, apply pixel ops
+      const oc = document.createElement('canvas');
+      oc.width  = srcImg.naturalWidth  || srcImg.width;
+      oc.height = srcImg.naturalHeight || srcImg.height;
+      const ox = oc.getContext('2d');
+      ox.drawImage(srcImg, 0, 0, oc.width, oc.height);
+      const imgData = ox.getImageData(0, 0, oc.width, oc.height);
+      const d = imgData.data;
+
+      // Build nearest-neighbour colormap entries
+      const cmapEntries = [];
+      Object.entries(cmap).forEach(([orig, rep]) => {
+        const qr = Math.min(255, Math.round(parseInt(orig.slice(1,3),16)/24)*24);
+        const qg = Math.min(255, Math.round(parseInt(orig.slice(3,5),16)/24)*24);
+        const qb = Math.min(255, Math.round(parseInt(orig.slice(5,7),16)/24)*24);
+        const nr=parseInt(rep.slice(1,3),16), ng=parseInt(rep.slice(3,5),16), nb=parseInt(rep.slice(5,7),16);
+        cmapEntries.push({ qr, qg, qb, rgb:[nr,ng,nb] });
+      });
+
+      for (let i = 0; i < d.length; i += 4) {
+        const r=d[i], g=d[i+1], b=d[i+2], a=d[i+3];
+        if (a < 10) continue;
+        if (hasRemoveWhite && r > 230 && g > 230 && b > 230) { d[i+3]=0; continue; }
+        if (cmapEntries.length > 0) {
+          let bestDist = 60*60*3, bestRgb = null;
+          for (const e of cmapEntries) {
+            const dr=r-e.qr, dg=g-e.qg, db=b-e.qb;
+            const dist = dr*dr+dg*dg+db*db;
+            if (dist < bestDist) { bestDist=dist; bestRgb=e.rgb; }
+          }
+          if (bestRgb) { d[i]=bestRgb[0]; d[i+1]=bestRgb[1]; d[i+2]=bestRgb[2]; }
+        }
+      }
+      ox.putImageData(imgData, 0, 0);
+      hx.drawImage(oc, -lw/2, -lh/2, lw, lh);
+    } else {
+      hx.drawImage(srcImg, -lw/2, -lh/2, lw, lh);
+    }
+    hx.restore();
+  });
+
+  return hiCanvas.toDataURL('image/png');
+}
+
 function downloadPreview() {
   // 1. Render canvas without print guide and without selection handles
   const prevActive = S.activeLayer;
@@ -5390,11 +5500,23 @@ function downloadPreview() {
     cx.font = '13px Inter, Arial, sans-serif';
     cx.fillText(sizesText, col1X, row3Y);
 
-    // Download
+    // Download preview composite
     const link = document.createElement('a');
-    link.download = `dyefresh-${productName.replace(/\s+/g,'-').toLowerCase()}-${colorName.replace(/\s+/g,'-').toLowerCase()}.png`;
+    const baseName = `dyefresh-${productName.replace(/\s+/g,'-').toLowerCase()}-${colorName.replace(/\s+/g,'-').toLowerCase()}`;
+    link.download = `${baseName}-preview.png`;
     link.href = comp.toDataURL('image/png');
     link.click();
+
+    // Also download hi-res 300 DPI print-ready artwork (artwork only, transparent bg)
+    if (S.layers.some(l => l.type === 'img' || l.type === 'text')) {
+      setTimeout(() => {
+        const hiResDataUrl = renderHiResPrintArtwork();
+        const hiLink = document.createElement('a');
+        hiLink.download = `${baseName}-print-300dpi.png`;
+        hiLink.href = hiResDataUrl;
+        hiLink.click();
+      }, 400);
+    }
   };
   img.src = garmentDataUrl;
 }
