@@ -446,6 +446,30 @@ app.get('/api/img-proxy', async (req, res) => {
 });
 
 /**
+ * GET /api/wsdl — fetches SanMar's WSDL and returns the raw XML for inspection
+ */
+app.get('/api/wsdl', async (req, res) => {
+  try {
+    const url = new URL(SANMAR_WSDL + '?wsdl');
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      const req2 = https.request({ hostname: url.hostname, port: url.port || 443, path: url.pathname + url.search, method: 'GET' }, r => {
+        r.on('data', c => chunks.push(c));
+        r.on('end', resolve);
+        r.on('error', reject);
+      });
+      req2.on('error', reject);
+      req2.end();
+    });
+    const xml = Buffer.concat(chunks).toString('utf8');
+    res.set('Content-Type', 'text/xml');
+    res.send(xml.substring(0, 50000)); // first 50kb
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
  * GET /api/debug?style=PC54
  * Returns raw parsed XML from SanMar for debugging response structure.
  * Remove or gate this endpoint before going to production.
