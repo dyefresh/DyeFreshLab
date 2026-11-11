@@ -398,6 +398,59 @@ app.get('/api/colors-with-inventory', async (req, res) => {
 });
 
 /**
+ * GET /api/colors-named?style=PC460&colors=Jet+Black,White,Club+Navy,...
+ * Queries each named color individually (for styles where empty color query fails).
+ * Uses size=M for the lookup; images are color-level, not size-level.
+ */
+app.get('/api/colors-named', async (req, res) => {
+  const { style, colors: colorsParam } = req.query;
+  if (!style || !colorsParam) return res.status(400).json({ error: 'style and colors are required' });
+
+  const colorNames = colorsParam.split(',').map(c => c.trim()).filter(Boolean);
+  const cacheKey = `colors-named:${style}:${colorNames.join('|')}`.toLowerCase();
+  const cached = productCache.get(cacheKey);
+  if (cached) return res.json(cached);
+
+  const results = {};
+  await Promise.all(colorNames.map(async colorName => {
+    try {
+      const body = `
+        <tns:getProductInfoByStyleColorSize>
+          <arg0>
+            <color>${colorName}</color>
+            <size>M</size>
+            <style>${style}</style>
+          </arg0>
+          ${authArg('arg1')}
+        </tns:getProductInfoByStyleColorSize>`;
+      const result = await soapRequest(SANMAR_WSDL, body);
+      const items = extractFromResponse(result) || [];
+      if (items.length > 0) {
+        const item = items[0];
+        const img  = item?.productImageInfo || {};
+        const info = item?.productBasicInfo || {};
+        results[colorName] = {
+          name        : info.color || colorName,
+          catalogColor: info.catalogColor || colorName,
+          front       : img.frontModel    || img.colorProductImage || null,
+          back        : img.backModel     || null,
+          side        : img.sideModel     || null,
+          frontFlat   : img.frontFlat     || null,
+          colorSwatch : img.colorSquareImage || img.colorSwatchImage || null,
+        };
+      } else {
+        results[colorName] = { name: colorName, error: 'not found' };
+      }
+    } catch (e) {
+      results[colorName] = { name: colorName, error: e.message };
+    }
+  }));
+
+  productCache.set(cacheKey, results);
+  res.json(results);
+});
+
+/**
  * GET /api/img-proxy?url=https://cdnp.sanmar.com/...
  */
 const ALLOWED_IMG_HOSTS = ['cdnp.sanmar.com', 'cdn.sanmar.com', 'www.sanmar.com', 'sanmar.com'];
