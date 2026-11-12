@@ -120,7 +120,7 @@ function soapRequest(endpoint, bodyXml) {
 // ─── SOAP ENVELOPE HELPER ────────────────────────────────────────────────────
 function soapBody(result) {
   const env = result?.['S:Envelope'] || result?.['soapenv:Envelope'] || result?.['SOAP-ENV:Envelope'] || result;
-  return env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env;
+  return env?.['S:Body'] || env?.['soapenv:Body'] || env?.['SOAP-ENV:Body'] || env?.Body || env;
 }
 
 // ─── AUTH XML (arg0 = webServiceUser per XSD) ────────────────────────────────
@@ -140,10 +140,13 @@ function authArg(argName = 'arg0') {
 //      productInfo.productImageInfo, productInfo.productBasicInfo
 function extractFromResponse(result) {
   const body = soapBody(result);
-  // Try both response element names
+  // Try both response element names (with and without ns2: prefix)
   const resp = body?.getProductInfoByStyleColorSizeResponse
+            || body?.['ns2:getProductInfoByStyleColorSizeResponse']
             || body?.getProductBulkInfoResponse
-            || body?.getProductInfoByBrandResponse;
+            || body?.['ns2:getProductBulkInfoResponse']
+            || body?.getProductInfoByBrandResponse
+            || body?.['ns2:getProductInfoByBrandResponse'];
   if (!resp) return null;
 
   const ret = resp?.return;
@@ -398,6 +401,59 @@ app.get('/api/colors-with-inventory', async (req, res) => {
 });
 
 /**
+ * GET /api/colors-bulk?style=PC460
+ * Uses getProductBulkInfo (returns ALL products, no style filter) then filters by style.
+ * Slower but gets exact SanMar color names for styles that reject empty color queries.
+ */
+app.get('/api/colors-bulk', async (req, res) => {
+  const { style } = req.query;
+  if (!style) return res.status(400).json({ error: 'style is required' });
+
+  const cacheKey = `colors-bulk:${style}`.toLowerCase();
+  const cached = productCache.get(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const body = `
+      <tns:getProductBulkInfo>
+        ${authArg('arg0')}
+      </tns:getProductBulkInfo>`;
+
+    const result = await soapRequest(SANMAR_WSDL, body);
+    const sBody = soapBody(result);
+    const resp = sBody?.getProductBulkInfoResponse
+              || sBody?.['ns2:getProductBulkInfoResponse'];
+    const ret = resp?.return;
+    const all = ret?.listResponse;
+    const items = Array.isArray(all) ? all : (all ? [all] : []);
+
+    const styleUpper = style.toUpperCase();
+    const colorMap = {};
+    items.forEach(item => {
+      const info = item?.productBasicInfo || {};
+      if ((info.style || '').toUpperCase() !== styleUpper) return;
+      const img = item?.productImageInfo || {};
+      const colorName = info.color || info.catalogColor;
+      if (!colorName || colorMap[colorName]) return;
+      colorMap[colorName] = {
+        name: colorName, catalogColor: info.catalogColor || colorName,
+        front: img.frontModel || img.colorProductImage || null,
+        back: img.backModel || null, side: img.sideModel || null,
+        colorSwatch: img.colorSquareImage || img.colorSwatchImage || null,
+      };
+    });
+
+    const colors = Object.values(colorMap);
+    if (colors.length === 0) return res.status(404).json({ error: 'No colors found for style ' + style, totalItems: items.length });
+    productCache.set(cacheKey, colors);
+    res.json(colors);
+  } catch (err) {
+    console.error('colors-bulk error:', err.message);
+    res.status(500).json({ error: 'SanMar API error', detail: err.message });
+  }
+});
+
+/**
  * GET /api/colors-named?style=PC460&colors=Jet+Black,White,Club+Navy,...
  * Queries each named color individually (for styles where empty color query fails).
  * Uses size=M for the lookup; images are color-level, not size-level.
@@ -441,7 +497,8 @@ app.get('/api/colors-named', async (req, res) => {
       } else {
         // Expose raw parsed response for debugging
         const body2 = soapBody(result);
-        const resp2 = body2?.getProductInfoByStyleColorSizeResponse;
+        const resp2 = body2?.getProductInfoByStyleColorSizeResponse
+                   || body2?.['ns2:getProductInfoByStyleColorSizeResponse'];
         const ret2  = resp2?.return;
         const sanmarMsg = ret2?.message || ret2?.errorMessage || null;
         const sanmarRaw = ret2 ? JSON.stringify(ret2).substring(0, 300) : JSON.stringify(body2).substring(0, 300);
