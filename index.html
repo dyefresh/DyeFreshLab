@@ -106,31 +106,34 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 /* Inventory panel */
 /* Inline inventory status under size labels */
 .inv-inline {
-  display:block;
-  font-family:var(--font-label); font-size:.55rem; font-weight:600;
-  letter-spacing:.04em; text-transform:uppercase;
-  line-height:1; text-align:center;
-  color:var(--txt3); min-height:.7rem;
-  transition:color .2s;
+  display:block; text-align:center; line-height:1;
+  height:.55rem; /* reserve consistent space */
+  transition:opacity .2s;
 }
-.inv-inline.in-stock  { color:#3a9e68; }
-.inv-inline.low-stock { color:#c47f00; }
-.inv-inline.out-stock { color:#aaa; opacity:.7; }
-/* Dim the size-grid-item input when out of stock */
+/* Colored dot rendered via ::after */
+.inv-inline::after {
+  content:''; display:inline-block;
+  width:6px; height:6px; border-radius:50%;
+  vertical-align:middle;
+  opacity:0; transition:opacity .25s, background .25s;
+}
+.inv-inline.in-stock::after  { background:#4caf7d; opacity:1; }
+.inv-inline.low-stock::after { background:#f0a028; opacity:1; }
+.inv-inline.out-stock::after { background:#ccc; opacity:.6; }
+/* Optional qty label for low stock — tiny text beside dot */
+.inv-inline .inv-qty {
+  font-family:var(--font-label); font-size:.5rem; font-weight:600;
+  color:#c47f00; letter-spacing:.02em; vertical-align:middle; margin-left:2px;
+}
+/* Dim the size input when out of stock */
 .size-grid-item:has(.inv-inline.out-stock) .size-input { opacity:.35; }
 /* Modal inv row */
-#modalInvRow th { padding:0 2px 3px; vertical-align:top; }
-#modalInvRow .inv-inline { font-size:.52rem; min-height:.65rem; }
+#modalInvRow th { padding:0 2px 3px; vertical-align:middle; }
 /* Loading spinner for inline */
-.inv-inline.loading {
-  color:transparent;
-  position:relative;
-}
 .inv-inline.loading::after {
-  content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:7px; height:7px; border-radius:50%;
+  background:none;
   border:1.5px solid var(--border); border-top-color:var(--red);
-  animation:inv-spin .7s linear infinite;
+  opacity:1; animation:inv-spin .7s linear infinite;
 }
 @keyframes inv-spin { to { transform:rotate(360deg); } }
 
@@ -4200,31 +4203,36 @@ async function loadInventory(color) {
 
   if (_invCache[cacheKey]) { renderInventory(_invCache[cacheKey]); return; }
 
-  // Show loading spinners on all inline targets
+  // Show loading spinners
   document.querySelectorAll('.inv-inline').forEach(el => {
     el.className = 'inv-inline loading';
-    el.textContent = '';
+    el.innerHTML = '';
   });
 
+  const doFetch = () => fetch(`${PROXY}/api/inventory?style=${style}&color=${colorParam}`);
+
   try {
-    const res = await fetch(`${PROXY}/api/inventory?style=${style}&color=${colorParam}`);
+    let res = await doFetch();
+    // Retry once after 3s if proxy is cold-starting (5xx or network error)
+    if (!res.ok && res.status >= 500) {
+      await new Promise(r => setTimeout(r, 3000));
+      res = await doFetch();
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     data._fetchedAt = Date.now();
     _invCache[cacheKey] = data;
     renderInventory(data);
   } catch (e) {
-    document.querySelectorAll('.inv-inline').forEach(el => {
-      el.className = 'inv-inline';
-      el.textContent = '—';
-    });
+    // On failure just clear — don't clutter with error text
+    clearInvInline();
   }
 }
 
 function clearInvInline() {
   document.querySelectorAll('.inv-inline').forEach(el => {
     el.className = 'inv-inline';
-    el.textContent = '';
+    el.innerHTML = '';
   });
 }
 
@@ -4234,14 +4242,16 @@ function renderInventory(data) {
     const sz = el.dataset.invSize;
     if (!sz || !sizes[sz]) {
       el.className = 'inv-inline';
-      el.textContent = '';
+      el.innerHTML = '';
       return;
     }
     const s = sizes[sz];
     const cls = s.status === 'in_stock' ? 'in-stock' : s.status === 'low_stock' ? 'low-stock' : 'out-stock';
-    const label = s.status === 'in_stock' ? '✓' : s.status === 'low_stock' ? `${s.qty < 12 ? s.qty + ' left' : 'low'}` : 'out';
+    // For low stock show qty if under 12
+    const qtyHtml = (s.status === 'low_stock' && s.qty > 0 && s.qty < 12)
+      ? `<span class="inv-qty">${s.qty}</span>` : '';
     el.className = `inv-inline ${cls}`;
-    el.textContent = label;
+    el.innerHTML = qtyHtml;
   });
 }
 
