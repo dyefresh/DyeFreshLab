@@ -3178,6 +3178,20 @@ const STYLE_NUMS = {
   pc54:'PC54',pc61:'PC61',pc600:'PC600',hoodie:'PC78H',pc54ls:'PC54LS',pc61ls:'PC61LS',pc450:'PC450',pc460:'PC460',pc147:'PC147'
 };
 
+// Sizes offered per product — drives which size cells show in sidebar + modal
+// Based on SanMar catalog. Any size not listed here is hidden.
+const PRODUCT_SIZES = {
+  pc54:   ['XS','S','M','L','XL','2XL','3XL','4XL','5XL'],
+  pc61:   ['XS','S','M','L','XL','2XL','3XL','4XL'],
+  pc600:  ['S','M','L','XL','2XL','3XL','4XL'],
+  hoodie: ['S','M','L','XL','2XL','3XL','4XL','5XL'],
+  pc54ls: ['S','M','L','XL','2XL','3XL'],
+  pc61ls: ['XS','S','M','L','XL','2XL','3XL','4XL'],
+  pc450:  ['XS','S','M','L','XL','2XL','3XL','4XL','5XL'],
+  pc460:  ['S','M','L','XL','2XL','3XL','4XL'],
+  pc147:  ['S','M','L','XL','2XL','3XL'],
+};
+
 // ── STATE ─────────────────────────────────────────────────────────────────
 const S = {
   productKey: null,   // 'pc54', 'hoodie', etc.
@@ -3220,6 +3234,9 @@ var _invCache = {};  // inventory cache — hoisted so no TDZ issues
   S.productKey = productKey;
   document.getElementById('prodName').textContent  = PRODUCT_NAMES[productKey] || productKey;
   document.getElementById('prodStyle').textContent = STYLE_NUMS[productKey] || '';
+
+  // Show only the sizes this product offers
+  applySizeVisibility(productKey);
 
   showLoading(true);
 
@@ -4184,6 +4201,47 @@ function selectColor(idx) {
   // Reset garment so loadGarmentImage always fetches the new color
   S.garmentImg = null;
   loadGarmentImage(null);
+}
+
+// ── SIZE VISIBILITY ───────────────────────────────────────────────────────
+// Show/hide size cells in sidebar and modal based on what this product offers
+function applySizeVisibility(productKey) {
+  const available = new Set(PRODUCT_SIZES[productKey] || ['S','M','L','XL','2XL','3XL']);
+
+  // Sidebar size-grid-items
+  document.querySelectorAll('.size-grid-item').forEach(item => {
+    const inp = item.querySelector('.size-input');
+    if (!inp) return;
+    const sz = inp.dataset.size;
+    const show = available.has(sz);
+    item.style.display = show ? '' : 'none';
+    if (!show) inp.value = '0'; // reset hidden sizes so they don't count toward total
+  });
+
+  // Modal size table — hide th (header) and td (input) for unavailable sizes
+  const allSizes = ['XS','S','M','L','XL','2XL','3XL','4XL','5XL'];
+  const modalTable = document.getElementById('modalSizeTable');
+  if (!modalTable) return;
+
+  // Header rows (size labels + inv row)
+  modalTable.querySelectorAll('thead tr').forEach(row => {
+    const cells = row.querySelectorAll('th');
+    cells.forEach((th, i) => {
+      const sz = allSizes[i];
+      if (sz) th.style.display = available.has(sz) ? '' : 'none';
+    });
+  });
+  // Body rows (inputs)
+  modalTable.querySelectorAll('tbody tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    cells.forEach((td, i) => {
+      const sz = allSizes[i];
+      if (!sz) return;
+      td.style.display = available.has(sz) ? '' : 'none';
+      const inp = td.querySelector('.size-input');
+      if (inp && !available.has(sz)) inp.value = '0';
+    });
+  });
 }
 
 // ── INVENTORY ─────────────────────────────────────────────────────────────
