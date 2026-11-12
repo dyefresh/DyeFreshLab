@@ -527,6 +527,31 @@ body{
       </div>
     </article>
 
+    <!-- PC147 Tie-Dye Tee -->
+    <article class="card" data-cat="tshirts" data-product-id="pc147">
+      <div class="card-image">
+        <img class="card-photo" id="pc147-img"
+          src="https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_navy_model_front.jpg"
+          alt="PC147 Tie-Dye Tee" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="card-photo-placeholder" style="display:none">👕</div>
+        <div class="card-badge new">Tie-Dye</div>
+      </div>
+      <div class="card-swatch-row" id="pc147-swatches"></div>
+      <div class="card-body">
+        <div class="card-style">SanMar PC147 · Port &amp; Company</div>
+        <div class="card-name">Tie-Dye Tee</div>
+        <div class="card-desc">5.4 oz 100% cotton. Each shirt is uniquely dyed for a one-of-a-kind look. Available in 20 colors — solid brights, vivid spirals, and bold rainbow patterns.</div>
+        <div class="card-meta">
+          <div class="card-color-label" id="pc147-color-label">Navy</div>
+        </div>
+        <button class="btn-customize" onclick="openPicker('pc147')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Customize It
+        </button>
+      </div>
+    </article>
+
     <!-- PC460 Fan Favorite Varsity Tee -->
     <article class="card" data-cat="tshirts" data-product-id="pc460">
       <div class="card-image">
@@ -1831,6 +1856,84 @@ const PRODUCTS = {
         img:'https://cdnp.sanmar.com/medias/sys_master/images/images/h58/hb6/8818844172318/6466-LightBlue-5-LPC54LSLightBlueFlatFront-1200W.jpg' },
       { name:'Neon Pink', slug:'neon-pink', hex:'#ff69b4',
         img:'https://cdnp.sanmar.com/medias/sys_master/images/images/h7e/hee/8828334178334/6466-NeonPink-5-LPC54LSNeonPinkFlatFront-1200W.jpg' }
+    ]
+  },
+  pc147: {
+    name: 'Tie-Dye Tee',
+    style: 'SanMar PC147',
+    sanMarStyle: 'PC147',
+    designLabKey: 'pc147',
+    defaultColor: 11,
+    colors: [
+      { name:'Black', slug:'black', hex:'#1a1a1a',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_black_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_black_model_back.jpg' },
+      { name:'Black Galaxy Spiral', slug:'black-galaxy-spiral', hex:'#2a2a3a',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_blackgalaxyspiral_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_blackgalaxyspiral_model_back.jpg' },
+      { name:'Blaze Rainbow', slug:'blaze-rainbow', hex:'#ff4500',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_blazerainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_blazerainbow_model_back.jpg' },
+      { name:'Forest Green', slug:'forest-green', hex:'#2d5a27',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_forestgreen_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_forestgreen_model_back.jpg' },
+      { name:'Gold', slug:'gold', hex:'#c9941a',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_gold_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_gold_model_back.jpg' },
+      { name:'Island Spiral', slug:'island-spiral', hex:'#007bbf',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2024/f8/PC147_islandspiral_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2024/f8/PC147_islandspiral_model_back.jpg' },
+      { name:'Kelly', slug:'kelly', hex:'#4caf50',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_kelly_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_kelly_model_back.jpg' },
+      { name:'Light Blue', slug:'light-blue', hex:'#add8e6', light:true,
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_lightblue_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_lightblue_model_back.jpg' },
+      { name:'Maroon', slug:'maroon', hex:'#7c1a3c',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_maroon_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_maroon_model_back.jpg' },
+      { name:'Mint Rainbow', slug:'mint-rainbow', hex:'#aee8d0', light:true,
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_mintrainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_mintrainbow_model_back.jpg' },
+      { name:'Neon Rainbow', slug:'neon-rainbow', hex:'#ff1493',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_neonrainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_neonrainbow_model_back.jpg' },
+      { name:'Navy', slug:'navy', hex:'#1a2952',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_navy_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_navy_model_back.jpg' },
+      { name:'Ocean Rainbow', slug:'ocean-rainbow', hex:'#006994',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_oceanrainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_oceanrainbow_model_back.jpg' },
+      { name:'Orange', slug:'orange', hex:'#e06020',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_orange_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_orange_model_back.jpg' },
+      { name:'Pastel Rainbow', slug:'pastel-rainbow', hex:'#f4c2c2', light:true,
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_pastelrainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_pastelrainbow_model_back.jpg' },
+      { name:'Pink', slug:'pink', hex:'#e75480',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_pink_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_pink_model_back.jpg' },
+      { name:'Purple', slug:'purple', hex:'#6a0dad',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_purple_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_purple_model_back.jpg' },
+      { name:'Rainbow', slug:'rainbow', hex:'#ff4500',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_rainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_rainbow_model_back.jpg' },
+      { name:'Red', slug:'red', hex:'#cc1e28',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_red_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_red_model_back.jpg' },
+      { name:'Royal', slug:'royal', hex:'#1a3f9e',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_royal_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_royal_model_back.jpg' },
+      { name:'Turquoise', slug:'turquoise', hex:'#30d5c8',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_turquoise_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_turquoise_model_back.jpg' },
+      { name:'USA Rainbow', slug:'usa-rainbow', hex:'#b22234',
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_usarainbow_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_usarainbow_model_back.jpg' },
+      { name:'Watercolor Spiral', slug:'watercolor-spiral', hex:'#5ba0c8', light:true,
+        img:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_watercolorspiral_model_front.jpg',
+        imgBack:'https://cdnm.sanmar.com/imglib/mresjpg/2020/f15/PC147_watercolorspiral_model_back.jpg' },
     ]
   },
   pc460: {
