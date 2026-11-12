@@ -104,30 +104,70 @@ html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var
 }
 
 /* Inventory panel */
-.inv-loading { color:var(--txt3); font-family:var(--font-label); font-size:.75rem; }
+.inv-loading {
+  display:flex; align-items:center; gap:7px;
+  color:var(--txt3); font-family:var(--font-label); font-size:.75rem;
+  padding:4px 0;
+}
+.inv-loading::before {
+  content:''; display:inline-block;
+  width:12px; height:12px; border-radius:50%;
+  border:2px solid var(--border); border-top-color:var(--red);
+  animation:inv-spin .7s linear infinite; flex-shrink:0;
+}
+@keyframes inv-spin { to { transform:rotate(360deg); } }
 .inv-error   { color:#e55; font-family:var(--font-label); font-size:.75rem; }
+.inv-color-label {
+  font-family:var(--font-label); font-size:.7rem; font-weight:600;
+  color:var(--txt2); letter-spacing:.05em; text-transform:uppercase;
+  margin-bottom:5px;
+}
 .inv-grid {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(46px,1fr));
   gap:5px;
 }
 .inv-size {
-  display:flex; flex-direction:column; align-items:center; gap:3px;
-  background:var(--panel); border:1px solid var(--border);
-  border-radius:6px; padding:5px 3px;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:var(--panel); border:1.5px solid var(--border);
+  border-radius:6px; padding:6px 3px 5px;
   font-family:var(--font-label); font-size:.68rem;
   letter-spacing:.06em; text-transform:uppercase;
+  transition:border-color .15s, opacity .15s;
+  position:relative; cursor:default;
 }
-.inv-size .sz-label { font-weight:600; color:var(--txt); font-size:.72rem; }
-.inv-size .sz-qty   { color:var(--txt3); font-size:.65rem; }
-.inv-size.in-stock  { border-color:rgba(80,200,120,.45); }
-.inv-size.low-stock { border-color:rgba(240,160,40,.55); }
-.inv-size.out-stock { opacity:.45; }
+.inv-size .sz-label { font-weight:700; color:var(--txt); font-size:.74rem; line-height:1; }
+.inv-size .sz-status {
+  font-size:.6rem; font-weight:500; letter-spacing:.04em;
+  line-height:1.1; text-align:center;
+}
+.inv-size .sz-qty-num {
+  font-size:.6rem; color:var(--txt3); letter-spacing:.02em;
+}
+.inv-size.in-stock  { border-color:rgba(76,175,125,.5); }
+.inv-size.in-stock .sz-status  { color:#3a9e68; }
+.inv-size.low-stock { border-color:rgba(240,160,40,.6); background:rgba(240,160,40,.05); }
+.inv-size.low-stock .sz-status { color:#c47f00; }
+.inv-size.out-stock { opacity:.38; border-color:var(--border); }
+.inv-size.out-stock .sz-status { color:var(--txt3); }
 .inv-dot {
-  width:7px; height:7px; border-radius:50%;
+  width:6px; height:6px; border-radius:50%; margin-bottom:1px;
 }
 .in-stock  .inv-dot { background:#4caf7d; }
 .low-stock .inv-dot { background:#f0a028; }
-.out-stock .inv-dot { background:#888; }
+.out-stock .inv-dot { background:#aaa; }
+.inv-legend {
+  display:flex; gap:10px; margin-top:7px;
+  font-family:var(--font-label); font-size:.62rem; color:var(--txt3);
+  letter-spacing:.04em;
+}
+.inv-legend-item { display:flex; align-items:center; gap:4px; }
+.inv-legend-dot {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+.inv-updated {
+  font-family:var(--font-label); font-size:.58rem; color:var(--txt3);
+  letter-spacing:.03em; margin-top:6px; opacity:.7;
+}
 
 /* Color swatches */
 .swatch-grid {
@@ -1111,7 +1151,12 @@ select.field { cursor:pointer; }
 
       <!-- Inventory / Size Availability -->
       <div class="panel-section" id="inventorySection">
-        <div class="panel-label">Availability</div>
+        <div class="panel-label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Size Availability</span>
+          <button id="invRefreshBtn" onclick="refreshInventory()" title="Refresh inventory"
+            style="background:none;border:none;cursor:pointer;color:var(--txt3);padding:2px 4px;font-size:.75rem;line-height:1;border-radius:4px;transition:color .15s;"
+            onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--txt3)'">↻</button>
+        </div>
         <div id="inventoryPanel" style="min-height:2.5rem;"></div>
       </div>
     </div>
@@ -4184,43 +4229,90 @@ async function loadInventory(color) {
   if (!panel) return;
   if (!color) { panel.innerHTML = ''; return; }
 
-  // Use color name as the SanMar API param
-  const colorParam = encodeURIComponent(color.name);
-  const style = (S.styleKey || 'PC54').toUpperCase();
-  const cacheKey = `${style}:${color.name}`;
+  // Use STYLE_MAP to get the correct SanMar style number for the current product
+  const style = (STYLE_MAP[S.productKey] || 'PC54').toUpperCase();
+  // Try catalogColorName first (SanMar's exact name), fall back to display name
+  const colorName = color.catalogColorName || color.name;
+  const colorParam = encodeURIComponent(colorName);
+  const cacheKey = `${style}:${colorName}`;
 
-  if (_invCache[cacheKey]) { renderInventory(panel, _invCache[cacheKey]); return; }
+  if (_invCache[cacheKey]) { renderInventory(panel, _invCache[cacheKey], color.name); return; }
 
   panel.innerHTML = '<span class="inv-loading">Loading availability…</span>';
   try {
     const res = await fetch(`${PROXY}/api/inventory?style=${style}&color=${colorParam}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    // Stamp fetch time for display
+    data._fetchedAt = Date.now();
     _invCache[cacheKey] = data;
-    renderInventory(panel, data);
+    renderInventory(panel, data, color.name);
   } catch (e) {
-    panel.innerHTML = `<span class="inv-error">Availability unavailable</span>`;
+    panel.innerHTML = `<span class="inv-error">⚠ Availability check failed — please try again</span>`;
   }
 }
 
-function renderInventory(panel, data) {
+function renderInventory(panel, data, colorDisplayName) {
   const sizes = data?.sizes || {};
   const order = ['XS','S','M','L','XL','2XL','3XL','4XL','5XL','6XL'];
   const keys = order.filter(k => sizes[k] !== undefined);
   if (!keys.length) {
-    panel.innerHTML = '<span class="inv-error">No size data</span>';
+    panel.innerHTML = '<span class="inv-error">No inventory data for this color</span>';
     return;
   }
-  panel.innerHTML = `<div class="inv-grid">${keys.map(sz => {
+
+  const fetchedAt = data._fetchedAt ? new Date(data._fetchedAt) : new Date();
+  const timeStr = fetchedAt.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+
+  const grid = keys.map(sz => {
     const s = sizes[sz];
     const cls = s.status === 'in_stock' ? 'in-stock' : s.status === 'low_stock' ? 'low-stock' : 'out-stock';
-    const qtyLabel = s.qty > 999 ? '999+' : s.qty === 0 ? 'Out' : s.qty < 12 ? `Low` : 'In';
-    return `<div class="inv-size ${cls}">
+    const statusLabel = s.status === 'in_stock' ? 'In Stock' : s.status === 'low_stock' ? 'Low Stock' : 'Out';
+    // Show qty when meaningful: 999+ for large numbers, exact for low stock
+    const qtyLine = s.qty === 0
+      ? ''
+      : s.qty < 12
+        ? `<span class="sz-qty-num">${s.qty} left</span>`
+        : s.qty > 999
+          ? `<span class="sz-qty-num">999+</span>`
+          : '';
+    return `<div class="inv-size ${cls}" title="${sz}: ${statusLabel}${s.qty > 0 ? ' · ' + (s.qty > 999 ? '999+' : s.qty) + ' units' : ''}">
       <div class="inv-dot"></div>
       <span class="sz-label">${sz}</span>
-      <span class="sz-qty">${qtyLabel}</span>
+      <span class="sz-status">${statusLabel}</span>
+      ${qtyLine}
     </div>`;
-  }).join('')}</div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    ${colorDisplayName ? `<div class="inv-color-label">${colorDisplayName}</div>` : ''}
+    <div class="inv-grid">${grid}</div>
+    <div class="inv-legend">
+      <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#4caf7d"></span>In Stock</span>
+      <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#f0a028"></span>Low (&lt;12)</span>
+      <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#aaa"></span>Out</span>
+    </div>
+    <div class="inv-updated">Updated ${timeStr} · 15 min cache</div>
+  `;
+}
+
+// ── INVENTORY REFRESH ─────────────────────────────────────────────────────
+function refreshInventory() {
+  const color = S.colors[S.colorIdx];
+  if (!color) return;
+  // Clear cache for this color so we force a fresh fetch
+  const style = (STYLE_MAP[S.productKey] || 'PC54').toUpperCase();
+  const colorName = color.catalogColorName || color.name;
+  const cacheKey = `${style}:${colorName}`;
+  delete _invCache[cacheKey];
+  // Animate the refresh button
+  const btn = document.getElementById('invRefreshBtn');
+  if (btn) {
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.transition = 'transform .4s';
+    setTimeout(() => { btn.style.transform = ''; btn.style.transition = ''; }, 500);
+  }
+  loadInventory(color);
 }
 
 // ── VIEW TABS ─────────────────────────────────────────────────────────────
