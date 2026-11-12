@@ -439,14 +439,16 @@ app.get('/api/colors-named', async (req, res) => {
           colorSwatch : img.colorSquareImage || img.colorSwatchImage || null,
         };
       } else {
-        // Extract SanMar error message for debugging
+        // Expose raw parsed response for debugging
         const body2 = soapBody(result);
         const resp2 = body2?.getProductInfoByStyleColorSizeResponse;
         const ret2  = resp2?.return;
-        const sanmarError = ret2?.message || ret2?.errorMessage || JSON.stringify(ret2).substring(0, 200);
-        results[colorName] = { name: colorName, error: 'not found', sanmarError };
+        const sanmarMsg = ret2?.message || ret2?.errorMessage || null;
+        const sanmarRaw = ret2 ? JSON.stringify(ret2).substring(0, 300) : JSON.stringify(body2).substring(0, 300);
+        results[colorName] = { name: colorName, error: 'not found', sanmarMsg, sanmarRaw };
       }
     } catch (e) {
+      // e.message often contains the raw SanMar fault string
       results[colorName] = { name: colorName, error: e.message };
     }
   }));
