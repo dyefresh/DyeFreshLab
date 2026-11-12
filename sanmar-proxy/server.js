@@ -44,6 +44,8 @@ const CONFIG = {
 // SanMar SOAP endpoints — HTTPS port 8080 (confirmed from WSDL)
 const SANMAR_WSDL = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort';
 const SANMAR_INV  = 'https://ws.sanmar.com:8080/SanMarWebService/SanMarWebServicePort';
+// Namespace for inventory service (different from product info service!)
+const INV_NS = 'http://webservice.integration.sanmar.com/';
 
 // Cache: product data 6h, inventory 15min
 const productCache   = new NodeCache({ stdTTL: 6 * 60 * 60 });
@@ -63,12 +65,12 @@ app.use(express.json());
 
 // ─── SOAP HELPER ─────────────────────────────────────────────────────────────
 // SOAPAction must be empty string per WSDL binding definition
-function soapRequest(endpoint, bodyXml) {
+function soapRequest(endpoint, bodyXml, tnsNamespace = 'http://impl.webservice.integration.sanmar.com/') {
   return new Promise((resolve, reject) => {
     const envelope = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-  xmlns:tns="http://impl.webservice.integration.sanmar.com/">
+  xmlns:tns="${tnsNamespace}">
   <soapenv:Header/>
   <soapenv:Body>
     ${bodyXml}
@@ -173,23 +175,61 @@ function mapProductToImages(item) {
   };
 }
 
-function extractInventory(invResponse) {
+/**
+ * Parse inventory response from getInventoryQtyForStyleColorSize (style-only query).
+ * When called with style+color only (no size), SanMar returns a <response xsi:type="ns2:Inventory">
+ * containing <skus><sku> entries each with <color>, <size>, <whse> blocks.
+ * We sum all warehouse quantities per size.
+ *
+ * Also handles style+color+size response which returns flat <listResponse> integers (one per warehouse).
+ */
+function extractInventory(invResponse, targetColor) {
   try {
     const body = soapBody(invResponse);
-    const items = body?.getInventoryQtyForStyleColorSizeResponse?.return?.listOfInventorySwing?.inventorySwing;
-    const list = Array.isArray(items) ? items : [items];
-    const sizes = {};
-    list.forEach(item => {
-      if (!item) return;
-      const size = item.SIZE || item.size;
-      const qty  = parseInt(item.QTY || item.qty || '0', 10);
-      sizes[size] = {
-        qty,
-        status: qty === 0 ? 'out_of_stock' : qty < 12 ? 'low_stock' : 'in_stock'
-      };
-    });
-    return { sizes };
+    const resp = body?.getInventoryQtyForStyleColorSizeResponse
+              || body?.['ns2:getInventoryQtyForStyleColorSizeResponse'];
+    if (!resp) return { sizes: {} };
+
+    const ret = resp?.return;
+    if (!ret) return { sizes: {} };
+
+    // Style-only or style+color query returns structured <response> with <skus>
+    const structured = ret?.response;
+    if (structured) {
+      const skusEl = structured?.skus;
+      let skuList = skusEl?.sku;
+      if (!skuList) return { sizes: {} };
+      if (!Array.isArray(skuList)) skuList = [skuList];
+
+      const sizes = {};
+      skuList.forEach(sku => {
+        const skuColor = (sku.color || '').toLowerCase().trim();
+        const skuSize  = (sku.size  || '').trim();
+        if (!skuSize) return;
+        // Filter to target color if provided
+        if (targetColor && skuColor && skuColor !== targetColor.toLowerCase().trim()) return;
+
+        // Sum qty across all warehouses
+        let whseList = sku.whse;
+        if (!whseList) return;
+        if (!Array.isArray(whseList)) whseList = [whseList];
+        const totalQty = whseList.reduce((sum, w) => sum + (parseInt(w.qty, 10) || 0), 0);
+
+        if (!sizes[skuSize]) {
+          sizes[skuSize] = { qty: totalQty, status: totalQty === 0 ? 'out_of_stock' : totalQty < 12 ? 'low_stock' : 'in_stock' };
+        } else {
+          sizes[skuSize].qty += totalQty;
+          sizes[skuSize].status = sizes[skuSize].qty === 0 ? 'out_of_stock' : sizes[skuSize].qty < 12 ? 'low_stock' : 'in_stock';
+        }
+      });
+      return { sizes };
+    }
+
+    // Fallback: flat listResponse (style+color+size single lookup) — returns warehouse quantities
+    // Not used by our /api/inventory route but kept for safety
+    return { sizes: {} };
   } catch (e) {
+    console.error('extractInventory error:', e.message);
     return { sizes: {} };
   }
 }
@@ -247,15 +287,20 @@ app.get('/api/inventory', async (req, res) => {
   if (cached) return res.json(cached);
 
   try {
+    // Inventory service uses flat args (not complex objects) and a different namespace.
+    // arg0=customerNumber, arg1=username, arg2=password, arg3=style, arg4=color, arg5=size(empty=all)
     const body = `
       <tns:getInventoryQtyForStyleColorSize>
-        ${authArg('arg0')}
-        <tns:style>${style}</tns:style>
-        <tns:color>${color}</tns:color>
+        <arg0>${CONFIG.customerNumber}</arg0>
+        <arg1>${CONFIG.username}</arg1>
+        <arg2>${CONFIG.password}</arg2>
+        <arg3>${style}</arg3>
+        <arg4>${color}</arg4>
+        <arg5></arg5>
       </tns:getInventoryQtyForStyleColorSize>`;
 
-    const result = await soapRequest(SANMAR_INV, body);
-    const inventory = extractInventory(result);
+    const result = await soapRequest(SANMAR_INV, body, INV_NS);
+    const inventory = extractInventory(result, color);
     inventoryCache.set(cacheKey, inventory);
     res.json(inventory);
   } catch (err) {
@@ -375,12 +420,15 @@ app.get('/api/colors-with-inventory', async (req, res) => {
           if (!inv) {
             const body = `
               <tns:getInventoryQtyForStyleColorSize>
-                ${authArg('arg0')}
-                <tns:style>${style}</tns:style>
-                <tns:color>${color.catalogColor}</tns:color>
+                <arg0>${CONFIG.customerNumber}</arg0>
+                <arg1>${CONFIG.username}</arg1>
+                <arg2>${CONFIG.password}</arg2>
+                <arg3>${style}</arg3>
+                <arg4>${color.catalogColor}</arg4>
+                <arg5></arg5>
               </tns:getInventoryQtyForStyleColorSize>`;
-            const result = await soapRequest(SANMAR_INV, body);
-            inv = extractInventory(result);
+            const result = await soapRequest(SANMAR_INV, body, INV_NS);
+            inv = extractInventory(result, color.catalogColor);
             inventoryCache.set(invCacheKey, inv);
           }
           const sizes = inv.sizes || {};
